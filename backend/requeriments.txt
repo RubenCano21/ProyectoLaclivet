@@ -1,0 +1,7 @@
+Django==6.0.5
+psycopg2-binary
+python-dotenv
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+
