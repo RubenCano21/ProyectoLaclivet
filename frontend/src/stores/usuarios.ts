@@ -14,6 +14,11 @@ export interface Usuario {
   is_staff: boolean
 }
 
+export interface ApiResult {
+  ok: boolean
+  error?: string
+}
+
 function extractError(err: unknown): string {
   const axiosErr = err as AxiosError<Record<string, string | string[]>>
   const d = axiosErr.response?.data
@@ -43,5 +48,15 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  return { items, loading, error, fetchAll }
+  async function remove(id: number): Promise<ApiResult> {
+    try {
+      await api.delete(`/usuarios/${id}/`)
+      items.value = items.value.filter(p => p.id !== id)
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: extractError(err) }
+    }
+  }
+
+  return { items, loading, error, fetchAll, remove }
 })
