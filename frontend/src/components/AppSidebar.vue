@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { SidebarProps } from '@/components/ui/sidebar'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 import {
   AudioWaveform,
@@ -11,12 +13,22 @@ import {
   Map,
   PieChart,
   Settings2,
+  SoapDispenserDroplet,
   SquareTerminal,
 } from "lucide-vue-next"
 import NavMain from '@/components/NavMain.vue'
 import NavProjects from '@/components/NavProjects.vue'
 import NavUser from '@/components/NavUser.vue'
 import TeamSwitcher from '@/components/TeamSwitcher.vue'
+
+const authStore = useAuthStore()
+const currentUser = computed(() => ({
+  name: authStore.user
+    ? (`${authStore.user.first_name} ${authStore.user.last_name}`.trim() || authStore.user.username)
+    : '',
+  email: authStore.user?.email ?? '',
+  avatar: '',
+}))
 
 import {
   Sidebar,
@@ -39,19 +51,14 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      name: "LACLIVET",
+      logo: SoapDispenserDroplet,
+      plan: "Laboratorio",
     },
     {
-      name: "Acme Corp.",
+      name: "PRACTICAS",
       logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
+      plan: "Estudiantes",
     },
   ],
   navMain: [
@@ -171,7 +178,7 @@ const data = {
       <NavProjects :projects="data.projects" />
     </SidebarContent>
     <SidebarFooter>
-      <NavUser :user="data.user" />
+      <NavUser :user="currentUser" />
     </SidebarFooter>
     <SidebarRail />
   </Sidebar>
