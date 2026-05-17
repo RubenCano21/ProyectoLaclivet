@@ -9,6 +9,11 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
+    // Agregar barra final si no la tiene (requerido por Django APPEND_SLASH)
+    if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
+        config.url += '/';
+    }
+
     const token = localStorage.getItem("access_token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
