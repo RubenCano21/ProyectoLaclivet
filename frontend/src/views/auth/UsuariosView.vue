@@ -129,12 +129,13 @@ onMounted(() => store.fetchAll())
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-mineral-green-50/60">
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-28">CI</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-28">#</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Nombre</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Apellido</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800">Correo</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-32">Teléfono</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Dirección</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-32">Último acceso</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Activo</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Administrador</th>
                   <th class="px-4 py-3 text-center font-semibold text-mineral-green-800 w-28">Acciones</th>
                 </tr>
               </thead>
@@ -147,14 +148,29 @@ onMounted(() => store.fetchAll())
                 </tr>
 
                 <tr
-                  v-for="p in filtered"
+                  v-for="(p, index) in filtered"
                   :key="p.id"
                   class="border-b last:border-0 hover:bg-mineral-green-50/40 transition-colors"
                 >
-                  <td class="px-4 py-3 font-medium text-mineral-green-950">{{ p.first_name }}</td>
+                  <td class="px-4 py-3 font-medium text-mineral-green-950">{{ index + 1 }}</td>
+                  <td class="px-4 py-3 text-mineral-green-800">{{ p.first_name }}</td>
                   <td class="px-4 py-3 text-mineral-green-800">{{ p.last_name }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ p.email }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ p.is_staff }}</td>
+                  <td class="px-4 py-3 text-mineral-green-700">{{ new Date(p.fecha_creacion).toLocaleDateString() }}</td>
+                    <td class="px-4 py-3">
+                        <span
+                        :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
+                        >
+                        {{ p.is_active ? 'Sí' : 'No' }}
+                        </span>
+                    </td>
+                  <td class="px-4 py-3">
+                    <span
+                      :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', p.is_staff ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
+                    >
+                      {{ p.is_staff ? 'Sí' : 'No' }}
+                    </span>
+                  </td>
                   <td class="px-4 py-3">
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
