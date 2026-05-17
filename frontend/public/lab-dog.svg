@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <defs>
+    <radialGradient id="bgGrad" cx="38%" cy="32%" r="72%">
+      <stop offset="0%" stop-color="#52b788"/>
+      <stop offset="100%" stop-color="#1b4332"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="150" cy="150" r="148" fill="url(#bgGrad)"/>
+  <circle cx="150" cy="150" r="146" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+
+  <!-- TABLE -->
+  <rect x="88" y="223" width="168" height="8" rx="4" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="102" y1="231" x2="97"  y2="276" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="243" y1="231" x2="248" y2="276" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- TAIL -->
+  <path d="M82 208 Q54 196 46 170 Q50 160 59 166 Q66 184 88 202" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- HIND LEGS -->
+  <path d="M82 220 Q73 242 77 266 Q85 270 90 259 Q94 238 87 220Z"  fill="rgba(255,255,255,0.16)" stroke="white" stroke-width="3"/>
+  <path d="M152 222 Q158 244 155 268 Q147 271 142 260 Q137 238 144 220Z" fill="rgba(255,255,255,0.16)" stroke="white" stroke-width="3"/>
+
+  <!-- BODY / LAB COAT -->
+  <path d="M79 218 Q77 174 108 161 Q120 157 131 159 Q156 162 160 176 Q165 192 157 220 Q139 239 118 237 Q89 233 79 218Z"
+        fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="3.5"/>
+  <!-- Center button line -->
+  <line x1="119" y1="162" x2="119" y2="236" stroke="white" stroke-width="2" opacity="0.6"/>
+  <!-- Left lapel -->
+  <path d="M119 163 L106 183 L115 193" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Right lapel -->
+  <path d="M119 163 L132 183 L123 193" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Pocket -->
+  <rect x="89" y="194" width="16" height="16" rx="3" fill="none" stroke="white" stroke-width="2" opacity="0.75"/>
+
+  <!-- ARM (reaching to microscope) -->
+  <path d="M152 190 Q176 178 189 186 Q197 192 195 202" stroke="white" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- Sleeve detail -->
+  <path d="M152 190 Q176 178 189 186 Q197 192 195 202" stroke="rgba(255,255,255,0.16)" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <!-- Paw -->
+  <circle cx="195" cy="202" r="7" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="3"/>
+
+  <!-- NECK -->
+  <rect x="108" y="152" width="30" height="16" rx="7" fill="rgba(255,255,255,0.16)" stroke="none"/>
+
+  <!-- HEAD -->
+  <ellipse cx="122" cy="132" rx="42" ry="38" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="3.5"/>
+
+  <!-- LEFT EAR (floppy) -->
+  <path d="M82 118 Q64 105 60 128 Q57 152 78 163 Q93 164 98 150 Q103 133 82 118Z"
+        fill="rgba(255,255,255,0.14)" stroke="white" stroke-width="3.5"/>
+
+  <!-- RIGHT EAR (floppy) -->
+  <path d="M161 116 Q179 103 184 126 Q187 150 167 161 Q152 162 148 149 Q143 132 161 116Z"
+        fill="rgba(255,255,255,0.14)" stroke="white" stroke-width="3.5"/>
+
+  <!-- SNOUT -->
+  <ellipse cx="122" cy="149" rx="19" ry="13" fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="2.5"/>
+
+  <!-- NOSE -->
+  <ellipse cx="122" cy="143" rx="7.5" ry="5" fill="white" opacity="0.88"/>
+
+  <!-- LEFT EYE -->
+  <circle cx="106" cy="122" r="8"   fill="white" opacity="0.92"/>
+  <circle cx="107" cy="123" r="4.5" fill="#1b4332"/>
+  <circle cx="106" cy="121" r="1.8" fill="white"/>
+
+  <!-- RIGHT EYE (gazing at scope) -->
+  <circle cx="138" cy="120" r="8"   fill="white" opacity="0.92"/>
+  <circle cx="140" cy="122" r="4.5" fill="#1b4332"/>
+  <circle cx="139" cy="120" r="1.8" fill="white"/>
+
+  <!-- MICROSCOPE -->
+  <!-- Base -->
+  <rect x="196" y="217" width="56" height="8" rx="4" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="3"/>
+  <!-- Pillar -->
+  <rect x="215" y="170" width="11" height="50" rx="5.5" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="3"/>
+  <!-- Arm horizontal -->
+  <rect x="211" y="168" width="36" height="9" rx="4.5" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="3"/>
+  <!-- Eyepiece tube -->
+  <rect x="239" y="136" width="10" height="36" rx="5" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="3"/>
+  <!-- Eyepiece cap (where eye looks in) -->
+  <ellipse cx="244" cy="136" rx="9" ry="5" fill="white" opacity="0.88"/>
+  <!-- Objective nosepiece -->
+  <rect x="212" y="178" width="9" height="24" rx="4.5" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="2.5"/>
+  <ellipse cx="216.5" cy="202" rx="5.5" ry="3.5" fill="white" opacity="0.72"/>
+  <!-- Stage -->
+  <rect x="201" y="206" width="34" height="8" rx="4" fill="rgba(255,255,255,0.18)" stroke="white" stroke-width="2.5"/>
+  <!-- Slide on stage -->
+  <rect x="207" y="203" width="21" height="4" rx="2" fill="white" opacity="0.65"/>
+  <!-- Coarse focus knob -->
+  <circle cx="224" cy="194" r="7.5" fill="rgba(255,255,255,0.15)" stroke="white" stroke-width="2.5"/>
+  <!-- Fine focus knob -->
+  <circle cx="224" cy="208" r="5"   fill="rgba(255,255,255,0.12)" stroke="white" stroke-width="2"/>
+</svg>
