@@ -115,10 +115,9 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if email and password:
-            # Usar el backend personalizado que acepta email
             usuario = authenticate(
                 request=self.context.get('request'),
-                username=email,  # El backend lo interpretará como email
+                username=email,
                 password=password
             )
 

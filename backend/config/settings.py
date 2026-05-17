@@ -140,10 +140,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Modelo de usuario personalizado
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
-# Backend de autenticación personalizado (permite login con email)
+# Backend de autenticación (el modelo usa USERNAME_FIELD = 'email', por lo que
+# el backend estándar autentica directamente con email)
 AUTHENTICATION_BACKENDS = [
-    'apps.usuarios.backends.EmailBackend',  # Backend personalizado con email
-    'django.contrib.auth.backends.ModelBackend',  # Backend por defecto (fallback)
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 # Configuración de Django REST Framework

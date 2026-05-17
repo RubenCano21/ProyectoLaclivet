@@ -43,11 +43,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         email = attrs.get(self.username_field)
         password = attrs.get('password')
 
-        # Usar el backend personalizado para autenticar con email
         from django.contrib.auth import authenticate
         user = authenticate(
             request=self.context.get('request'),
-            username=email,  # El backend lo interpretará como email
+            username=email,
             password=password
         )
 

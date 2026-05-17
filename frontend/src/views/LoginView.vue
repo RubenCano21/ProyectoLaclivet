@@ -2,19 +2,19 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { User, Lock, LogIn, Loader2, AlertCircle } from 'lucide-vue-next'
+import { Mail, Lock, LogIn, Loader2, AlertCircle } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 
 async function handleLogin() {
-  const ok = await auth.login(username.value, password.value)
+  const ok = await auth.login(email.value, password.value)
   if (ok) {
-    router.push('/')
+    router.push({ name: 'dashboard' })
   }
 }
 </script>
@@ -54,22 +54,22 @@ async function handleLogin() {
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-5">
-          <!-- Username -->
+          <!-- Email -->
           <div class="space-y-1">
-            <label for="username" class="block text-sm font-medium text-mineral-green-800">Usuario</label>
+            <label for="email" class="block text-sm font-medium text-mineral-green-800">Correo electrónico</label>
             <div class="relative">
               <span
                 class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-mineral-green-400"
               >
-                <User class="w-4 h-4" />
+                <Mail class="w-4 h-4" />
               </span>
               <input
-                id="username"
-                v-model="username"
-                type="text"
-                autocomplete="username"
+                id="email"
+                v-model="email"
+                type="email"
+                autocomplete="email"
                 required
-                placeholder="Tu nombre de usuario"
+                placeholder="tu@correo.com"
                 class="w-full rounded-xl border border-mineral-green-200 bg-white py-2.5 pl-10 pr-4 text-sm text-mineral-green-950 placeholder-mineral-green-400 shadow-sm transition focus:border-mineral-green-500 focus:outline-none focus:ring-2 focus:ring-mineral-green-500/30"
               />
             </div>
