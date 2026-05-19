@@ -7,13 +7,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import logout
 
-from .models import Usuario
+from .models import Usuario, Rol, Permiso, RolPermiso
 from .serializers import (
     UsuarioSerializer,
     RegistroUsuarioSerializer,
     LoginSerializer,
     CambiarPasswordSerializer,
-    ActualizarUsuarioSerializer
+    ActualizarUsuarioSerializer,
+    AdminActualizarUsuarioSerializer,
+    RolSerializer,
+    PermisoSerializer,
+    RolConPermisosSerializer,
 )
 
 
@@ -216,10 +220,27 @@ class ListaUsuariosView(generics.ListAPIView):
 
 
 class DetalleUsuarioView(generics.RetrieveUpdateDestroyAPIView):
-    """Vista para ver, actualizar y eliminar un usuario específico (solo para administradores)"""
+    """
+    GET    /usuarios/<pk>/  → detalle del usuario
+    PUT    /usuarios/<pk>/  → actualizar usuario (admin): nombre, email, teléfono, is_active, is_staff, rol
+    PATCH  /usuarios/<pk>/  → actualización parcial
+    DELETE /usuarios/<pk>/  → eliminar usuario
+    """
     queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get_serializer_class(self):
+        if self.request.method in ('PUT', 'PATCH'):
+            return AdminActualizarUsuarioSerializer
+        return UsuarioSerializer
+
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True  # siempre parcial para no exigir todos los campos
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UsuarioSerializer(instance).data)
 
 
 @api_view(['GET'])
@@ -230,4 +251,63 @@ def verificar_token(request):
         'mensaje': 'Token válido',
         'usuario': UsuarioSerializer(request.user).data
     })
+
+
+class ListaRolesView(generics.ListAPIView):
+    """Lista todos los roles del sistema"""
+    queryset = Rol.objects.all()
+    serializer_class = RolConPermisosSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ListaPermisosView(generics.ListAPIView):
+    """Lista todos los permisos del sistema"""
+    queryset = Permiso.objects.all()
+    serializer_class = PermisoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ActualizarRolPermisosView(APIView):
+    """Actualiza los permisos asignados a un rol (solo administradores)"""
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def put(self, request, pk):
+        try:
+            rol = Rol.objects.get(pk=pk)
+        except Rol.DoesNotExist:
+            return Response({'error': 'Rol no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        permiso_ids = request.data.get('permisos', [])
+        if not isinstance(permiso_ids, list):
+            return Response({'error': 'Se esperaba una lista de IDs'}, status=status.HTTP_400_BAD_REQUEST)
+
+        permisos_validos = Permiso.objects.filter(id__in=permiso_ids)
+        RolPermiso.objects.filter(rol=rol).delete()
+        RolPermiso.objects.bulk_create([
+            RolPermiso(rol=rol, permiso=p) for p in permisos_validos
+        ])
+        return Response(RolConPermisosSerializer(rol).data)
+
+
+class AsignarRolUsuarioView(APIView):
+    """Asigna un rol a un usuario (solo administradores)"""
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        rol_id = request.data.get('rol_id')
+        if rol_id is None:
+            usuario.rol = None
+        else:
+            try:
+                usuario.rol = Rol.objects.get(pk=rol_id)
+            except Rol.DoesNotExist:
+                return Response({'error': 'Rol no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        usuario.save()
+        return Response(UsuarioSerializer(usuario).data)
 

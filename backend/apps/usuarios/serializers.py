@@ -12,6 +12,19 @@ class RolSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre', 'descripcion']
 
 
+class RolConPermisosSerializer(serializers.ModelSerializer):
+    """Serializer para Rol incluyendo sus permisos"""
+    permisos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Rol
+        fields = ['id', 'nombre', 'descripcion', 'permisos']
+
+    def get_permisos(self, obj):
+        permisos = Permiso.objects.filter(roles_permiso__rol=obj)
+        return PermisoSerializer(permisos, many=True).data
+
+
 class PermisoSerializer(serializers.ModelSerializer):
     """Serializer para el modelo Permiso"""
 
@@ -185,7 +198,7 @@ class CambiarPasswordSerializer(serializers.Serializer):
 
 
 class ActualizarUsuarioSerializer(serializers.ModelSerializer):
-    """Serializer para actualizar información del usuario"""
+    """Serializer para actualizar información del usuario (uso propio)"""
 
     class Meta:
         model = Usuario
@@ -200,6 +213,29 @@ class ActualizarUsuarioSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         """Validar que el email no esté registrado por otro usuario"""
         usuario = self.context['request'].user
+        if Usuario.objects.exclude(pk=usuario.pk).filter(email=value).exists():
+            raise serializers.ValidationError("Este email ya está registrado por otro usuario.")
+        return value
+
+
+class AdminActualizarUsuarioSerializer(serializers.ModelSerializer):
+    """Serializer para que administradores actualicen cualquier usuario"""
+    rol_id = serializers.PrimaryKeyRelatedField(
+        queryset=Rol.objects.all(),
+        source='rol',
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Usuario
+        fields = [
+            'first_name', 'last_name', 'email', 'telefono',
+            'direccion', 'fecha_nacimiento', 'is_active', 'is_staff', 'rol_id'
+        ]
+
+    def validate_email(self, value):
+        usuario = self.instance
         if Usuario.objects.exclude(pk=usuario.pk).filter(email=value).exists():
             raise serializers.ValidationError("Este email ya está registrado por otro usuario.")
         return value

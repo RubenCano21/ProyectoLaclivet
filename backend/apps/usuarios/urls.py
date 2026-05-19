@@ -9,7 +9,11 @@ from .views import (
     CambiarPasswordView,
     ListaUsuariosView,
     DetalleUsuarioView,
-    verificar_token
+    verificar_token,
+    ListaRolesView,
+    ListaPermisosView,
+    ActualizarRolPermisosView,
+    AsignarRolUsuarioView,
 )
 
 app_name = 'usuarios'
@@ -30,5 +34,11 @@ urlpatterns = [
     # Gestión de usuarios (admin)
     path('', ListaUsuariosView.as_view(), name='lista_usuarios'),
     path('<int:pk>/', DetalleUsuarioView.as_view(), name='detalle_usuario'),
+    path('<int:pk>/asignar-rol/', AsignarRolUsuarioView.as_view(), name='asignar_rol'),
+
+    # Roles y permisos
+    path('roles/', ListaRolesView.as_view(), name='lista_roles'),
+    path('permisos/', ListaPermisosView.as_view(), name='lista_permisos'),
+    path('roles/<int:pk>/permisos/', ActualizarRolPermisosView.as_view(), name='actualizar_rol_permisos'),
 ]
 

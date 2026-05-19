@@ -62,6 +62,18 @@ const data = {
       items: [],
     },
     {
+      title: "Administracion",
+      url: "/auth",
+      icon: Users,
+      items: [
+        {
+          title: "Usuarios",
+          url: "/auth/usuarios",
+          icon: Users,
+        }
+      ]
+    },
+    {
       title: "Propietarios",
       url: "/propietarios",
       icon: Users,
