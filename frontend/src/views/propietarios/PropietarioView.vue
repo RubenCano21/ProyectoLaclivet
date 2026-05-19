@@ -87,7 +87,8 @@ onMounted(() => store.fetchAll())
         <!-- Título + botón nuevo -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-mineral-green-100 text-mineral-green-700">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg 
+            bg-mineral-green-100 text-mineral-green-700">
               <Users class="h-5 w-5" />
             </div>
             <div>
@@ -120,7 +121,8 @@ onMounted(() => store.fetchAll())
         </div>
 
         <!-- Error al cargar -->
-        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
+        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200 
+        bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ store.error }}
         </div>
@@ -158,7 +160,8 @@ onMounted(() => store.fetchAll())
                   <td class="px-4 py-3 text-mineral-green-800">{{ p.apellido }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ p.correo }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ p.telefono }}</td>
-                  <td class="px-4 py-3 text-mineral-green-600 max-w-40 truncate" :title="p.direccion">{{ p.direccion }}</td>
+                  <td class="px-4 py-3 text-mineral-green-600 max-w-40 truncate" 
+                    :title="p.direccion">{{ p.direccion }}</td>
                   <td class="px-4 py-3">
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">

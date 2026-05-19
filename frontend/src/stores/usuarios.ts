@@ -23,6 +23,18 @@ export interface UsuarioDetalle extends UsuarioResumen {
   permisos: { id: number; nombre: string; codigo: string; descripcion: string }[]
 }
 
+export interface RegisterForm {
+  username: string
+  email: string
+  password: string
+  password2: string
+  first_name: string
+  last_name?: string
+  telefono?: string | null
+  direccion?: string | null
+  fecha_nacimiento?: string | null
+}
+
 /** Campos que el admin puede editar en PUT/PATCH /usuarios/<pk>/ */
 export interface AdminActualizarForm {
   first_name?: string
@@ -84,6 +96,16 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
+  /** POST /auth/registro/ — registrar un nuevo usuario */
+  async function register(params: RegisterForm): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
+    try {
+      const { data } = await api.post('/auth/registro/', params)
+      return { ok: true, data }
+    } catch (err) {
+      return { ok: false, error: extractError(err) }
+    }
+  }
+
   /** PUT/PATCH /usuarios/<pk>/ — actualizar usuario como admin */
   async function update(id: number, form: AdminActualizarForm): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
     try {
@@ -110,5 +132,5 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  return { items, loading, error, fetchAll, fetchById, update, remove }
+  return { items, loading, error, fetchAll, fetchById, register, update, remove }
 })

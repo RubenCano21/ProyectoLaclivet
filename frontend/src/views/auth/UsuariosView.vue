@@ -16,6 +16,7 @@ import {
   AlertCircle, Users, X, Check,
 } from 'lucide-vue-next'
 import { useUsuariosStore, type Usuario } from '@/stores/usuarios'
+import RegisterUsuarioView from '@/views/auth/RegisterUsuarioView.vue'
 
 const store = useUsuariosStore()
 
@@ -85,7 +86,8 @@ onMounted(() => store.fetchAll())
         <!-- Título + botón nuevo -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-mineral-green-100 text-mineral-green-700">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg 
+            bg-mineral-green-100 text-mineral-green-700">
               <Users class="h-5 w-5" />
             </div>
             <div>
@@ -118,7 +120,8 @@ onMounted(() => store.fetchAll())
         </div>
 
         <!-- Error al cargar -->
-        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
+        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border 
+        border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ store.error }}
         </div>
@@ -159,14 +162,16 @@ onMounted(() => store.fetchAll())
                   <td class="px-4 py-3 text-mineral-green-700">{{ new Date(p.fecha_creacion).toLocaleDateString() }}</td>
                     <td class="px-4 py-3">
                         <span
-                        :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
+                        :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                         p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
                         >
                         {{ p.is_active ? 'Sí' : 'No' }}
                         </span>
                     </td>
                   <td class="px-4 py-3">
                     <span
-                      :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', p.is_staff ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
+                      :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', 
+                      p.is_staff ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
                     >
                       {{ p.is_staff ? 'Sí' : 'No' }}
                     </span>
@@ -218,10 +223,10 @@ onMounted(() => store.fetchAll())
     </SidebarInset>
   </SidebarProvider>
 
-  <!-- Modal crear / editar -->
+  <!-- Modal registrar usuario -->
   <RegisterUsuarioView
     v-model:open="modalOpen"
-    :usuario="editingUsuario"
+    @saved="store.fetchAll()"
   />
 </template>
 
