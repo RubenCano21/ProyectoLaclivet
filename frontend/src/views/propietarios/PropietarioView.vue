@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Plus, Search, Pencil, Trash2, Loader2,
-  AlertCircle, Users, X, Check,
+  AlertCircle, Users, X, Check, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import RegisterPropietarioView from './RegisterPropietarioView.vue'
 
@@ -56,6 +56,10 @@ async function handleDelete(id: number) {
   confirmDeleteId.value = null
 }
 
+function goToPage(page: number) {
+  store.fetchAll(page)
+}
+
 onMounted(() => store.fetchAll())
 </script>
 
@@ -94,7 +98,7 @@ onMounted(() => store.fetchAll())
             <div>
               <h1 class="text-2xl font-bold text-mineral-green-950 leading-tight">Propietarios</h1>
               <p class="text-sm text-muted-foreground">
-                {{ store.items.length }} registrado{{ store.items.length !== 1 ? 's' : '' }}
+                {{ store.total }} registrado{{ store.total !== 1 ? 's' : '' }}
               </p>
             </div>
           </div>
@@ -202,6 +206,32 @@ onMounted(() => store.fetchAll())
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Paginación -->
+          <div v-if="store.paginas > 1" class="flex items-center justify-between px-4 py-3 border-t bg-mineral-green-50/30">
+            <span class="text-sm text-muted-foreground">
+              Página {{ store.paginaActual }} de {{ store.paginas }} — {{ store.total }} registros
+            </span>
+            <div class="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="store.paginaActual <= 1"
+                @click="goToPage(store.paginaActual - 1)"
+              >
+                <ChevronLeft class="h-4 w-4" />
+              </Button>
+              <span class="px-2 text-sm font-medium">{{ store.paginaActual }}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="store.paginaActual >= store.paginas"
+                @click="goToPage(store.paginaActual + 1)"
+              >
+                <ChevronRight class="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </main>

@@ -36,13 +36,19 @@ export const usePropietariosStore = defineStore('propietarios', () => {
   const loading = ref(false)
   const saving = ref(false)
   const error = ref<string | null>(null)
+  const total = ref(0)
+  const paginas = ref(1)
+  const paginaActual = ref(1)
 
-  async function fetchAll() {
+  async function fetchAll(page = 1) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/propietarios/')
-      items.value = data
+      const { data } = await api.get('/propietarios/', { params: { page } })
+      items.value = data.resultados
+      total.value = data.total
+      paginas.value = data.paginas
+      paginaActual.value = data.pagina_actual
     } catch (err) {
       error.value = extractError(err)
     } finally {
@@ -87,5 +93,5 @@ export const usePropietariosStore = defineStore('propietarios', () => {
     }
   }
 
-  return { items, loading, saving, error, fetchAll, create, update, remove }
+  return { items, loading, saving, error, total, paginas, paginaActual, fetchAll, create, update, remove }
 })

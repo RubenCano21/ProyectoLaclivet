@@ -165,6 +165,9 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    # Paginación global
+    'DEFAULT_PAGINATION_CLASS': 'config.pagination.StandardPagination',
+    'PAGE_SIZE': 10,
 }
 
 # Configuración de Simple JWT
