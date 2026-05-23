@@ -2,6 +2,7 @@ from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from config.pagination import StandardPagination
 from .models import Propietario
 from .serializers import (
     PropietarioSerializer,
@@ -16,8 +17,10 @@ class PropietarioListCreateView(APIView):
 
     def get(self, request):
         propietarios = Propietario.objects.all().order_by('apellido', 'nombre')
-        serializer = PropietarioSerializer(propietarios, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = StandardPagination()
+        pagina = paginator.paginate_queryset(propietarios, request)
+        serializer = PropietarioSerializer(pagina, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = PropietarioCreateSerializer(data=request.data)

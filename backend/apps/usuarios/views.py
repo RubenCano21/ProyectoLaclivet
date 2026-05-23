@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import logout
 
+from config.pagination import StandardPagination
 from .models import Usuario, Rol, Permiso, RolPermiso
 from .serializers import (
     UsuarioSerializer,
@@ -214,9 +215,10 @@ class CambiarPasswordView(APIView):
 
 class ListaUsuariosView(generics.ListAPIView):
     """Vista para listar todos los usuarios (solo para administradores)"""
-    queryset = Usuario.objects.all()
+    queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = StandardPagination
 
 
 class DetalleUsuarioView(generics.RetrieveUpdateDestroyAPIView):
@@ -255,16 +257,18 @@ def verificar_token(request):
 
 class ListaRolesView(generics.ListAPIView):
     """Lista todos los roles del sistema"""
-    queryset = Rol.objects.all()
+    queryset = Rol.objects.all().order_by('id')
     serializer_class = RolConPermisosSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPagination
 
 
 class ListaPermisosView(generics.ListAPIView):
     """Lista todos los permisos del sistema"""
-    queryset = Permiso.objects.all()
+    queryset = Permiso.objects.all().order_by('id')
     serializer_class = PermisoSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPagination
 
 
 class ActualizarRolPermisosView(APIView):

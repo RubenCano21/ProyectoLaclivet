@@ -71,14 +71,20 @@ export const useUsuariosStore = defineStore('usuarios', () => {
   const items = ref<UsuarioResumen[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const total = ref(0)
+  const paginas = ref(1)
+  const paginaActual = ref(1)
 
-  /** GET /usuarios/ — lista todos los usuarios (solo admin) */
-  async function fetchAll() {
+  /** GET /usuarios/?page=X — lista usuarios paginados (solo admin) */
+  async function fetchAll(page = 1) {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.get('/usuarios/')
-      items.value = data
+      const { data } = await api.get('/usuarios/', { params: { page } })
+      items.value = data.resultados
+      total.value = data.total
+      paginas.value = data.paginas
+      paginaActual.value = data.pagina_actual
     } catch (err) {
       error.value = extractError(err)
     } finally {
@@ -132,5 +138,5 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  return { items, loading, error, fetchAll, fetchById, register, update, remove }
+  return { items, loading, error, total, paginas, paginaActual, fetchAll, fetchById, register, update, remove }
 })
