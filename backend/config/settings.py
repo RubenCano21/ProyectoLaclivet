@@ -50,6 +50,10 @@ INSTALLED_APPS = [
     # Local apps
     'apps.usuarios',
     'apps.propietario',
+    'apps.catalogo',
+    'apps.medico',
+    'apps.paciente',
+    'apps.recepcion',
 
     # Terceros
     'drf_yasg',
