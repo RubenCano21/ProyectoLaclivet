@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     # Local apps
     'apps.usuarios',
     'apps.propietario',
+
+    # Terceros
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
