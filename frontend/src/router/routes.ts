@@ -37,8 +37,8 @@ export const protectedRoutes: RouteRecordRaw[] = [
   },
   // ── Propietarios & Pacientes ──────────────────────────────────────
   {
-    path: '/pacientes',
-    name: 'pacientes',
+    path: '/propietarios',
+    name: 'propietarios',
     component: () => import('@/views/pacientes/PropietariosView.vue'),
   },
   {
@@ -47,9 +47,19 @@ export const protectedRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/pacientes/PropietarioForm.vue'),
   },
   {
-    path: '/pacientes/lista',
+    path: '/pacientes',
     name: 'lista-pacientes',
     component: () => import('@/views/pacientes/PacienteListView.vue'),
+  },
+  {
+    path: '/pacientes/especies-razas',
+    name: 'catalogo-especies-razas',
+    component: () => import('@/views/pacientes/EspecieRazaView.vue'),
+  },
+  {
+    path: '/pacientes/nuevo',
+    name: 'nuevo-paciente',
+    component: () => import('@/views/pacientes/PacienteFormView.vue'),
   },
   {
     path: '/pacientes/:id',
