@@ -8,12 +8,10 @@ const router = createRouter({
 })
 
 // Strip trailing slashes (e.g. /propietarios/ → /propietarios)
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to) => {
   if (to.path !== '/' && to.path.endsWith('/')) {
-    next({ path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true })
-    return
+    return { path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true }
   }
-  next()
 })
 
 router.beforeEach((to) => {

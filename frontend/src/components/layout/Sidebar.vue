@@ -65,7 +65,7 @@ const data = {
     },
     {
       title: "Administracion",
-      url: "/",
+      url: "",
       icon: Users,
       items: [
         {
