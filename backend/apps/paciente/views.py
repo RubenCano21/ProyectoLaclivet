@@ -21,13 +21,16 @@ _del_response = openapi.Response('Eliminado exitosamente')
 class EspecieListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(operation_summary="Listar especies", responses={200: EspecieSerializer(many=True)})
+    @swagger_auto_schema(operation_summary="Listar especies",
+                         responses={200: EspecieSerializer(many=True)})
     def get(self, request):
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(Especie.objects.all(), request)
         return paginator.get_paginated_response(EspecieSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear especie", request_body=EspecieCreateSerializer, responses={201: EspecieSerializer})
+    @swagger_auto_schema(operation_summary="Crear especie",
+                         request_body=EspecieCreateSerializer,
+                         responses={201: EspecieSerializer})
     def post(self, request):
         s = EspecieCreateSerializer(data=request.data)
         if s.is_valid():
@@ -44,24 +47,31 @@ class EspecieDetailView(APIView):
         except Especie.DoesNotExist:
             return None
 
-    @swagger_auto_schema(operation_summary="Obtener especie", responses={200: EspecieSerializer})
+    @swagger_auto_schema(operation_summary="Obtener especie",
+                         responses={200: EspecieSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
-            return Response({'error': 'Especie no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Especie no encontrada'},
+                            status=status.HTTP_404_NOT_FOUND)
         return Response(EspecieSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar especie", request_body=EspecieUpdateSerializer, responses={200: EspecieSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar especie",
+                         request_body=EspecieUpdateSerializer,
+                         responses={200: EspecieSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
-            return Response({'error': 'Especie no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Especie no encontrada'},
+                            status=status.HTTP_404_NOT_FOUND)
         s = EspecieUpdateSerializer(obj, data=request.data)
         if s.is_valid():
             return Response(EspecieSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente especie", request_body=EspecieUpdateSerializer, responses={200: EspecieSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente especie",
+                         request_body=EspecieUpdateSerializer,
+                         responses={200: EspecieSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -90,7 +100,9 @@ class RazaListCreateView(APIView):
         pagina = paginator.paginate_queryset(Raza.objects.select_related('especie').all(), request)
         return paginator.get_paginated_response(RazaSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear raza", request_body=RazaCreateSerializer, responses={201: RazaSerializer})
+    @swagger_auto_schema(operation_summary="Crear raza",
+                         request_body=RazaCreateSerializer,
+                         responses={201: RazaSerializer})
     def post(self, request):
         s = RazaCreateSerializer(data=request.data)
         if s.is_valid():
@@ -114,7 +126,9 @@ class RazaDetailView(APIView):
             return Response({'error': 'Raza no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         return Response(RazaSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar raza", request_body=RazaUpdateSerializer, responses={200: RazaSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar raza",
+                         request_body=RazaUpdateSerializer,
+                         responses={200: RazaSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -124,7 +138,9 @@ class RazaDetailView(APIView):
             return Response(RazaSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente raza", request_body=RazaUpdateSerializer, responses={200: RazaSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente raza",
+                         request_body=RazaUpdateSerializer,
+                         responses={200: RazaSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -154,7 +170,9 @@ class PacienteListCreateView(APIView):
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(PacienteSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear paciente", request_body=PacienteCreateSerializer, responses={201: PacienteSerializer})
+    @swagger_auto_schema(operation_summary="Crear paciente",
+                         request_body=PacienteCreateSerializer,
+                         responses={201: PacienteSerializer})
     def post(self, request):
         s = PacienteCreateSerializer(data=request.data)
         if s.is_valid():
@@ -171,14 +189,17 @@ class PacienteDetailView(APIView):
         except Paciente.DoesNotExist:
             return None
 
-    @swagger_auto_schema(operation_summary="Obtener paciente", responses={200: PacienteSerializer})
+    @swagger_auto_schema(operation_summary="Obtener paciente",
+                         responses={200: PacienteSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(PacienteSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar paciente", request_body=PacienteUpdateSerializer, responses={200: PacienteSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar paciente",
+                         request_body=PacienteUpdateSerializer,
+                         responses={200: PacienteSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -188,7 +209,9 @@ class PacienteDetailView(APIView):
             return Response(PacienteSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente paciente", request_body=PacienteUpdateSerializer, responses={200: PacienteSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente paciente",
+                         request_body=PacienteUpdateSerializer,
+                         responses={200: PacienteSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -246,14 +269,17 @@ class PacienteHistorialView(APIView):
 class AntecedentePacienteListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(operation_summary="Listar antecedentes de pacientes", responses={200: AntecedentePacienteSerializer(many=True)})
+    @swagger_auto_schema(operation_summary="Listar antecedentes de pacientes",
+                         responses={200: AntecedentePacienteSerializer(many=True)})
     def get(self, request):
         qs = AntecedentePaciente.objects.select_related('paciente', 'registrado_por').all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(AntecedentePacienteSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Registrar antecedente de paciente", request_body=AntecedentePacienteCreateSerializer, responses={201: AntecedentePacienteSerializer})
+    @swagger_auto_schema(operation_summary="Registrar antecedente de paciente",
+                         request_body=AntecedentePacienteCreateSerializer,
+                         responses={201: AntecedentePacienteSerializer})
     def post(self, request):
         s = AntecedentePacienteCreateSerializer(data=request.data)
         if s.is_valid():
@@ -270,14 +296,17 @@ class AntecedentePacienteDetailView(APIView):
         except AntecedentePaciente.DoesNotExist:
             return None
 
-    @swagger_auto_schema(operation_summary="Obtener antecedente", responses={200: AntecedentePacienteSerializer})
+    @swagger_auto_schema(operation_summary="Obtener antecedente",
+                         responses={200: AntecedentePacienteSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(AntecedentePacienteSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar antecedente", request_body=AntecedentePacienteUpdateSerializer, responses={200: AntecedentePacienteSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar antecedente",
+                         request_body=AntecedentePacienteUpdateSerializer,
+                         responses={200: AntecedentePacienteSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -287,7 +316,9 @@ class AntecedentePacienteDetailView(APIView):
             return Response(AntecedentePacienteSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente antecedente", request_body=AntecedentePacienteUpdateSerializer, responses={200: AntecedentePacienteSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente antecedente",
+                         request_body=AntecedentePacienteUpdateSerializer,
+                         responses={200: AntecedentePacienteSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
