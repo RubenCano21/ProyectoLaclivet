@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import AppSidebar from '@/components/AppSidebar.vue'
+import { usePropietariosStore, type Propietario } from '@/stores/propietarios'
+import AppSidebar from '@/components/layout/Sidebar.vue'
 import {
   SidebarInset, SidebarProvider, SidebarTrigger,
 } from '@/components/ui/sidebar'
@@ -15,10 +16,9 @@ import {
   Plus, Search, Pencil, Trash2, Loader2,
   AlertCircle, Users, X, Check, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
-import { useUsuariosStore, type Usuario } from '@/stores/usuarios'
-import RegisterUsuarioView from '@/views/auth/RegisterUsuarioView.vue'
+import RegisterPropietarioView from './PropietarioForm.vue'
 
-const store = useUsuariosStore()
+const store = usePropietariosStore()
 
 // ── Búsqueda ────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -26,24 +26,25 @@ const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return store.items
   return store.items.filter(p =>
-    p.first_name.toLowerCase().includes(q) ||
-    p.last_name.toLowerCase().includes(q) ||
-    p.email.toLowerCase().includes(q) ||
-    p.is_staff.toString().includes(q),
+    p.nombre.toLowerCase().includes(q) ||
+    p.apellido.toLowerCase().includes(q) ||
+    p.ci.toLowerCase().includes(q) ||
+    p.correo.toLowerCase().includes(q) ||
+    p.telefono.includes(q),
   )
 })
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 const modalOpen = ref(false)
-const editingUsuario = ref<Usuario | null>(null)
+const editingPropietario = ref<Propietario | null>(null)
 
 function openCreate() {
-  editingUsuario.value = null
+  editingPropietario.value = null
   modalOpen.value = true
 }
 
-function openEdit(p: Usuario) {
-  editingUsuario.value = p
+function openEdit(p: Propietario) {
+  editingPropietario.value = p
   modalOpen.value = true
 }
 
@@ -78,7 +79,7 @@ onMounted(() => store.fetchAll())
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Usuarios</BreadcrumbPage>
+              <BreadcrumbPage>Propietarios</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -95,7 +96,7 @@ onMounted(() => store.fetchAll())
               <Users class="h-5 w-5" />
             </div>
             <div>
-              <h1 class="text-2xl font-bold text-mineral-green-950 leading-tight">Gestion de Usuarios</h1>
+              <h1 class="text-2xl font-bold text-mineral-green-950 leading-tight">Propietarios</h1>
               <p class="text-sm text-muted-foreground">
                 {{ store.total }} registrado{{ store.total !== 1 ? 's' : '' }}
               </p>
@@ -103,7 +104,7 @@ onMounted(() => store.fetchAll())
           </div>
           <Button @click="openCreate" class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white gap-2">
             <Plus class="h-4 w-4" />
-            Nuevo usuario
+            Nuevo propietario
           </Button>
         </div>
 
@@ -120,12 +121,12 @@ onMounted(() => store.fetchAll())
         <!-- Estado de carga -->
         <div v-if="store.loading" class="flex items-center justify-center py-16 gap-3 text-muted-foreground">
           <Loader2 class="h-5 w-5 animate-spin" />
-          <span class="text-sm">Cargando usuarios…</span>
+          <span class="text-sm">Cargando propietarios…</span>
         </div>
 
         <!-- Error al cargar -->
-        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border 
-        border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
+        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200 
+        bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ store.error }}
         </div>
@@ -136,13 +137,12 @@ onMounted(() => store.fetchAll())
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b bg-mineral-green-50/60">
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-28">#</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-28">CI</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Nombre</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Apellido</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800">Correo</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-32">Último acceso</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Activo</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Administrador</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-32">Teléfono</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Dirección</th>
                   <th class="px-4 py-3 text-center font-semibold text-mineral-green-800 w-28">Acciones</th>
                 </tr>
               </thead>
@@ -150,36 +150,22 @@ onMounted(() => store.fetchAll())
                 <!-- Sin resultados -->
                 <tr v-if="filtered.length === 0">
                   <td colspan="7" class="px-4 py-12 text-center text-muted-foreground">
-                    {{ search ? 'Sin resultados para tu búsqueda.' : 'No hay usuarios registrados.' }}
+                    {{ search ? 'Sin resultados para tu búsqueda.' : 'No hay propietarios registrados.' }}
                   </td>
                 </tr>
 
                 <tr
-                  v-for="(p, index) in filtered"
+                  v-for="p in filtered"
                   :key="p.id"
                   class="border-b last:border-0 hover:bg-mineral-green-50/40 transition-colors"
                 >
-                  <td class="px-4 py-3 font-medium text-mineral-green-950">{{ index + 1 }}</td>
-                  <td class="px-4 py-3 text-mineral-green-800">{{ p.first_name }}</td>
-                  <td class="px-4 py-3 text-mineral-green-800">{{ p.last_name }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ p.email }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ new Date(p.fecha_creacion).toLocaleDateString() }}</td>
-                    <td class="px-4 py-3">
-                        <span
-                        :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                         p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
-                        >
-                        {{ p.is_active ? 'Sí' : 'No' }}
-                        </span>
-                    </td>
-                  <td class="px-4 py-3">
-                    <span
-                      :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', 
-                      p.is_staff ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
-                    >
-                      {{ p.is_staff ? 'Sí' : 'No' }}
-                    </span>
-                  </td>
+                  <td class="px-4 py-3 font-mono text-xs text-mineral-green-700">{{ p.ci }}</td>
+                  <td class="px-4 py-3 font-medium text-mineral-green-950">{{ p.nombre }}</td>
+                  <td class="px-4 py-3 text-mineral-green-800">{{ p.apellido }}</td>
+                  <td class="px-4 py-3 text-mineral-green-700">{{ p.correo }}</td>
+                  <td class="px-4 py-3 text-mineral-green-700">{{ p.telefono }}</td>
+                  <td class="px-4 py-3 text-mineral-green-600 max-w-40 truncate" 
+                    :title="p.direccion">{{ p.direccion }}</td>
                   <td class="px-4 py-3">
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
@@ -253,10 +239,10 @@ onMounted(() => store.fetchAll())
     </SidebarInset>
   </SidebarProvider>
 
-  <!-- Modal registrar usuario -->
-  <RegisterUsuarioView
+  <!-- Modal crear / editar -->
+  <RegisterPropietarioView
     v-model:open="modalOpen"
-    @saved="store.fetchAll(store.paginaActual)"
+    :propietario="editingPropietario"
   />
 </template>
 

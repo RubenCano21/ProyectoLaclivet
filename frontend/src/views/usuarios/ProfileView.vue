@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, watch } from "vue";
-import AppSidebar from "@/components/AppSidebar.vue";
+import AppSidebar from "@/components/layout/Sidebar.vue";
 import {
   SidebarInset,
   SidebarProvider,

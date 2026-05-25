@@ -1,4 +1,4 @@
-import api from '@/lib/api'
+import api from '@/services/apiClient'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 

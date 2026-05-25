@@ -9,9 +9,9 @@ import {
   Users,
   SoapDispenserDroplet,
 } from "lucide-vue-next"
-import NavMain from '@/components/NavMain.vue'
-import NavUser from '@/components/NavUser.vue'
-import TeamSwitcher from '@/components/TeamSwitcher.vue'
+import NavMain from './NavMain.vue'
+import NavUser from './NavUser.vue'
+import TeamSwitcher from './TeamSwitcher.vue'
 
 const authStore = useAuthStore()
 const currentUser = computed(() => ({
@@ -74,10 +74,21 @@ const data = {
       ]
     },
     {
-      title: "Propietarios",
-      url: "/propietarios",
+      title: "Gestion Pacientes",
+      url: "",
       icon: Users,
-      items: [],
+      items: [
+        {
+          title: "Pacientes",
+          url: "/pacientes",
+          icon: Users,
+        },
+        {
+          title: "Visitas",
+          url: "/visitas",
+          icon: Users,
+        },
+      ],
     },
   ],
   projects: [],

@@ -1,4 +1,4 @@
-import api from "@/lib/api";
+import api from "@/services/apiClient";
 import type { AxiosError } from "axios";
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
