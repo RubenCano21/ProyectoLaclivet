@@ -38,8 +38,8 @@ class SolicitudExamen(models.Model):
         Cobro, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='solicitud'
     )
-    historial_clinico = models.ForeignKey(
-        'paciente.HistorialClinico', on_delete=models.SET_NULL,
+    paciente = models.ForeignKey(
+        'paciente.Paciente', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='solicitudes'
     )
     medico_veterinario = models.ForeignKey(

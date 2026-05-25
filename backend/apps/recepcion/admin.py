@@ -10,7 +10,7 @@ class CobroAdmin(admin.ModelAdmin):
 
 @admin.register(SolicitudExamen)
 class SolicitudExamenAdmin(admin.ModelAdmin):
-    list_display = ['id', 'codigo', 'estado', 'fecha_solicitud', 'medico_veterinario']
+    list_display = ['id', 'codigo', 'estado', 'fecha_solicitud', 'paciente', 'medico_veterinario']
     search_fields = ['codigo']
     list_filter = ['estado']
 
