@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Especie, Raza, HistorialClinico
+from .models import Especie, Raza, HistorialClinico, Paciente
 
 
 # ── Especie ──────────────────────────────────────────────
@@ -86,3 +86,45 @@ class HistorialClinicoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = HistorialClinico
         fields = ['antecedentes', 'observaciones', 'usuario']
+
+
+# ── Paciente ──────────────────────────────────────────────
+class PacienteSerializer(serializers.ModelSerializer):
+    raza_nombre = serializers.CharField(source='raza.nombre', read_only=True)
+    especie_nombre = serializers.CharField(source='raza.especie.nombre', read_only=True)
+    propietario_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Paciente
+        fields = [
+            'id', 'nombre', 'sexo', 'tamanio', 'color',
+            'historial_clinico', 'propietario', 'propietario_nombre',
+            'raza', 'raza_nombre', 'especie_nombre',
+        ]
+
+    def get_propietario_nombre(self, obj):
+        if obj.propietario:
+            return f"{obj.propietario.nombre} {obj.propietario.apellido}"
+        return None
+
+
+class PacienteCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Paciente
+        fields = ['nombre', 'sexo', 'tamanio', 'color', 'historial_clinico', 'propietario', 'raza']
+        extra_kwargs = {
+            'nombre': {'required': True},
+            'historial_clinico': {'required': True},
+        }
+
+    def validate_historial_clinico(self, value):
+        if Paciente.objects.filter(historial_clinico=value).exists():
+            raise serializers.ValidationError("Ya existe un paciente con este historial clínico.")
+        return value
+
+
+class PacienteUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Paciente
+        fields = ['nombre', 'sexo', 'tamanio', 'color', 'propietario', 'raza']
+

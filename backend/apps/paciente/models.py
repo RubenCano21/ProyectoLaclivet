@@ -48,3 +48,40 @@ class HistorialClinico(models.Model):
 
     def __str__(self):
         return f"Historial #{self.pk} - {self.fecha_creacion.strftime('%d/%m/%Y')}"
+
+
+class Paciente(models.Model):
+    SEXO_CHOICES = [
+        ('macho', 'Macho'),
+        ('hembra', 'Hembra'),
+        ('desconocido', 'Desconocido'),
+    ]
+    TAMANIO_CHOICES = [
+        ('pequeño', 'Pequeño'),
+        ('mediano', 'Mediano'),
+        ('grande', 'Grande'),
+    ]
+
+    nombre = models.CharField(max_length=100)
+    sexo = models.CharField(max_length=20, choices=SEXO_CHOICES, blank=True, null=True)
+    tamanio = models.CharField(max_length=20, choices=TAMANIO_CHOICES, blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    historial_clinico = models.OneToOneField(
+        HistorialClinico, on_delete=models.CASCADE, related_name='paciente'
+    )
+    propietario = models.ForeignKey(
+        'propietario.Propietario', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='pacientes'
+    )
+    raza = models.ForeignKey(
+        Raza, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='pacientes'
+    )
+
+    class Meta:
+        verbose_name = 'Paciente'
+        verbose_name_plural = 'Pacientes'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.raza})"

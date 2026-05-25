@@ -3,32 +3,30 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from config.pagination import StandardPagination
-from .models import CatalogoExamen, Examen
+from .models import CatalogoExamen, Examen, Parametro, ValorReferencia
 from .serializers import (
-    CatalogoExamenSerializer,
-    CatalogoExamenCreateSerializer,
-    CatalogoExamenUpdateSerializer,
-    ExamenSerializer,
-    ExamenCreateSerializer,
-    ExamenUpdateSerializer,
+    CatalogoExamenSerializer, CatalogoExamenCreateSerializer, CatalogoExamenUpdateSerializer,
+    ExamenSerializer, ExamenCreateSerializer, ExamenUpdateSerializer,
+    ParametroSerializer, ParametroCreateSerializer, ParametroUpdateSerializer,
+    ValorReferenciaSerializer, ValorReferenciaCreateSerializer, ValorReferenciaUpdateSerializer,
 )
 
 
+# ── CatalogoExamen ────────────────────────────────────────
 class CatalogoExamenListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        catalogos = CatalogoExamen.objects.all()
+        qs = CatalogoExamen.objects.all()
         paginator = StandardPagination()
-        pagina = paginator.paginate_queryset(catalogos, request)
+        pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(CatalogoExamenSerializer(pagina, many=True).data)
 
     def post(self, request):
-        serializer = CatalogoExamenCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            catalogo = serializer.save()
-            return Response(CatalogoExamenSerializer(catalogo).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = CatalogoExamenCreateSerializer(data=request.data)
+        if s.is_valid():
+            return Response(CatalogoExamenSerializer(s.save()).data, status=status.HTTP_201_CREATED)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CatalogoExamenDetailView(APIView):
@@ -50,19 +48,19 @@ class CatalogoExamenDetailView(APIView):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Catálogo no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = CatalogoExamenUpdateSerializer(obj, data=request.data)
-        if serializer.is_valid():
-            return Response(CatalogoExamenSerializer(serializer.save()).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = CatalogoExamenUpdateSerializer(obj, data=request.data)
+        if s.is_valid():
+            return Response(CatalogoExamenSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Catálogo no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = CatalogoExamenUpdateSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            return Response(CatalogoExamenSerializer(serializer.save()).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = CatalogoExamenUpdateSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            return Response(CatalogoExamenSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         obj = self.get_object(pk)
@@ -77,17 +75,16 @@ class ExamenListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        examenes = Examen.objects.select_related('catalogo').all()
+        qs = Examen.objects.select_related('catalogo').all()
         paginator = StandardPagination()
-        pagina = paginator.paginate_queryset(examenes, request)
+        pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ExamenSerializer(pagina, many=True).data)
 
     def post(self, request):
-        serializer = ExamenCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            examen = serializer.save()
-            return Response(ExamenSerializer(examen).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = ExamenCreateSerializer(data=request.data)
+        if s.is_valid():
+            return Response(ExamenSerializer(s.save()).data, status=status.HTTP_201_CREATED)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExamenDetailView(APIView):
@@ -109,19 +106,19 @@ class ExamenDetailView(APIView):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Examen no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ExamenUpdateSerializer(obj, data=request.data)
-        if serializer.is_valid():
-            return Response(ExamenSerializer(serializer.save()).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = ExamenUpdateSerializer(obj, data=request.data)
+        if s.is_valid():
+            return Response(ExamenSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Examen no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ExamenUpdateSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            return Response(ExamenSerializer(serializer.save()).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        s = ExamenUpdateSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            return Response(ExamenSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         obj = self.get_object(pk)
@@ -129,3 +126,119 @@ class ExamenDetailView(APIView):
             return Response({'error': 'Examen no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         obj.delete()
         return Response({'mensaje': 'Examen eliminado exitosamente'}, status=status.HTTP_200_OK)
+
+
+# ── Parametro ─────────────────────────────────────────────
+class ParametroListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = Parametro.objects.select_related('examen').all()
+        paginator = StandardPagination()
+        pagina = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(ParametroSerializer(pagina, many=True).data)
+
+    def post(self, request):
+        s = ParametroCreateSerializer(data=request.data)
+        if s.is_valid():
+            return Response(ParametroSerializer(s.save()).data, status=status.HTTP_201_CREATED)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ParametroDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Parametro.objects.select_related('examen').get(pk=pk)
+        except Parametro.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Parámetro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(ParametroSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Parámetro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = ParametroUpdateSerializer(obj, data=request.data)
+        if s.is_valid():
+            return Response(ParametroSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Parámetro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = ParametroUpdateSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            return Response(ParametroSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Parámetro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return Response({'mensaje': 'Parámetro eliminado exitosamente'}, status=status.HTTP_200_OK)
+
+
+# ── ValorReferencia ───────────────────────────────────────
+class ValorReferenciaListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = ValorReferencia.objects.select_related('parametro').all()
+        paginator = StandardPagination()
+        pagina = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(ValorReferenciaSerializer(pagina, many=True).data)
+
+    def post(self, request):
+        s = ValorReferenciaCreateSerializer(data=request.data)
+        if s.is_valid():
+            return Response(ValorReferenciaSerializer(s.save()).data, status=status.HTTP_201_CREATED)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ValorReferenciaDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return ValorReferencia.objects.select_related('parametro').get(pk=pk)
+        except ValorReferencia.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Valor de referencia no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(ValorReferenciaSerializer(obj).data)
+
+    def put(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Valor de referencia no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = ValorReferenciaUpdateSerializer(obj, data=request.data)
+        if s.is_valid():
+            return Response(ValorReferenciaSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Valor de referencia no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = ValorReferenciaUpdateSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            return Response(ValorReferenciaSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Valor de referencia no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return Response({'mensaje': 'Valor de referencia eliminado exitosamente'}, status=status.HTTP_200_OK)

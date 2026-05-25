@@ -3,6 +3,7 @@ from .views import (
     EspecieListCreateView, EspecieDetailView,
     RazaListCreateView, RazaDetailView,
     HistorialClinicoListCreateView, HistorialClinicoDetailView,
+    PacienteListCreateView, PacienteDetailView,
 )
 
 urlpatterns = [
@@ -12,4 +13,6 @@ urlpatterns = [
     path('razas/<int:pk>/', RazaDetailView.as_view(), name='raza-detail'),
     path('historiales/', HistorialClinicoListCreateView.as_view(), name='historial-list-create'),
     path('historiales/<int:pk>/', HistorialClinicoDetailView.as_view(), name='historial-detail'),
+    path('pacientes/', PacienteListCreateView.as_view(), name='paciente-list-create'),
+    path('pacientes/<int:pk>/', PacienteDetailView.as_view(), name='paciente-detail'),
 ]
