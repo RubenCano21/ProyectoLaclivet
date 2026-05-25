@@ -1,6 +1,8 @@
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from config.pagination import StandardPagination
 from .models import Especie, Raza, HistorialClinico, Paciente
@@ -11,21 +13,20 @@ from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, PacienteUpdateSerializer,
 )
 
-
-def _crud_view(Model, ReadSerializer, WriteSerializer, UpdateSerializer, not_found_msg):
-    """Helper para reducir boilerplate en vistas detalle"""
-    pass
+_del_response = openapi.Response('Eliminado exitosamente')
 
 
 # ── Especie ──────────────────────────────────────────────
 class EspecieListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_summary="Listar especies", responses={200: EspecieSerializer(many=True)})
     def get(self, request):
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(Especie.objects.all(), request)
         return paginator.get_paginated_response(EspecieSerializer(pagina, many=True).data)
 
+    @swagger_auto_schema(operation_summary="Crear especie", request_body=EspecieCreateSerializer, responses={201: EspecieSerializer})
     def post(self, request):
         s = EspecieCreateSerializer(data=request.data)
         if s.is_valid():
@@ -42,12 +43,14 @@ class EspecieDetailView(APIView):
         except Especie.DoesNotExist:
             return None
 
+    @swagger_auto_schema(operation_summary="Obtener especie", responses={200: EspecieSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Especie no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         return Response(EspecieSerializer(obj).data)
 
+    @swagger_auto_schema(operation_summary="Actualizar especie", request_body=EspecieUpdateSerializer, responses={200: EspecieSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -57,6 +60,7 @@ class EspecieDetailView(APIView):
             return Response(EspecieSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente especie", request_body=EspecieUpdateSerializer, responses={200: EspecieSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -66,6 +70,7 @@ class EspecieDetailView(APIView):
             return Response(EspecieSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Eliminar especie", responses={200: _del_response})
     def delete(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -78,11 +83,13 @@ class EspecieDetailView(APIView):
 class RazaListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_summary="Listar razas", responses={200: RazaSerializer(many=True)})
     def get(self, request):
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(Raza.objects.select_related('especie').all(), request)
         return paginator.get_paginated_response(RazaSerializer(pagina, many=True).data)
 
+    @swagger_auto_schema(operation_summary="Crear raza", request_body=RazaCreateSerializer, responses={201: RazaSerializer})
     def post(self, request):
         s = RazaCreateSerializer(data=request.data)
         if s.is_valid():
@@ -99,12 +106,14 @@ class RazaDetailView(APIView):
         except Raza.DoesNotExist:
             return None
 
+    @swagger_auto_schema(operation_summary="Obtener raza", responses={200: RazaSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Raza no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         return Response(RazaSerializer(obj).data)
 
+    @swagger_auto_schema(operation_summary="Actualizar raza", request_body=RazaUpdateSerializer, responses={200: RazaSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -114,6 +123,7 @@ class RazaDetailView(APIView):
             return Response(RazaSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente raza", request_body=RazaUpdateSerializer, responses={200: RazaSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -123,6 +133,7 @@ class RazaDetailView(APIView):
             return Response(RazaSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Eliminar raza", responses={200: _del_response})
     def delete(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -135,11 +146,13 @@ class RazaDetailView(APIView):
 class HistorialClinicoListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_summary="Listar historiales clínicos", responses={200: HistorialClinicoSerializer(many=True)})
     def get(self, request):
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(HistorialClinico.objects.all(), request)
         return paginator.get_paginated_response(HistorialClinicoSerializer(pagina, many=True).data)
 
+    @swagger_auto_schema(operation_summary="Crear historial clínico", request_body=HistorialClinicoCreateSerializer, responses={201: HistorialClinicoSerializer})
     def post(self, request):
         s = HistorialClinicoCreateSerializer(data=request.data)
         if s.is_valid():
@@ -156,12 +169,14 @@ class HistorialClinicoDetailView(APIView):
         except HistorialClinico.DoesNotExist:
             return None
 
+    @swagger_auto_schema(operation_summary="Obtener historial clínico", responses={200: HistorialClinicoSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Historial clínico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(HistorialClinicoSerializer(obj).data)
 
+    @swagger_auto_schema(operation_summary="Actualizar historial clínico", request_body=HistorialClinicoUpdateSerializer, responses={200: HistorialClinicoSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -171,6 +186,7 @@ class HistorialClinicoDetailView(APIView):
             return Response(HistorialClinicoSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente historial", request_body=HistorialClinicoUpdateSerializer, responses={200: HistorialClinicoSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -180,6 +196,7 @@ class HistorialClinicoDetailView(APIView):
             return Response(HistorialClinicoSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Eliminar historial clínico", responses={200: _del_response})
     def delete(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -192,17 +209,18 @@ class HistorialClinicoDetailView(APIView):
 class PacienteListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_summary="Listar pacientes", responses={200: PacienteSerializer(many=True)})
     def get(self, request):
         qs = Paciente.objects.select_related('raza__especie', 'propietario', 'historial_clinico').all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(PacienteSerializer(pagina, many=True).data)
 
+    @swagger_auto_schema(operation_summary="Crear paciente", request_body=PacienteCreateSerializer, responses={201: PacienteSerializer})
     def post(self, request):
         s = PacienteCreateSerializer(data=request.data)
         if s.is_valid():
-            paciente = s.save()
-            return Response(PacienteSerializer(paciente).data, status=status.HTTP_201_CREATED)
+            return Response(PacienteSerializer(s.save()).data, status=status.HTTP_201_CREATED)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -215,12 +233,14 @@ class PacienteDetailView(APIView):
         except Paciente.DoesNotExist:
             return None
 
+    @swagger_auto_schema(operation_summary="Obtener paciente", responses={200: PacienteSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(PacienteSerializer(obj).data)
 
+    @swagger_auto_schema(operation_summary="Actualizar paciente", request_body=PacienteUpdateSerializer, responses={200: PacienteSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -230,6 +250,7 @@ class PacienteDetailView(APIView):
             return Response(PacienteSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente paciente", request_body=PacienteUpdateSerializer, responses={200: PacienteSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -239,6 +260,7 @@ class PacienteDetailView(APIView):
             return Response(PacienteSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Eliminar paciente", responses={200: _del_response})
     def delete(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
