@@ -102,7 +102,8 @@ class AntecedentePacienteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AntecedentePaciente
-        fields = ['id', 'paciente', 'tipo', 'tipo_display', 'descripcion', 'fecha_registro', 'registrado_por', 'registrado_por_email']
+        fields = ['id', 'paciente', 'tipo', 'tipo_display', 'descripcion',
+                  'fecha_registro', 'registrado_por', 'registrado_por_email']
 
 
 class AntecedentePacienteCreateSerializer(serializers.ModelSerializer):
