@@ -8,6 +8,8 @@ import {
   LayoutDashboard,
   Users,
   SoapDispenserDroplet,
+  PawPrint,
+  ClipboardList,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -63,30 +65,30 @@ const data = {
     },
     {
       title: "Administracion",
-      url: "/auth",
+      url: "/",
       icon: Users,
       items: [
         {
           title: "Usuarios",
-          url: "/auth/usuarios",
+          url: "/usuarios",
           icon: Users,
         }
       ]
     },
     {
-      title: "Gestion Pacientes",
+      title: "Gestión Pacientes",
       url: "",
-      icon: Users,
+      icon: PawPrint,
       items: [
         {
-          title: "Pacientes",
-          url: "/pacientes",
+          title: "Propietarios",
+          url: "/propietarios",
           icon: Users,
         },
         {
-          title: "Visitas",
-          url: "/visitas",
-          icon: Users,
+          title: "Pacientes",
+          url: "/pacientes",
+          icon: ClipboardList,
         },
       ],
     },

@@ -7,6 +7,15 @@ const router = createRouter({
   routes,
 })
 
+// Strip trailing slashes (e.g. /propietarios/ → /propietarios)
+router.beforeEach((to, _from, next) => {
+  if (to.path !== '/' && to.path.endsWith('/')) {
+    next({ path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true })
+    return
+  }
+  next()
+})
+
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
