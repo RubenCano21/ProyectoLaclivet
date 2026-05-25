@@ -1,6 +1,8 @@
-from rest_framework import status, generics, permissions
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from config.pagination import StandardPagination
 from .models import Propietario
@@ -15,6 +17,10 @@ class PropietarioListCreateView(APIView):
     """Lista todos los propietarios o crea uno nuevo"""
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Listar propietarios",
+        responses={200: PropietarioSerializer(many=True)}
+    )
     def get(self, request):
         propietarios = Propietario.objects.all().order_by('apellido', 'nombre')
         paginator = StandardPagination()
@@ -22,6 +28,11 @@ class PropietarioListCreateView(APIView):
         serializer = PropietarioSerializer(pagina, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary="Crear propietario",
+        request_body=PropietarioCreateSerializer,
+        responses={201: PropietarioSerializer}
+    )
     def post(self, request):
         serializer = PropietarioCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -43,6 +54,7 @@ class PropietarioDetailView(APIView):
         except Propietario.DoesNotExist:
             return None
 
+    @swagger_auto_schema(operation_summary="Obtener propietario", responses={200: PropietarioSerializer})
     def get(self, request, pk):
         propietario = self.get_object(pk)
         if propietario is None:
@@ -53,6 +65,7 @@ class PropietarioDetailView(APIView):
         serializer = PropietarioSerializer(propietario)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(operation_summary="Actualizar propietario", request_body=PropietarioUpdateSerializer, responses={200: PropietarioSerializer})
     def put(self, request, pk):
         propietario = self.get_object(pk)
         if propietario is None:
@@ -66,6 +79,7 @@ class PropietarioDetailView(APIView):
             return Response(PropietarioSerializer(propietario).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente propietario", request_body=PropietarioUpdateSerializer, responses={200: PropietarioSerializer})
     def patch(self, request, pk):
         propietario = self.get_object(pk)
         if propietario is None:
@@ -79,6 +93,7 @@ class PropietarioDetailView(APIView):
             return Response(PropietarioSerializer(propietario).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(operation_summary="Eliminar propietario", responses={200: openapi.Response('Eliminado')})
     def delete(self, request, pk):
         propietario = self.get_object(pk)
         if propietario is None:
@@ -91,4 +106,3 @@ class PropietarioDetailView(APIView):
             {'mensaje': 'Propietario eliminado exitosamente'},
             status=status.HTTP_200_OK
         )
-
