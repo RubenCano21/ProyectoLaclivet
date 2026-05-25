@@ -1,51 +1,30 @@
-import { useAuthStore } from "@/stores/auth";
-import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from 'vue-router'
+import { routes } from './routes'
 
-// @ts-ignore
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: "/",
-      redirect: "/login",
-    },
-    {
-      path: "/login",
-      name: "login",
-      component: () => import("../views/LoginView.vue"),
-      meta: { public: true },
-    },
-    {
-      path: "/dashboard",
-      name: "dashboard",
-      component: () => import("../views/DashboardView.vue"),
-    },
-    {
-      path: "/auth/usuarios",
-      name: "usuarios",
-      component: () => import("../views/auth/UsuariosView.vue"),
-    },
-    {
-      path: "/perfil",
-      name: "perfil",
-      component: () => import("../views/auth/ProfileView.vue"),
-    },
-    {
-      path: "/propietarios",
-      name: "propietarios",
-      component: () => import("../views/propietarios/PropietarioView.vue"),
-    },
-  ],
-});
+  routes,
+})
 
 router.beforeEach((to) => {
-  const auth = useAuthStore();
-  if (!to.meta.public && !auth.isAuthenticated) {
-    return "/login";
-  }
-  if (to.name === "login" && auth.isAuthenticated) {
-    return { name: "dashboard" };
-  }
-});
+  const auth = useAuthStore()
 
-export default router;
+  // Redirect unauthenticated users to login
+  if (!to.meta.public && !auth.isAuthenticated) {
+    return '/login'
+  }
+
+  // Redirect already-authenticated users away from login
+  if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'dashboard' }
+  }
+
+  // Permission guard: if route declares a required permission, enforce it
+  const requiredPermiso = to.meta.permiso as string | undefined
+  if (requiredPermiso && !auth.user?.permisos?.some((p) => p.codigo === requiredPermiso)) {
+    return { name: 'dashboard' }
+  }
+})
+
+export default router

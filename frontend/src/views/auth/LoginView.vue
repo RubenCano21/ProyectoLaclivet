@@ -81,7 +81,7 @@ async function handleLogin() {
           <!-- Foto con anillos orbitantes -->
           <div class="relative w-52 h-52 animate-[heroIn_1s_ease_both]">
             <img
-              src="../assets/perrolab.jpeg"
+              src="@/assets/images/perrolab.jpeg"
               alt="Laboratorio clínico veterinario"
               class="w-full h-full rounded-full object-cover object-center
                      opacity-60 border-2 border-white/15
