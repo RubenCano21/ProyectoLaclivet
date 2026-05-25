@@ -52,6 +52,11 @@ export const protectedRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/pacientes/PacienteListView.vue'),
   },
   {
+    path: '/pacientes/especies-razas',
+    name: 'catalogo-especies-razas',
+    component: () => import('@/views/pacientes/EspecieRazaView.vue'),
+  },
+  {
     path: '/pacientes/:id',
     name: 'detalle-paciente',
     component: () => import('@/views/pacientes/PacienteDetailView.vue'),

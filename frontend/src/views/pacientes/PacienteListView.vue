@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { pacienteService, type Paciente } from '@/services/pacienteService'
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
@@ -17,6 +17,7 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route  = useRoute()
 
 // ── Estado ───────────────────────────────────────────────────────────────────
 const pacientes       = ref<Paciente[]>([])
@@ -69,7 +70,9 @@ async function loadPacientes(page = 1) {
   }
 }
 
-function goToPage(page: number) { loadPacientes(page) }
+function goToPage(page: number) {
+  router.replace({ query: { page: String(page) } })
+}
 
 async function handleDelete(id: number) {
   try {
@@ -81,7 +84,16 @@ async function handleDelete(id: number) {
   }
 }
 
-onMounted(() => loadPacientes())
+// Reacciona a cambios en ?page= (incluyendo el primer render y el botón Atrás del navegador)
+watch(
+  () => route.query.page,
+  (pageParam) => {
+    const page = Number(pageParam) || 1
+    loadPacientes(page)
+  },
+  { immediate: true },
+)
+
 </script>
 
 <template>

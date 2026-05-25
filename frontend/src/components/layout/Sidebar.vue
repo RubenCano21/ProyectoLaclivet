@@ -10,6 +10,7 @@ import {
   SoapDispenserDroplet,
   PawPrint,
   ClipboardList,
+  BookOpen,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -89,6 +90,11 @@ const data = {
           title: "Pacientes",
           url: "/pacientes",
           icon: ClipboardList,
+        },
+        {
+          title: "Especies & Razas",
+          url: "/pacientes/especies-razas",
+          icon: BookOpen,
         },
       ],
     },
