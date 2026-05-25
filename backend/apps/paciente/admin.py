@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Especie, Raza, HistorialClinico, Paciente
+from .models import Especie, Raza, Paciente, AntecedentePaciente
 
 
 @admin.register(Especie)
@@ -15,14 +15,15 @@ class RazaAdmin(admin.ModelAdmin):
     list_filter = ['especie']
 
 
-@admin.register(HistorialClinico)
-class HistorialClinicoAdmin(admin.ModelAdmin):
-    list_display = ['id', 'fecha_creacion', 'usuario']
-    list_filter = ['fecha_creacion']
-
-
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ['id', 'nombre', 'sexo', 'tamanio', 'color', 'raza', 'propietario']
+    list_display = ['id', 'nombre', 'sexo', 'tamanio', 'color', 'fecha_nacimiento', 'raza', 'propietario']
     search_fields = ['nombre']
     list_filter = ['sexo', 'tamanio', 'raza__especie']
+
+
+@admin.register(AntecedentePaciente)
+class AntecedentePacienteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'paciente', 'tipo', 'fecha_registro', 'registrado_por']
+    list_filter = ['tipo', 'fecha_registro']
+    search_fields = ['paciente__nombre', 'descripcion']

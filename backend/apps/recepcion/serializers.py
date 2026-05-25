@@ -44,7 +44,7 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
         model = SolicitudExamen
         fields = [
             'id', 'codigo', 'fecha_solicitud', 'observaciones', 'estado',
-            'cobro', 'historial_clinico', 'medico_veterinario',
+            'cobro', 'paciente', 'medico_veterinario',
             'medico_nombre', 'paciente_nombre',
         ]
 
@@ -54,15 +54,15 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
         return None
 
     def get_paciente_nombre(self, obj):
-        if obj.historial_clinico and hasattr(obj.historial_clinico, 'paciente'):
-            return obj.historial_clinico.paciente.nombre
+        if obj.paciente:
+            return obj.paciente.nombre
         return None
 
 
 class SolicitudExamenCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SolicitudExamen
-        fields = ['codigo', 'observaciones', 'estado', 'cobro', 'historial_clinico', 'medico_veterinario']
+        fields = ['codigo', 'observaciones', 'estado', 'cobro', 'paciente', 'medico_veterinario']
         extra_kwargs = {'codigo': {'required': True}}
 
     def validate_codigo(self, value):
@@ -74,7 +74,7 @@ class SolicitudExamenCreateSerializer(serializers.ModelSerializer):
 class SolicitudExamenUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SolicitudExamen
-        fields = ['observaciones', 'estado', 'cobro', 'historial_clinico', 'medico_veterinario']
+        fields = ['observaciones', 'estado', 'cobro', 'paciente', 'medico_veterinario']
 
 
 # ── DetalleSolicitud ──────────────────────────────────────

@@ -5,12 +5,13 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from config.pagination import StandardPagination
-from .models import Especie, Raza, HistorialClinico, Paciente
+from .models import Especie, Raza, Paciente, AntecedentePaciente
 from .serializers import (
     EspecieSerializer, EspecieCreateSerializer, EspecieUpdateSerializer,
     RazaSerializer, RazaCreateSerializer, RazaUpdateSerializer,
-    HistorialClinicoSerializer, HistorialClinicoCreateSerializer, HistorialClinicoUpdateSerializer,
     PacienteSerializer, PacienteCreateSerializer, PacienteUpdateSerializer,
+    AntecedentePacienteSerializer, AntecedentePacienteCreateSerializer, AntecedentePacienteUpdateSerializer,
+    HistorialSolicitudSerializer,
 )
 
 _del_response = openapi.Response('Eliminado exitosamente')
@@ -142,76 +143,13 @@ class RazaDetailView(APIView):
         return Response({'mensaje': 'Raza eliminada exitosamente'}, status=status.HTTP_200_OK)
 
 
-# ── HistorialClinico ──────────────────────────────────────
-class HistorialClinicoListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @swagger_auto_schema(operation_summary="Listar historiales clínicos", responses={200: HistorialClinicoSerializer(many=True)})
-    def get(self, request):
-        paginator = StandardPagination()
-        pagina = paginator.paginate_queryset(HistorialClinico.objects.all(), request)
-        return paginator.get_paginated_response(HistorialClinicoSerializer(pagina, many=True).data)
-
-    @swagger_auto_schema(operation_summary="Crear historial clínico", request_body=HistorialClinicoCreateSerializer, responses={201: HistorialClinicoSerializer})
-    def post(self, request):
-        s = HistorialClinicoCreateSerializer(data=request.data)
-        if s.is_valid():
-            return Response(HistorialClinicoSerializer(s.save()).data, status=status.HTTP_201_CREATED)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class HistorialClinicoDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self, pk):
-        try:
-            return HistorialClinico.objects.get(pk=pk)
-        except HistorialClinico.DoesNotExist:
-            return None
-
-    @swagger_auto_schema(operation_summary="Obtener historial clínico", responses={200: HistorialClinicoSerializer})
-    def get(self, request, pk):
-        obj = self.get_object(pk)
-        if obj is None:
-            return Response({'error': 'Historial clínico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(HistorialClinicoSerializer(obj).data)
-
-    @swagger_auto_schema(operation_summary="Actualizar historial clínico", request_body=HistorialClinicoUpdateSerializer, responses={200: HistorialClinicoSerializer})
-    def put(self, request, pk):
-        obj = self.get_object(pk)
-        if obj is None:
-            return Response({'error': 'Historial clínico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        s = HistorialClinicoUpdateSerializer(obj, data=request.data)
-        if s.is_valid():
-            return Response(HistorialClinicoSerializer(s.save()).data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente historial", request_body=HistorialClinicoUpdateSerializer, responses={200: HistorialClinicoSerializer})
-    def patch(self, request, pk):
-        obj = self.get_object(pk)
-        if obj is None:
-            return Response({'error': 'Historial clínico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        s = HistorialClinicoUpdateSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            return Response(HistorialClinicoSerializer(s.save()).data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(operation_summary="Eliminar historial clínico", responses={200: _del_response})
-    def delete(self, request, pk):
-        obj = self.get_object(pk)
-        if obj is None:
-            return Response({'error': 'Historial clínico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        obj.delete()
-        return Response({'mensaje': 'Historial clínico eliminado exitosamente'}, status=status.HTTP_200_OK)
-
-
 # ── Paciente ──────────────────────────────────────────────
 class PacienteListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar pacientes", responses={200: PacienteSerializer(many=True)})
     def get(self, request):
-        qs = Paciente.objects.select_related('raza__especie', 'propietario', 'historial_clinico').all()
+        qs = Paciente.objects.select_related('raza__especie', 'propietario').all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(PacienteSerializer(pagina, many=True).data)
@@ -229,7 +167,7 @@ class PacienteDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Paciente.objects.select_related('raza__especie', 'propietario', 'historial_clinico').get(pk=pk)
+            return Paciente.objects.select_related('raza__especie', 'propietario').get(pk=pk)
         except Paciente.DoesNotExist:
             return None
 
@@ -267,3 +205,102 @@ class PacienteDetailView(APIView):
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         obj.delete()
         return Response({'mensaje': 'Paciente eliminado exitosamente'}, status=status.HTTP_200_OK)
+
+
+# ── Historial Dinámico (CU16) ─────────────────────────────
+class PacienteHistorialView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="Consultar historial clínico-laboratorial del paciente (CU16)",
+        operation_description=(
+            "Retorna el historial dinámico: datos del paciente, antecedentes persistentes "
+            "y todas las solicitudes de examen vinculadas cronológicamente."
+        ),
+        responses={200: openapi.Response('Historial del paciente')}
+    )
+    def get(self, request, pk):
+        try:
+            paciente = Paciente.objects.select_related('raza__especie', 'propietario').get(pk=pk)
+        except Paciente.DoesNotExist:
+            return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Antecedentes persistentes
+        antecedentes = paciente.antecedentes.select_related('registrado_por').all()
+
+        # Historial dinámico: todas las solicitudes del paciente
+        from apps.recepcion.models import SolicitudExamen
+        solicitudes = SolicitudExamen.objects.filter(paciente=paciente).select_related(
+            'medico_veterinario', 'cobro'
+        ).prefetch_related('detalles__examen').order_by('-fecha_solicitud')
+
+        return Response({
+            'paciente': PacienteSerializer(paciente).data,
+            'antecedentes': AntecedentePacienteSerializer(antecedentes, many=True).data,
+            'total_visitas': solicitudes.count(),
+            'solicitudes': HistorialSolicitudSerializer(solicitudes, many=True).data,
+        })
+
+
+# ── AntecedentePaciente ───────────────────────────────────
+class AntecedentePacienteListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(operation_summary="Listar antecedentes de pacientes", responses={200: AntecedentePacienteSerializer(many=True)})
+    def get(self, request):
+        qs = AntecedentePaciente.objects.select_related('paciente', 'registrado_por').all()
+        paginator = StandardPagination()
+        pagina = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(AntecedentePacienteSerializer(pagina, many=True).data)
+
+    @swagger_auto_schema(operation_summary="Registrar antecedente de paciente", request_body=AntecedentePacienteCreateSerializer, responses={201: AntecedentePacienteSerializer})
+    def post(self, request):
+        s = AntecedentePacienteCreateSerializer(data=request.data)
+        if s.is_valid():
+            return Response(AntecedentePacienteSerializer(s.save()).data, status=status.HTTP_201_CREATED)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AntecedentePacienteDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return AntecedentePaciente.objects.select_related('paciente', 'registrado_por').get(pk=pk)
+        except AntecedentePaciente.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(operation_summary="Obtener antecedente", responses={200: AntecedentePacienteSerializer})
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AntecedentePacienteSerializer(obj).data)
+
+    @swagger_auto_schema(operation_summary="Actualizar antecedente", request_body=AntecedentePacienteUpdateSerializer, responses={200: AntecedentePacienteSerializer})
+    def put(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = AntecedentePacienteUpdateSerializer(obj, data=request.data)
+        if s.is_valid():
+            return Response(AntecedentePacienteSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente antecedente", request_body=AntecedentePacienteUpdateSerializer, responses={200: AntecedentePacienteSerializer})
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = AntecedentePacienteUpdateSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            return Response(AntecedentePacienteSerializer(s.save()).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(operation_summary="Eliminar antecedente", responses={200: _del_response})
+    def delete(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        obj.delete()
+        return Response({'mensaje': 'Antecedente eliminado exitosamente'}, status=status.HTTP_200_OK)

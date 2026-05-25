@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Especie, Raza, HistorialClinico, Paciente
+from .models import Especie, Raza, Paciente, AntecedentePaciente
 
 
 # ── Especie ──────────────────────────────────────────────
@@ -7,7 +7,6 @@ class EspecieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Especie
         fields = ['id', 'nombre']
-
 
 class EspecieCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,7 +18,6 @@ class EspecieCreateSerializer(serializers.ModelSerializer):
         if Especie.objects.filter(nombre__iexact=value).exists():
             raise serializers.ValidationError("Ya existe una especie con este nombre.")
         return value
-
 
 class EspecieUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,21 +38,16 @@ class RazaSerializer(serializers.ModelSerializer):
         model = Raza
         fields = ['id', 'nombre', 'descripcion', 'especie', 'especie_nombre']
 
-
 class RazaCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Raza
         fields = ['nombre', 'descripcion', 'especie']
-        extra_kwargs = {
-            'nombre': {'required': True},
-            'especie': {'required': True},
-        }
+        extra_kwargs = {'nombre': {'required': True}, 'especie': {'required': True}}
 
     def validate(self, attrs):
         if Raza.objects.filter(nombre__iexact=attrs['nombre'], especie=attrs['especie']).exists():
             raise serializers.ValidationError("Ya existe una raza con este nombre para esta especie.")
         return attrs
-
 
 class RazaUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -69,25 +62,6 @@ class RazaUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
 
-# ── HistorialClinico ──────────────────────────────────────
-class HistorialClinicoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HistorialClinico
-        fields = ['id', 'fecha_creacion', 'antecedentes', 'observaciones', 'usuario']
-
-
-class HistorialClinicoCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HistorialClinico
-        fields = ['antecedentes', 'observaciones', 'usuario']
-
-
-class HistorialClinicoUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HistorialClinico
-        fields = ['antecedentes', 'observaciones', 'usuario']
-
-
 # ── Paciente ──────────────────────────────────────────────
 class PacienteSerializer(serializers.ModelSerializer):
     raza_nombre = serializers.CharField(source='raza.nombre', read_only=True)
@@ -97,8 +71,8 @@ class PacienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paciente
         fields = [
-            'id', 'nombre', 'sexo', 'tamanio', 'color',
-            'historial_clinico', 'propietario', 'propietario_nombre',
+            'id', 'nombre', 'sexo', 'tamanio', 'color', 'fecha_nacimiento',
+            'propietario', 'propietario_nombre',
             'raza', 'raza_nombre', 'especie_nombre',
         ]
 
@@ -111,20 +85,63 @@ class PacienteSerializer(serializers.ModelSerializer):
 class PacienteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paciente
-        fields = ['nombre', 'sexo', 'tamanio', 'color', 'historial_clinico', 'propietario', 'raza']
-        extra_kwargs = {
-            'nombre': {'required': True},
-            'historial_clinico': {'required': True},
-        }
-
-    def validate_historial_clinico(self, value):
-        if Paciente.objects.filter(historial_clinico=value).exists():
-            raise serializers.ValidationError("Ya existe un paciente con este historial clínico.")
-        return value
+        fields = ['nombre', 'sexo', 'tamanio', 'color', 'fecha_nacimiento', 'propietario', 'raza']
+        extra_kwargs = {'nombre': {'required': True}}
 
 
 class PacienteUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paciente
-        fields = ['nombre', 'sexo', 'tamanio', 'color', 'propietario', 'raza']
+        fields = ['nombre', 'sexo', 'tamanio', 'color', 'fecha_nacimiento', 'propietario', 'raza']
 
+
+# ── AntecedentePaciente ───────────────────────────────────
+class AntecedentePacienteSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    registrado_por_email = serializers.CharField(source='registrado_por.email', read_only=True)
+
+    class Meta:
+        model = AntecedentePaciente
+        fields = ['id', 'paciente', 'tipo', 'tipo_display', 'descripcion', 'fecha_registro', 'registrado_por', 'registrado_por_email']
+
+
+class AntecedentePacienteCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedentePaciente
+        fields = ['paciente', 'tipo', 'descripcion', 'registrado_por']
+        extra_kwargs = {
+            'paciente': {'required': True},
+            'descripcion': {'required': True},
+        }
+
+
+class AntecedentePacienteUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedentePaciente
+        fields = ['tipo', 'descripcion']
+
+
+# ── Historial Dinámico ────────────────────────────────────
+class HistorialSolicitudSerializer(serializers.Serializer):
+    """Serializer de solo lectura para el historial dinámico del paciente"""
+    id = serializers.IntegerField()
+    codigo = serializers.CharField()
+    fecha_solicitud = serializers.DateTimeField()
+    estado = serializers.CharField()
+    observaciones = serializers.CharField()
+    medico_veterinario = serializers.SerializerMethodField()
+    examenes = serializers.SerializerMethodField()
+
+    def get_medico_veterinario(self, obj):
+        if obj.medico_veterinario:
+            return f"{obj.medico_veterinario.nombre} {obj.medico_veterinario.apellido}"
+        return None
+
+    def get_examenes(self, obj):
+        return [
+            {
+                'examen': d.examen.nombre_examen if d.examen else None,
+                'precio_aplicado': d.precio_aplicado,
+            }
+            for d in obj.detalles.select_related('examen').all()
+        ]
