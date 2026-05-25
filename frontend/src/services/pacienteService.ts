@@ -32,11 +32,15 @@ export type PropietarioForm = Omit<Propietario, 'id'>
 export interface Paciente {
   id: number
   nombre: string
-  especie: number
-  raza: number
   sexo: string
+  tamanio: string
+  color: string
   fecha_nacimiento: string | null
   propietario: number
+  propietario_nombre: string
+  raza: number
+  raza_nombre: string
+  especie_nombre: string
 }
 
 export type PacienteForm = Omit<Paciente, 'id'>
