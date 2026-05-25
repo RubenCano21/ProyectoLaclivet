@@ -16,11 +16,11 @@ urlpatterns = [
     path('razas/<int:pk>/', RazaDetailView.as_view(), name='raza-detail'),
 
     # Pacientes
-    path('pacientes/', PacienteListCreateView.as_view(), name='paciente-list-create'),
-    path('pacientes/<int:pk>/', PacienteDetailView.as_view(), name='paciente-detail'),
+    path('', PacienteListCreateView.as_view(), name='paciente-list-create'),
+    path('<int:pk>/', PacienteDetailView.as_view(), name='paciente-detail'),
 
     # Historial dinámico CU16
-    path('pacientes/<int:pk>/historial/', PacienteHistorialView.as_view(), name='paciente-historial'),
+    path('<int:pk>/historial/', PacienteHistorialView.as_view(), name='paciente-historial'),
 
     # Antecedentes
     path('antecedentes/', AntecedentePacienteListCreateView.as_view(), name='antecedente-list-create'),
