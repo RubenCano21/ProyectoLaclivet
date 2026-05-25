@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'apps.medico',
     'apps.paciente',
     'apps.recepcion',
+    'apps.bitacora',
+    'apps.muestra',
 
     # Terceros
     'drf_yasg',
