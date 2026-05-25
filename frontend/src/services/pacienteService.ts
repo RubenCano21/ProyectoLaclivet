@@ -12,10 +12,16 @@ export type EspecieForm = Omit<Especie, 'id'>
 export interface Raza {
   id: number
   nombre: string
+  descripcion?: string | null
   especie: number
+  especie_nombre?: string
 }
 
-export type RazaForm = Omit<Raza, 'id'>
+export type RazaForm = {
+  nombre: string
+  descripcion?: string | null
+  especie: number
+}
 
 export interface Propietario {
   id: number
@@ -48,17 +54,42 @@ export type PacienteForm = Omit<Paciente, 'id'>
 export interface Antecedente {
   id: number
   paciente: number
+  tipo: string
+  tipo_display: string
   descripcion: string
-  fecha: string
+  fecha_registro: string
+  registrado_por: number | null
+  registrado_por_email: string | null
 }
 
-export type AntecedenteForm = Omit<Antecedente, 'id'>
+export type AntecedenteForm = {
+  paciente: number
+  tipo: string
+  descripcion: string
+}
+
+export interface HistorialSolicitud {
+  id: number
+  codigo: string
+  fecha_solicitud: string
+  estado: string
+  observaciones: string | null
+  medico_veterinario: string | null
+  examenes: Array<{ examen: string | null; precio_aplicado: number }>
+}
+
+export interface HistorialResponse {
+  paciente: Paciente
+  antecedentes: Antecedente[]
+  total_visitas: number
+  solicitudes: HistorialSolicitud[]
+}
 
 // ─── Especies ─────────────────────────────────────────────────────────────────
 
 export const especieService = {
   getAll() {
-    return api.get<Especie[]>('/pacientes/especies/')
+    return api.get<Especie[]>('/pacientes/especies/', { params: { page_size: 100 } })
   },
   getById(id: number) {
     return api.get<Especie>(`/pacientes/especies/${id}/`)
@@ -81,7 +112,9 @@ export const especieService = {
 
 export const razaService = {
   getAll(especieId?: number) {
-    return api.get<Raza[]>('/pacientes/razas/', { params: especieId ? { especie: especieId } : undefined })
+    return api.get<Raza[]>('/pacientes/razas/', {
+      params: { page_size: 100, ...(especieId ? { especie: especieId } : {}) },
+    })
   },
   getById(id: number) {
     return api.get<Raza>(`/pacientes/razas/${id}/`)
