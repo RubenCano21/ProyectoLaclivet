@@ -11,6 +11,8 @@ import {
   PawPrint,
   ClipboardList,
   BookOpen,
+  FlaskConical,
+  FilePlus,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -95,6 +97,23 @@ const data = {
           title: "Especies & Razas",
           url: "/pacientes/especies-razas",
           icon: BookOpen,
+        },
+      ],
+    },
+    {
+      title: "Solicitudes",
+      url: "",
+      icon: FlaskConical,
+      items: [
+        {
+          title: "Catálogo de Exámenes",
+          url: "/solicitudes/catalogo",
+          icon: BookOpen,
+        },
+        {
+          title: "Nueva Solicitud",
+          url: "/solicitudes/nueva",
+          icon: FilePlus,
         },
       ],
     },
