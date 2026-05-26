@@ -84,7 +84,7 @@ class SolicitudExamenListCreateView(APIView):
 
     @swagger_auto_schema(operation_summary="Listar solicitudes de examen", responses={200: SolicitudExamenSerializer(many=True)})
     def get(self, request):
-        qs = SolicitudExamen.objects.select_related('cobro', 'historial_clinico', 'medico_veterinario').all()
+        qs = SolicitudExamen.objects.select_related('cobro', 'paciente', 'medico_veterinario').all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(SolicitudExamenSerializer(pagina, many=True).data)
@@ -102,7 +102,7 @@ class SolicitudExamenDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return SolicitudExamen.objects.select_related('cobro', 'historial_clinico', 'medico_veterinario').get(pk=pk)
+            return SolicitudExamen.objects.select_related('cobro', 'paciente', 'medico_veterinario').get(pk=pk)
         except SolicitudExamen.DoesNotExist:
             return None
 
