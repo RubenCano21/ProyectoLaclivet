@@ -39,13 +39,14 @@ class CobroUpdateSerializer(serializers.ModelSerializer):
 class SolicitudExamenSerializer(serializers.ModelSerializer):
     medico_nombre = serializers.SerializerMethodField()
     paciente_nombre = serializers.SerializerMethodField()
+    propietario_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = SolicitudExamen
         fields = [
             'id', 'codigo', 'fecha_solicitud', 'observaciones', 'estado',
             'cobro', 'paciente', 'medico_veterinario',
-            'medico_nombre', 'paciente_nombre',
+            'medico_nombre', 'paciente_nombre', 'propietario_nombre',
         ]
 
     def get_medico_nombre(self, obj):
@@ -56,6 +57,12 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
     def get_paciente_nombre(self, obj):
         if obj.paciente:
             return obj.paciente.nombre
+        return None
+
+    def get_propietario_nombre(self, obj):
+        if obj.paciente and obj.paciente.propietario:
+            p = obj.paciente.propietario
+            return f"{p.nombre} {p.apellido}"
         return None
 
 

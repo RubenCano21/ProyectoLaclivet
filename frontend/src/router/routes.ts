@@ -28,12 +28,17 @@ export const protectedRoutes: RouteRecordRaw[] = [
     path: '/usuarios/auditoria',
     name: 'auditoria',
     component: () => import('@/views/usuarios/AuditLogView.vue'),
-    meta: { permiso: 'ver_auditoria' },
   },
   {
     path: '/perfil',
     name: 'perfil',
     component: () => import('@/views/usuarios/ProfileView.vue'),
+  },
+  // ── Médicos ────────────────────────────────────────
+  {
+    path: '/medicos',
+    name: 'medicos',
+    component: () => import('@/views/medicos/MedicoListView.vue'),
   },
   // ── Propietarios & Pacientes ──────────────────────────────────────
   {
