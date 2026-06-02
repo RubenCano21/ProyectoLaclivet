@@ -22,7 +22,7 @@ export const protectedRoutes: RouteRecordRaw[] = [
     path: '/usuarios',
     name: 'usuarios',
     component: () => import('@/views/usuarios/UserListView.vue'),
-    meta: { permiso: 'gestionar_usuarios' },
+    meta: { permiso: 'ver_usuarios' },
   },
   {
     path: '/usuarios/auditoria',

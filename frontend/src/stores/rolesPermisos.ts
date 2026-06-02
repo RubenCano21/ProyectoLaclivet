@@ -26,11 +26,11 @@ export const useRolesPermisosStore = defineStore('rolesPermisos', () => {
     loading.value = true
     try {
       const [rolesRes, permisosRes] = await Promise.all([
-        api.get('/usuarios/roles/'),
-        api.get('/usuarios/permisos/'),
+        api.get('/usuarios/roles/', { params: { page_size: 100 } }),
+        api.get('/usuarios/permisos/', { params: { page_size: 100 } }),
       ])
-      roles.value = rolesRes.data
-      permisos.value = permisosRes.data
+      roles.value = rolesRes.data?.resultados ?? rolesRes.data ?? []
+      permisos.value = permisosRes.data?.resultados ?? permisosRes.data ?? []
     } finally {
       loading.value = false
     }

@@ -67,13 +67,20 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'},
         label='Confirmar contraseña'
     )
+    rol_id = serializers.PrimaryKeyRelatedField(
+        queryset=Rol.objects.all(),
+        source='rol',
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
 
     class Meta:
         model = Usuario
         fields = [
-            'username', 'email', 'password', 'password2',
+            'email', 'password', 'password2',
             'first_name', 'last_name', 'telefono',
-            'direccion', 'fecha_nacimiento'
+            'direccion', 'fecha_nacimiento', 'rol_id'
         ]
         extra_kwargs = {
             'email': {'required': True},
@@ -95,16 +102,21 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Este email ya está registrado.")
         return value
 
-    def validate_username(self, value):
-        """Validar que el username no esté registrado"""
-        if Usuario.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Este nombre de usuario ya está registrado.")
-        return value
+    def _generar_username(self, email):
+        """Genera un username único a partir del email"""
+        base = (email or '').split('@')[0][:140] or 'user'
+        username = base
+        i = 1
+        while Usuario.objects.filter(username=username).exists():
+            i += 1
+            username = f"{base}{i}"[:150]
+        return username
 
     def create(self, validated_data):
         """Crear un nuevo usuario"""
         validated_data.pop('password2')
         password = validated_data.pop('password')
+        validated_data['username'] = self._generar_username(validated_data.get('email'))
 
         usuario = Usuario.objects.create(**validated_data)
         usuario.set_password(password)

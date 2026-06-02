@@ -140,9 +140,9 @@ onMounted(() => store.fetchAll())
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Nombre</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Apellido</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800">Correo</th>
+                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-36">Rol</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-32">Último acceso</th>
                   <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Activo</th>
-                  <th class="px-4 py-3 text-left font-semibold text-mineral-green-800 w-40">Administrador</th>
                   <th class="px-4 py-3 text-center font-semibold text-mineral-green-800 w-28">Acciones</th>
                 </tr>
               </thead>
@@ -163,6 +163,15 @@ onMounted(() => store.fetchAll())
                   <td class="px-4 py-3 text-mineral-green-800">{{ p.first_name }}</td>
                   <td class="px-4 py-3 text-mineral-green-800">{{ p.last_name }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ p.email }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      v-if="p.rol"
+                      class="inline-flex items-center rounded-full bg-mineral-green-100 px-2 py-0.5 text-xs font-medium text-mineral-green-800"
+                    >
+                      {{ p.rol.nombre }}
+                    </span>
+                    <span v-else class="text-xs text-muted-foreground italic">Sin rol</span>
+                  </td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ new Date(p.fecha_creacion).toLocaleDateString() }}</td>
                     <td class="px-4 py-3">
                         <span
@@ -172,14 +181,6 @@ onMounted(() => store.fetchAll())
                         {{ p.is_active ? 'Sí' : 'No' }}
                         </span>
                     </td>
-                  <td class="px-4 py-3">
-                    <span
-                      :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', 
-                      p.is_staff ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']"
-                    >
-                      {{ p.is_staff ? 'Sí' : 'No' }}
-                    </span>
-                  </td>
                   <td class="px-4 py-3">
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
@@ -253,9 +254,10 @@ onMounted(() => store.fetchAll())
     </SidebarInset>
   </SidebarProvider>
 
-  <!-- Modal registrar usuario -->
+  <!-- Modal registrar/editar usuario -->
   <RegisterUsuarioView
     v-model:open="modalOpen"
+    :usuario="editingUsuario"
     @saved="store.fetchAll(store.paginaActual)"
   />
 </template>

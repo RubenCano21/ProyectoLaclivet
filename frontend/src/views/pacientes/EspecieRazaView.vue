@@ -256,7 +256,7 @@ onMounted(loadAll)
             <PawPrint class="h-5 w-5" />
           </div>
           <div>
-            <h1 class="text-2xl font-bold leading-tight">Catálogo de Especies &amp; Razas</h1>
+            <h1 class="text-2xl font-bold leading-tight">Gestión de Especies &amp; Razas</h1>
             <p class="text-sm text-muted-foreground">
               Gestiona las especies y sus razas en un solo lugar.
             </p>
