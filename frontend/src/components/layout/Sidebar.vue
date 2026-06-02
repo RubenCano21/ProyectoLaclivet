@@ -13,6 +13,8 @@ import {
   BookOpen,
   FlaskConical,
   FilePlus,
+  Stethoscope,
+  ScrollText,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -75,6 +77,16 @@ const data = {
           title: "Usuarios",
           url: "/usuarios",
           icon: Users,
+        },
+        {
+          title: "Médicos",
+          url: "/medicos",
+          icon: Stethoscope,
+        },
+        {
+          title: "Bitácora",
+          url: "/usuarios/auditoria",
+          icon: ScrollText,
         }
       ]
     },

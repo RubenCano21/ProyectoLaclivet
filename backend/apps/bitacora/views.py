@@ -15,7 +15,7 @@ class BitacoraListCreateView(APIView):
 
     @swagger_auto_schema(operation_summary="Listar registros de bitácora", responses={200: BitacoraSerializer(many=True)})
     def get(self, request):
-        registros = Bitacora.objects.select_related('usuario').all()
+        registros = Bitacora.objects.select_related('usuario').order_by('-fecha', '-id')
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(registros, request)
         return paginator.get_paginated_response(BitacoraSerializer(pagina, many=True).data)

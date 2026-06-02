@@ -56,6 +56,7 @@ interface SolicitudReciente {
   codigo: string
   estado: string
   paciente_nombre: string | null
+  propietario_nombre: string | null
   fecha_solicitud: string
 }
 const recientes = ref<SolicitudReciente[]>([])
@@ -98,6 +99,7 @@ async function loadDashboard() {
       codigo:         s.codigo,
       estado:         s.estado,
       paciente_nombre: s.paciente_nombre,
+      propietario_nombre: s.propietario_nombre,
       fecha_solicitud: s.fecha_solicitud,
     }))
   } catch {
@@ -214,6 +216,7 @@ onMounted(loadDashboard)
               <tr>
                 <th class="text-left px-5 py-2 text-xs font-medium text-muted-foreground">Código</th>
                 <th class="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Paciente</th>
+                <th class="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Propietario</th>
                 <th class="text-left px-4 py-2 text-xs font-medium text-muted-foreground">Estado</th>
                 <th class="text-right px-5 py-2 text-xs font-medium text-muted-foreground">Fecha</th>
               </tr>
@@ -227,6 +230,7 @@ onMounted(loadDashboard)
               >
                 <td class="px-5 py-2.5 font-mono text-xs font-medium">{{ sol.codigo }}</td>
                 <td class="px-4 py-2.5 text-sm">{{ sol.paciente_nombre ?? '—' }}</td>
+                <td class="px-4 py-2.5 text-sm text-muted-foreground">{{ sol.propietario_nombre ?? '—' }}</td>
                 <td class="px-4 py-2.5">
                   <Badge
                     class="text-xs capitalize"
