@@ -96,7 +96,7 @@ onMounted(() => store.fetchAll())
               <Users class="h-5 w-5" />
             </div>
             <div>
-              <h1 class="text-2xl font-bold text-mineral-green-950 leading-tight">Propietarios</h1>
+              <h1 class="text-2xl font-bold text-mineral-green-950 leading-tight">Gestión de Propietarios</h1>
               <p class="text-sm text-muted-foreground">
                 {{ store.total }} registrado{{ store.total !== 1 ? 's' : '' }}
               </p>

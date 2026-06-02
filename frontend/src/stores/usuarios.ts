@@ -12,6 +12,7 @@ export interface UsuarioResumen {
   fecha_creacion: string
   is_active: boolean
   is_staff: boolean
+  rol: { id: number; nombre: string; descripcion: string } | null
 }
 
 export interface UsuarioDetalle extends UsuarioResumen {
@@ -24,7 +25,6 @@ export interface UsuarioDetalle extends UsuarioResumen {
 }
 
 export interface RegisterForm {
-  username: string
   email: string
   password: string
   password2: string
@@ -33,6 +33,7 @@ export interface RegisterForm {
   telefono?: string | null
   direccion?: string | null
   fecha_nacimiento?: string | null
+  rol_id?: number | null
 }
 
 /** Campos que el admin puede editar en PUT/PATCH /usuarios/<pk>/ */
@@ -102,11 +103,11 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  /** POST /auth/registro/ — registrar un nuevo usuario */
+  /** POST /usuarios/auth/registro/ — registrar un nuevo usuario */
   async function register(params: RegisterForm): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
     try {
-      const { data } = await api.post('/auth/registro/', params)
-      return { ok: true, data }
+      const { data } = await api.post('/usuarios/auth/registro/', params)
+      return { ok: true, data: data.usuario ?? data }
     } catch (err) {
       return { ok: false, error: extractError(err) }
     }

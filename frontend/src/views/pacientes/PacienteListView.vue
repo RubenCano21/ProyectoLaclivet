@@ -128,7 +128,7 @@ watch(
               <PawPrint class="h-5 w-5" />
             </div>
             <div>
-              <h1 class="text-2xl font-bold leading-tight">Pacientes</h1>
+              <h1 class="text-2xl font-bold leading-tight">Gestión de Pacientes</h1>
               <p class="text-sm text-muted-foreground">
                 {{ total }} registrado{{ total !== 1 ? 's' : '' }}
               </p>

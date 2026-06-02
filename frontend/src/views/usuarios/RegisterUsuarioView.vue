@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useUsuariosStore, type RegisterForm } from '@/stores/usuarios'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useUsuariosStore, type RegisterForm, type AdminActualizarForm, type Usuario } from '@/stores/usuarios'
+import { useRolesPermisosStore } from '@/stores/rolesPermisos'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { AlertCircle, Loader2, X } from 'lucide-vue-next'
 
 const props = defineProps<{
   open: boolean
+  usuario?: Usuario | null
 }>()
 
 const emit = defineEmits<{
@@ -15,11 +20,13 @@ const emit = defineEmits<{
 }>()
 
 const store = useUsuariosStore()
+const rolesStore = useRolesPermisosStore()
 const formError = ref<string | null>(null)
 const saving = ref(false)
 
+const isEdit = computed(() => !!props.usuario)
+
 interface LocalForm {
-  username: string
   email: string
   password: string
   password2: string
@@ -28,10 +35,12 @@ interface LocalForm {
   telefono: string
   direccion: string
   fecha_nacimiento: string
+  rol_id: string
+  is_active: boolean
+  is_staff: boolean
 }
 
 const emptyForm = (): LocalForm => ({
-  username: '',
   email: '',
   password: '',
   password2: '',
@@ -40,9 +49,39 @@ const emptyForm = (): LocalForm => ({
   telefono: '',
   direccion: '',
   fecha_nacimiento: '',
+  rol_id: '',
+  is_active: true,
+  is_staff: false,
 })
 
 const form = ref<LocalForm>(emptyForm())
+const roles = computed(() => rolesStore.roles)
+
+onMounted(() => {
+  if (rolesStore.roles.length === 0) rolesStore.fetchAll()
+})
+
+async function loadForEdit(id: number) {
+  const res = await store.fetchById(id)
+  if (!res.ok || !res.data) {
+    formError.value = res.error ?? 'No se pudo cargar el usuario'
+    return
+  }
+  const u = res.data
+  form.value = {
+    email: u.email ?? '',
+    password: '',
+    password2: '',
+    first_name: u.first_name ?? '',
+    last_name: u.last_name ?? '',
+    telefono: u.telefono ?? '',
+    direccion: u.direccion ?? '',
+    fecha_nacimiento: u.fecha_nacimiento ?? '',
+    rol_id: u.rol?.id ? String(u.rol.id) : '',
+    is_active: u.is_active,
+    is_staff: u.is_staff,
+  }
+}
 
 watch(
   () => props.open,
@@ -50,6 +89,7 @@ watch(
     if (!val) return
     formError.value = null
     form.value = emptyForm()
+    if (props.usuario) loadForEdit(props.usuario.id)
   },
 )
 
@@ -60,14 +100,37 @@ function close() {
 async function handleSubmit() {
   formError.value = null
 
-  if (form.value.password !== form.value.password2) {
+  if (!isEdit.value && form.value.password !== form.value.password2) {
     formError.value = 'Las contraseñas no coinciden'
     return
   }
 
   saving.value = true
+
+  if (isEdit.value && props.usuario) {
+    const payload: AdminActualizarForm = {
+      email: form.value.email,
+      first_name: form.value.first_name,
+      last_name: form.value.last_name || undefined,
+      telefono: form.value.telefono || null,
+      direccion: form.value.direccion || null,
+      fecha_nacimiento: form.value.fecha_nacimiento || null,
+      rol_id: form.value.rol_id ? Number(form.value.rol_id) : null,
+      is_active: form.value.is_active,
+      is_staff: form.value.is_staff,
+    }
+    const result = await store.update(props.usuario.id, payload)
+    saving.value = false
+    if (result.ok) {
+      emit('saved')
+      close()
+    } else {
+      formError.value = result.error ?? 'Error al actualizar usuario'
+    }
+    return
+  }
+
   const payload: RegisterForm = {
-    username: form.value.username,
     email: form.value.email,
     password: form.value.password,
     password2: form.value.password2,
@@ -76,6 +139,7 @@ async function handleSubmit() {
     telefono: form.value.telefono || null,
     direccion: form.value.direccion || null,
     fecha_nacimiento: form.value.fecha_nacimiento || null,
+    rol_id: form.value.rol_id ? Number(form.value.rol_id) : null,
   }
   const result = await store.register(payload)
   saving.value = false
@@ -106,9 +170,13 @@ async function handleSubmit() {
           <!-- Header -->
           <div class="flex items-start justify-between border-b px-6 py-5">
             <div>
-              <h2 class="text-lg font-bold text-mineral-green-950">Nuevo usuario</h2>
+              <h2 class="text-lg font-bold text-mineral-green-950">
+                {{ isEdit ? 'Editar usuario' : 'Nuevo usuario' }}
+              </h2>
               <p class="mt-0.5 text-sm text-muted-foreground">
-                Completa el formulario para registrar un nuevo usuario.
+                {{ isEdit
+                  ? 'Modifica los datos del usuario.'
+                  : 'Completa el formulario para registrar un nuevo usuario.' }}
               </p>
             </div>
             <button
@@ -122,14 +190,6 @@ async function handleSubmit() {
 
           <!-- Form -->
           <form @submit.prevent="handleSubmit" class="px-6 py-5 space-y-4">
-
-            <!-- Username -->
-            <div class="space-y-1.5">
-              <label class="block text-sm font-medium text-mineral-green-800">
-                Nombre de usuario <span class="text-red-500">*</span>
-              </label>
-              <Input v-model="form.username" placeholder="Ej: juan123" required maxlength="150" />
-            </div>
 
             <!-- Nombre + Apellido -->
             <div class="grid grid-cols-2 gap-4">
@@ -154,7 +214,7 @@ async function handleSubmit() {
             </div>
 
             <!-- Contraseña -->
-            <div class="grid grid-cols-2 gap-4">
+            <div v-if="!isEdit" class="grid grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <label class="block text-sm font-medium text-mineral-green-800">
                   Contraseña <span class="text-red-500">*</span>
@@ -187,6 +247,33 @@ async function handleSubmit() {
               <Input v-model="form.fecha_nacimiento" type="date" />
             </div>
 
+            <!-- Rol -->
+            <div class="space-y-1.5">
+              <label class="block text-sm font-medium text-mineral-green-800">Rol</label>
+              <Select v-model="form.rol_id">
+                <SelectTrigger class="w-full">
+                  <SelectValue placeholder="Selecciona un rol (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="r in roles" :key="r.id" :value="String(r.id)">
+                    {{ r.nombre }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- Estados (solo edición) -->
+            <div v-if="isEdit" class="grid grid-cols-2 gap-4">
+              <label class="flex items-center gap-2 text-sm font-medium text-mineral-green-800">
+                <input type="checkbox" v-model="form.is_active" class="h-4 w-4 rounded border-mineral-green-300" />
+                Activo
+              </label>
+              <label class="flex items-center gap-2 text-sm font-medium text-mineral-green-800">
+                <input type="checkbox" v-model="form.is_staff" class="h-4 w-4 rounded border-mineral-green-300" />
+                Administrador
+              </label>
+            </div>
+
             <!-- Error del servidor -->
             <Transition name="fade">
               <div
@@ -208,7 +295,9 @@ async function handleSubmit() {
                 class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white min-w-32"
               >
                 <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
-                {{ saving ? 'Registrando…' : 'Registrar usuario' }}
+                {{ saving
+                  ? (isEdit ? 'Guardando…' : 'Registrando…')
+                  : (isEdit ? 'Guardar cambios' : 'Registrar usuario') }}
               </Button>
             </div>
           </form>
