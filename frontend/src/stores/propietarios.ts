@@ -1,17 +1,9 @@
+import type { Propietario } from '@/models/propietario'
 import api from '@/services/apiClient'
 import type { AxiosError } from 'axios'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export interface Propietario {
-  id: number
-  ci: string
-  nombre: string
-  apellido: string
-  correo: string
-  telefono: string
-  direccion: string
-}
 
 export type PropietarioForm = Omit<Propietario, 'id'>
 
@@ -41,20 +33,20 @@ export const usePropietariosStore = defineStore('propietarios', () => {
   const paginaActual = ref(1)
 
   async function fetchAll(page = 1, search = '') {
-  loading.value = true
-  error.value = null
-  try {
-    const { data } = await api.get('/propietarios/', { params: { page, search } })
-    items.value = data.resultados
-    total.value = data.total
-    paginas.value = data.paginas
-    paginaActual.value = data.pagina_actual
-  } catch (err) {
-    error.value = extractError(err)
-  } finally {
-    loading.value = false
+    loading.value = true
+    error.value = null
+    try {
+      const { data } = await api.get('/propietarios/', { params: { page, search } })
+      items.value = data.resultados
+      total.value = data.total
+      paginas.value = data.paginas
+      paginaActual.value = data.pagina_actual
+    } catch (err) {
+      error.value = extractError(err)
+    } finally {
+      loading.value = false
+    }
   }
-}
 
   async function create(form: PropietarioForm): Promise<ApiResult> {
     saving.value = true

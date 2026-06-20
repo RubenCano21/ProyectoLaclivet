@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Muestra, muestraService } from '@/services/muestraService';
+import { muestraService } from '@/services/muestraService';
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -17,6 +17,7 @@ import {
   Plus, Search, Pencil, Trash2, Loader2,
   AlertCircle, PawPrint, Check, X, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
+import type { Muestra } from '@/models/muestra';
 
 const router = useRouter();
 const route = useRoute();
@@ -33,7 +34,7 @@ const search = ref('')
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return muestras.value
-  return muestras.value.filter( m =>
+  return muestras.value.filter( (m: any) =>
       m.codigo.toLowerCase().includes(q) ||
       m.estado.toLowerCase().includes(q) ||
       m.fecha_recepcion.toLowerCase().includes(q) ||

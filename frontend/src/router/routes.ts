@@ -111,4 +111,11 @@ export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
   ...publicRoutes,
   ...protectedRoutes,
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFound.vue'),
+    meta: { public: true },
+  },
+  
 ]

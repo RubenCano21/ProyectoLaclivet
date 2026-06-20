@@ -1,21 +1,12 @@
+import type { Propietario } from '@/models/propietario'
 import api from './apiClient'
+import type { Especie } from '@/models/especie'
+import type { Raza } from '@/models/raza'
+import type { Paciente } from '@/models/paciente'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-export interface Especie {
-  id: number
-  nombre: string
-}
-
 export type EspecieForm = Omit<Especie, 'id'>
-
-export interface Raza {
-  id: number
-  nombre: string
-  descripcion?: string | null
-  especie: number
-  especie_nombre?: string
-}
 
 export type RazaForm = {
   nombre: string
@@ -23,31 +14,9 @@ export type RazaForm = {
   especie: number
 }
 
-export interface Propietario {
-  id: number
-  ci: string
-  nombre: string
-  apellido: string
-  correo: string
-  telefono: string
-  direccion: string
-}
 
 export type PropietarioForm = Omit<Propietario, 'id'>
 
-export interface Paciente {
-  id: number
-  nombre: string
-  sexo: string
-  tamanio: string
-  color: string
-  fecha_nacimiento: string | null
-  propietario: number
-  propietario_nombre: string
-  raza: number
-  raza_nombre: string
-  especie_nombre: string
-}
 
 export type PacienteForm = Omit<Paciente, 'id'>
 
