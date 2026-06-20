@@ -36,4 +36,8 @@ export const muestraService = {
   getIncidencias(id: number) {
     return api.get(`/muestras/${id}/incidencias/`)
   },
+
+  delete(id: number) {
+    return api.delete(`/muestras/${id}`)
+  }
 }
