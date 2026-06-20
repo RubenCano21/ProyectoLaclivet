@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { pacienteService, type Paciente } from '@/services/pacienteService'
+import { pacienteService } from '@/services/pacienteService'
 import { medicoService, type MedicoVeterinario } from '@/services/medicoService'
 import { catalogoService, examenService, type CatalogoExamen, type Examen } from '@/services/catalogoService'
 import { cobroService, solicitudService, detalleService } from '@/services/solicitudService'
@@ -23,6 +23,7 @@ import {
   FilePlus, AlertCircle, Loader2, Trash2, Plus,
   FlaskConical, BookOpen, CreditCard, CheckCircle2, Search,
 } from 'lucide-vue-next'
+import type { Paciente } from '@/models/paciente'
 
 const router = useRouter()
 

@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status, generics, permissions, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -6,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import logout
+from django.contrib.auth import authenticate
 
 from config.pagination import StandardPagination
 from .models import Usuario, Rol, Permiso, RolPermiso
@@ -48,7 +50,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         email = attrs.get(self.username_field)
         password = attrs.get('password')
 
-        from django.contrib.auth import authenticate
+
         user = authenticate(
             request=self.context.get('request'),
             username=email,
@@ -70,13 +72,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Generar tokens
         refresh = self.get_token(user)
 
-        data = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
+        data = {'refresh': str(refresh), 'access': str(refresh.access_token), 'usuario': UsuarioSerializer(user).data}
 
         # Agregar información del usuario a la respuesta
-        data['usuario'] = UsuarioSerializer(user).data
 
         return data
 
@@ -222,12 +220,7 @@ class ListaUsuariosView(generics.ListAPIView):
 
 
 class DetalleUsuarioView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /usuarios/<pk>/  → detalle del usuario
-    PUT    /usuarios/<pk>/  → actualizar usuario (admin): nombre, email, teléfono, is_active, is_staff, rol
-    PATCH  /usuarios/<pk>/  → actualización parcial
-    DELETE /usuarios/<pk>/  → eliminar usuario
-    """
+
     queryset = Usuario.objects.all()
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
@@ -243,6 +236,22 @@ class DetalleUsuarioView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UsuarioSerializer(instance).data)
+
+    def perform_destroy(self, instance):
+        """ En lugar de eliminar fisicamente, marcamos como inactivo"""
+        instance.is_active = False
+        instance.save()
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Sobrescribimos el destroy para devolver un mensaje claro y
+        el código de estado 200 (OK) en lugar de 204 (No Content).
+        """
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'mensaje': 'Usuario desactivado exitosamente (eliminación lógica)'
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -298,10 +307,8 @@ class AsignarRolUsuarioView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def patch(self, request, pk):
-        try:
-            usuario = Usuario.objects.get(pk=pk)
-        except Usuario.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        usuario = get_object_or_404(Usuario, pk=pk)
 
         rol_id = request.data.get('rol_id')
         if rol_id is None:

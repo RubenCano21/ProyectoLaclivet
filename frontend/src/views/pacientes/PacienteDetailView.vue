@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   especieService, razaService, propietarioService,
   pacienteService, antecedenteService,
-  type Especie, type Raza, type Propietario,
   type HistorialResponse,
 } from '@/services/pacienteService'
 import AppSidebar from '@/components/layout/Sidebar.vue'
@@ -24,6 +23,9 @@ import {
   Loader2, PawPrint, AlertCircle, Save, ArrowLeft,
   Plus, Trash2, Check, X, ClipboardList, History, Stethoscope,
 } from 'lucide-vue-next'
+import type { Especie } from '@/models/especie'
+import type { Propietario } from '@/models/propietario'
+import type { Raza } from '@/models/raza'
 
 const route  = useRoute()
 const router = useRouter()

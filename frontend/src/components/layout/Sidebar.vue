@@ -4,7 +4,6 @@ import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 import {
-  AudioWaveform,
   LayoutDashboard,
   Users,
   SoapDispenserDroplet,
@@ -15,6 +14,8 @@ import {
   FilePlus,
   Stethoscope,
   ScrollText,
+  ClipboardPlus,
+  Microscope,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -54,11 +55,11 @@ const data = {
       logo: SoapDispenserDroplet,
       plan: "Laboratorio",
     },
-    {
+    /*{
       name: "PRACTICAS",
       logo: AudioWaveform,
       plan: "Estudiantes",
-    },
+    },*/
   ],
   navMain: [
     {
@@ -126,6 +127,23 @@ const data = {
           title: "Nueva Solicitud",
           url: "/solicitudes/nueva",
           icon: FilePlus,
+        },
+      ],
+    },
+    {
+      title: "Gestion de Muestras",
+      url: "",
+      icon: ClipboardPlus,
+      items: [
+        {
+          title: "Incidencias",
+          url: "/muestras/incidencias",
+          icon: Microscope,
+        },
+        {
+          title: "Recepcion",
+          url: "/muestras/recepcion",
+          icon: Microscope,
         },
       ],
     },

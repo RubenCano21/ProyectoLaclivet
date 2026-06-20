@@ -1,14 +1,5 @@
-import api from './apiClient'
-
-export interface Muestra {
-  id: number
-  codigo: string
-  paciente: number
-  tipo: string
-  estado: string
-  observaciones: string | null
-  fecha_recepcion: string
-}
+import type { Muestra } from '@/models/muestra'
+import api from '@/services/apiClient'
 
 export type MuestraForm = Omit<Muestra, 'id' | 'codigo' | 'fecha_recepcion'>
 
@@ -36,4 +27,8 @@ export const muestraService = {
   getIncidencias(id: number) {
     return api.get(`/muestras/${id}/incidencias/`)
   },
+
+  delete(id: number) {
+    return api.delete(`/muestras/${id}`)
+  }
 }
