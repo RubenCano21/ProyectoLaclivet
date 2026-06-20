@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { usePropietariosStore, type Propietario, type PropietarioForm } from '@/stores/propietarios'
+import { usePropietariosStore, type PropietarioForm } from '@/stores/propietarios'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertCircle, Loader2 } from 'lucide-vue-next'
+import type { Propietario } from '@/models/propietario'
 
 const props = defineProps<{
   open: boolean

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { pacienteService, type Paciente } from '@/services/pacienteService'
+import { pacienteService } from '@/services/pacienteService'
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import {
@@ -16,6 +16,7 @@ import {
   AlertCircle, PawPrint, Check, X, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import PacienteFormView from './PacienteFormView.vue'
+import type { Paciente } from '@/models/paciente.ts'
 
 
 const router = useRouter()

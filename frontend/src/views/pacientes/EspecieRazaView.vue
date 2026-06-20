@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { especieService, razaService, type Especie, type Raza } from '@/services/pacienteService'
+import { especieService, razaService } from '@/services/pacienteService'
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import {
@@ -16,6 +16,8 @@ import {
   Plus, Pencil, Trash2, Check, X,
   Loader2, AlertCircle, PawPrint, Tag,
 } from 'lucide-vue-next'
+import type { Especie } from '@/models/especie'
+import type { Raza } from '@/models/raza'
 
 // ── Estado global ─────────────────────────────────────────────────────────────
 const loading     = ref(true)

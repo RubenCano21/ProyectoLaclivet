@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { usePropietariosStore, type Propietario } from '@/stores/propietarios'
+import { usePropietariosStore } from '@/stores/propietarios'
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import {
   SidebarInset, SidebarProvider, SidebarTrigger,
@@ -17,6 +17,7 @@ import {
   AlertCircle, Users, X, Check, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import RegisterPropietarioView from './PropietarioForm.vue'
+import type { Propietario } from '@/models/propietario.ts'
 
 const store = usePropietariosStore()
 

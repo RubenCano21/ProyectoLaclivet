@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { watchDebounced } from '@vueuse/core'
-import {especieService, razaService, pacienteService, type Especie, type Raza, type Paciente,
+import {especieService, razaService, pacienteService
 } from '@/services/pacienteService'
-import { usePropietariosStore, type Propietario } from '@/stores/propietarios'
+import { usePropietariosStore } from '@/stores/propietarios'
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,10 @@ import {
   Search, Loader2, AlertCircle, UserPlus, PawPrint, User,
 } from 'lucide-vue-next'
 import PropietarioForm from './PropietarioForm.vue'
+import type { Especie } from '@/models/especie.ts'
+import type { Paciente } from '@/models/paciente.ts'
+import type { Propietario } from '@/models/propietario.ts'
+import type { Raza } from '@/models/raza.ts'
 
 const props = defineProps<{
   open: boolean
