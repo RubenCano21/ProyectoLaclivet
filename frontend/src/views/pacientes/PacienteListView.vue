@@ -15,19 +15,21 @@ import {
   Plus, Search, Pencil, Trash2, Loader2,
   AlertCircle, PawPrint, Check, X, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
+import PacienteFormView from './PacienteFormView.vue'
+
 
 const router = useRouter()
-const route  = useRoute()
+const route = useRoute()
 
 // ── Estado ───────────────────────────────────────────────────────────────────
-const pacientes       = ref<Paciente[]>([])
-const loading         = ref(false)
-const error           = ref<string | null>(null)
-const total           = ref(0)
-const paginas         = ref(1)
-const paginaActual    = ref(1)
+const pacientes = ref<Paciente[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const total = ref(0)
+const paginas = ref(1)
+const paginaActual = ref(1)
 const confirmDeleteId = ref<number | null>(null)
-const search          = ref('')
+const search = ref('')
 
 // ── Filtro ───────────────────────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -59,9 +61,9 @@ async function loadPacientes(page = 1) {
   try {
     const res = await pacienteService.getAll(page)
     const data = res.data
-    pacientes.value  = data.resultados
-    total.value      = data.total
-    paginas.value    = data.paginas
+    pacientes.value = data.resultados
+    total.value = data.total
+    paginas.value = data.paginas
     paginaActual.value = data.pagina_actual
   } catch (e: any) {
     error.value = e.response?.data?.detail ?? 'Error al cargar los pacientes'
@@ -93,6 +95,21 @@ watch(
   },
   { immediate: true },
 )
+
+const modalOpen = ref(false)
+const pacienteEditando = ref<Paciente | null>(null)
+
+function abrirNuevo() {
+  pacienteEditando.value = null
+  modalOpen.value = true
+}
+function abrirEditar(p: Paciente) {
+  pacienteEditando.value = p
+  modalOpen.value = true
+}
+function onSaved() {
+  loadPacientes(paginaActual.value)
+}
 
 </script>
 
@@ -134,9 +151,8 @@ watch(
               </p>
             </div>
           </div>
-          <Button @click="router.push('/pacientes/nuevo')" class="gap-2">
-            <Plus class="h-4 w-4" />
-            Nuevo paciente
+          <Button @click="abrirNuevo" class="gap-2">
+            <Plus class="h-4 w-4" /> Nuevo paciente
           </Button>
         </div>
 
@@ -153,7 +169,8 @@ watch(
         </div>
 
         <!-- Error -->
-        <div v-else-if="error" class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
+        <div v-else-if="error"
+          class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ error }}
         </div>
@@ -179,11 +196,8 @@ watch(
                     {{ search ? 'Sin resultados para tu búsqueda.' : 'No hay pacientes registrados.' }}
                   </td>
                 </tr>
-                <tr
-                  v-for="p in filtered"
-                  :key="p.id"
-                  class="border-b last:border-0 hover:bg-muted/20 transition-colors"
-                >
+                <tr v-for="p in filtered" :key="p.id"
+                  class="border-b last:border-0 hover:bg-muted/20 transition-colors">
                   <td class="px-4 py-3 font-medium">{{ p.nombre }}</td>
                   <td class="px-4 py-3">{{ p.especie_nombre }}</td>
                   <td class="px-4 py-3">{{ p.raza_nombre }}</td>
@@ -192,34 +206,24 @@ watch(
                   <td class="px-4 py-3">{{ p.propietario_nombre }}</td>
                   <td class="px-4 py-3">
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
-                      <button
-                        @click="router.push(`/pacientes/${p.id}`)"
-                        class="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                        title="Ver / Editar"
-                      >
+                      <button @click="abrirEditar(p)" class="p-1.5 rounded-md text-primary hover:bg-primary/10"
+                        title="Editar">
                         <Pencil class="h-4 w-4" />
                       </button>
-                      <button
-                        @click="confirmDeleteId = p.id"
-                        class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
-                        title="Eliminar"
-                      >
+                      <button @click="confirmDeleteId = p.id"
+                        class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors" title="Eliminar">
                         <Trash2 class="h-4 w-4" />
                       </button>
                     </div>
                     <div v-else class="flex items-center justify-center gap-1">
-                      <button
-                        @click="handleDelete(p.id)"
+                      <button @click="handleDelete(p.id)"
                         class="p-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        title="Confirmar eliminación"
-                      >
+                        title="Confirmar eliminación">
                         <Check class="h-4 w-4" />
                       </button>
-                      <button
-                        @click="confirmDeleteId = null"
+                      <button @click="confirmDeleteId = null"
                         class="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
-                        title="Cancelar"
-                      >
+                        title="Cancelar">
                         <X class="h-4 w-4" />
                       </button>
                     </div>
@@ -239,7 +243,8 @@ watch(
                 <ChevronLeft class="h-4 w-4" />
               </Button>
               <span class="px-2 text-sm font-medium">{{ paginaActual }}</span>
-              <Button variant="outline" size="sm" :disabled="paginaActual >= paginas" @click="goToPage(paginaActual + 1)">
+              <Button variant="outline" size="sm" :disabled="paginaActual >= paginas"
+                @click="goToPage(paginaActual + 1)">
                 <ChevronRight class="h-4 w-4" />
               </Button>
             </div>
@@ -249,5 +254,12 @@ watch(
       </main>
     </SidebarInset>
   </SidebarProvider>
+
+  <PacienteFormView
+  v-model:open="modalOpen"
+  :paciente="pacienteEditando"
+  @saved="onSaved"
+/>
 </template>
+
 

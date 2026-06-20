@@ -40,21 +40,21 @@ export const usePropietariosStore = defineStore('propietarios', () => {
   const paginas = ref(1)
   const paginaActual = ref(1)
 
-  async function fetchAll(page = 1) {
-    loading.value = true
-    error.value = null
-    try {
-      const { data } = await api.get('/propietarios/', { params: { page } })
-      items.value = data.resultados
-      total.value = data.total
-      paginas.value = data.paginas
-      paginaActual.value = data.pagina_actual
-    } catch (err) {
-      error.value = extractError(err)
-    } finally {
-      loading.value = false
-    }
+  async function fetchAll(page = 1, search = '') {
+  loading.value = true
+  error.value = null
+  try {
+    const { data } = await api.get('/propietarios/', { params: { page, search } })
+    items.value = data.resultados
+    total.value = data.total
+    paginas.value = data.paginas
+    paginaActual.value = data.pagina_actual
+  } catch (err) {
+    error.value = extractError(err)
+  } finally {
+    loading.value = false
   }
+}
 
   async function create(form: PropietarioForm): Promise<ApiResult> {
     saving.value = true
