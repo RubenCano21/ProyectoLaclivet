@@ -76,7 +76,7 @@ jobs:
           gcloud run jobs deploy migrate-job-${{ env.ENV_NAME }} \
             --image ${{ env.IMAGE }} \
             --region us-central1 \
-            --add-cloudsql-instances gen-lang-client-0248828390:us-central1:vetlab-db \
+            --set-cloudsql-instances gen-lang-client-0248828390:us-central1:vetlab-db \
             --set-env-vars DJANGO_SETTINGS_MODULE=${{ env.SETTINGS_MODULE }} \
             --set-secrets SECRET_KEY=django-secret-key-${{ env.ENV_NAME }}:latest,DATABASE_URL=database-url-${{ env.ENV_NAME }}:latest \
             --command python,manage.py,migrate
