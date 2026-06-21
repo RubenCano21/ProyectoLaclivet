@@ -1,0 +1,23 @@
+# .github/workflows/test-on-push.yml
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - 'front/**'
+      - 'back/**'
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+          python manage.py test

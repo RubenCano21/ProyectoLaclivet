@@ -1,0 +1,97 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        working-directory: ./backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+        run: python manage.py test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/7574522149/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'github-deployer@gen-lang-client-0248828390.iam.gserviceaccount.com'
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set environment variables by branch
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "ENV_NAME=prod" >> $GITHUB_ENV
+            echo "SERVICE_NAME=vetlab-backend" >> $GITHUB_ENV
+            echo "SETTINGS_MODULE=config.settings.prod" >> $GITHUB_ENV
+          else
+            echo "ENV_NAME=staging" >> $GITHUB_ENV
+            echo "SERVICE_NAME=vetlab-backend-staging" >> $GITHUB_ENV
+            echo "SETTINGS_MODULE=config.settings.staging" >> $GITHUB_ENV
+          fi
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build & Push image
+        working-directory: ./backend
+        run: |
+          IMAGE=us-central1-docker.pkg.dev/gen-lang-client-0248828390/vetlab-repo/backend:${{ env.ENV_NAME }}-${{ github.sha }}
+          docker build -t $IMAGE .
+          docker push $IMAGE
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Run migrations
+        run: |
+          gcloud run jobs deploy migrate-job-${{ env.ENV_NAME }} \
+            --image ${{ env.IMAGE }} \
+            --region us-central1 \
+            --add-cloudsql-instances gen-lang-client-0248828390:us-central1:vetlab-db \
+            --set-env-vars DJANGO_SETTINGS_MODULE=${{ env.SETTINGS_MODULE }} \
+            --set-secrets SECRET_KEY=django-secret-key-${{ env.ENV_NAME }}:latest,DATABASE_URL=database-url-${{ env.ENV_NAME }}:latest \
+            --command python,manage.py,migrate
+          gcloud run jobs execute migrate-job-${{ env.ENV_NAME }} --region us-central1 --wait
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.IMAGE }} \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --add-cloudsql-instances gen-lang-client-0248828390:us-central1:vetlab-db \
+            --set-env-vars DJANGO_SETTINGS_MODULE=${{ env.SETTINGS_MODULE }} \
+            --set-secrets SECRET_KEY=django-secret-key-${{ env.ENV_NAME }}:latest,DATABASE_URL=database-url-${{ env.ENV_NAME }}:latest \
+            --memory 512Mi \
+            --min-instances 0 \
+            --max-instances 3
