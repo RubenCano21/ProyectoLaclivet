@@ -4,7 +4,7 @@ Script para crear un superusuario automáticamente
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.dev')
 django.setup()
 
 from apps.usuarios.models import Usuario, Rol

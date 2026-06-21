@@ -4,7 +4,7 @@ Script para crear datos iniciales: roles y permisos
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.base')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.dev')
 django.setup()
 
 from apps.usuarios.models import Rol, Permiso, RolPermiso
