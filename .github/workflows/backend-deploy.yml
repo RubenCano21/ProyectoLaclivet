@@ -90,7 +90,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --add-cloudsql-instances gen-lang-client-0248828390:us-central1:vetlab-db \
-            --set-env-vars DJANGO_SETTINGS_MODULE=${{ env.SETTINGS_MODULE }} \
+            --set-env-vars DJANGO_SETTINGS_MODULE=${{ env.SETTINGS_MODULE }},ALLOWED_HOSTS=.run.app \
             --set-secrets SECRET_KEY=django-secret-key-${{ env.ENV_NAME }}:latest,DATABASE_URL=database-url-${{ env.ENV_NAME }}:latest \
             --memory 512Mi \
             --min-instances 0 \
