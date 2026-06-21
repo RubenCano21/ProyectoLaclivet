@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - main
+      - master
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-deploy.yml'
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set environment variables by branch
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/master" ]; then
             echo "ENV_NAME=prod" >> $GITHUB_ENV
             echo "SERVICE_NAME=vetlab-frontend" >> $GITHUB_ENV
           else
