@@ -32,9 +32,11 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/master" ]; then
             echo "ENV_NAME=prod" >> $GITHUB_ENV
             echo "SERVICE_NAME=vetlab-frontend" >> $GITHUB_ENV
+            echo "API_URL=https://vetlab-backend-7574522149.us-central1.run.app/api" >> $GITHUB_ENV
           else
             echo "ENV_NAME=staging" >> $GITHUB_ENV
             echo "SERVICE_NAME=vetlab-frontend-staging" >> $GITHUB_ENV
+            echo "API_URL=https://vetlab-backend-staging-7574522149.us-central1.run.app/api" >> $GITHUB_ENV
           fi
 
       - name: Configure Docker
@@ -44,7 +46,7 @@ jobs:
         working-directory: ./frontend
         run: |
           IMAGE=us-central1-docker.pkg.dev/gen-lang-client-0248828390/vetlab-repo/frontend:${{ env.ENV_NAME }}-${{ github.sha }}
-          docker build -t $IMAGE .
+          docker build --build-arg VITE_API_BASE_URL=${{ env.API_URL }} -t $IMAGE .
           docker push $IMAGE
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
