@@ -58,13 +58,13 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
     """Serializer para el registro de nuevos usuarios"""
     password = serializers.CharField(
         write_only=True,
-        required=True,
+        required=False,
         validators=[validate_password],
         style={'input_type': 'password'}
     )
     password2 = serializers.CharField(
         write_only=True,
-        required=True,
+        required=False,
         style={'input_type': 'password'},
         label='Confirmar contraseña'
     )
@@ -90,12 +90,20 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        """Validar que las contraseñas coincidan"""
-        if attrs['password'] != attrs['password2']:
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        if password and password2 and password != password2:
             raise serializers.ValidationError({
                 "password": "Las contraseñas no coinciden."
             })
         return attrs
+
+    def _generar_password_default(self, validated_data):
+        """Genera la contraseña por defecto: primer_apellido.ci en minúsculas"""
+        last_name = validated_data.get('last_name', '').strip().lower()
+        primer_apellido = last_name.split()[0] if last_name else 'usuario'
+        ci = validated_data.get('ci', '').strip()
+        return f"{primer_apellido}.{ci}" if ci else primer_apellido
 
     def validate_ci(self, value):
         validar_formato_ci(value)
@@ -123,15 +131,17 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         return username
 
     def create(self, validated_data):
-        """Crear un nuevo usuario"""
-        validated_data.pop('password2')
-        password = validated_data.pop('password')
-        validated_data['username'] = self._generar_username(validated_data.get('email'))
+        validated_data.pop('password2', None)
+        password = validated_data.pop('password', None)
 
+        # Si no envió contraseña, usar primer_apellido.ci
+        if not password:
+            password = self._generar_password_default(validated_data)
+
+        validated_data['username'] = self._generar_username(validated_data.get('email'))
         usuario = Usuario.objects.create(**validated_data)
         usuario.set_password(password)
         usuario.save()
-
         return usuario
 
 

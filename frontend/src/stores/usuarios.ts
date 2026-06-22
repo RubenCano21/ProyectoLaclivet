@@ -9,6 +9,7 @@ export interface UsuarioResumen {
   email: string
   first_name: string
   last_name: string
+  ci: string | null          // ← agregar
   fecha_creacion: string
   is_active: boolean
   is_staff: boolean
@@ -26,21 +27,21 @@ export interface UsuarioDetalle extends UsuarioResumen {
 
 export interface RegisterForm {
   email: string
-  password: string
-  password2: string
   first_name: string
   last_name?: string
+  ci?: string | null         // ← agregar
   telefono?: string | null
   direccion?: string | null
   fecha_nacimiento?: string | null
   rol_id?: number | null
+  // password y password2 eliminados — el backend los genera automáticamente
 }
 
-/** Campos que el admin puede editar en PUT/PATCH /usuarios/<pk>/ */
 export interface AdminActualizarForm {
   first_name?: string
   last_name?: string
   email?: string
+  ci?: string | null         // ← agregar
   telefono?: string | null
   direccion?: string | null
   fecha_nacimiento?: string | null
@@ -54,7 +55,6 @@ export interface ApiResult {
   error?: string
 }
 
-// Mantener compatibilidad con código existente
 export type Usuario = UsuarioResumen
 
 function extractError(err: unknown): string {
@@ -76,7 +76,6 @@ export const useUsuariosStore = defineStore('usuarios', () => {
   const paginas = ref(1)
   const paginaActual = ref(1)
 
-  /** GET /usuarios/?page=X — lista usuarios paginados (solo admin) */
   async function fetchAll(page = 1) {
     loading.value = true
     error.value = null
@@ -93,7 +92,6 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  /** GET /usuarios/<pk>/ — detalle de un usuario (solo admin) */
   async function fetchById(id: number): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
     try {
       const { data } = await api.get(`/usuarios/${id}/`)
@@ -103,7 +101,6 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  /** POST /usuarios/auth/registro/ — registrar un nuevo usuario */
   async function register(params: RegisterForm): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
     try {
       const { data } = await api.post('/usuarios/auth/registro/', params)
@@ -113,11 +110,9 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  /** PUT/PATCH /usuarios/<pk>/ — actualizar usuario como admin */
   async function update(id: number, form: AdminActualizarForm): Promise<{ ok: boolean; data?: UsuarioDetalle; error?: string }> {
     try {
       const { data } = await api.patch(`/usuarios/${id}/`, form)
-      // Reflejar cambios en la lista local si el ítem existe
       const idx = items.value.findIndex(u => u.id === id)
       if (idx !== -1) {
         items.value[idx] = { ...items.value[idx], ...data }
@@ -128,7 +123,6 @@ export const useUsuariosStore = defineStore('usuarios', () => {
     }
   }
 
-  /** DELETE /usuarios/<pk>/ — eliminar usuario (solo admin) */
   async function remove(id: number): Promise<ApiResult> {
     try {
       await api.delete(`/usuarios/${id}/`)
