@@ -1,3 +1,4 @@
+from apps.core.permissions import EsStaffInterno, EsMedicoExterno
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +15,7 @@ from .serializers import (
 
 
 class MedicoVeterinarioListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar médicos veterinarios", responses={200: MedicoVeterinarioSerializer(many=True)})
     def get(self, request):
@@ -33,7 +34,7 @@ class MedicoVeterinarioListCreateView(APIView):
 
 
 class MedicoVeterinarioDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -76,3 +77,9 @@ class MedicoVeterinarioDetailView(APIView):
         medico.delete()
         return Response({'mensaje': 'Médico eliminado exitosamente'}, status=status.HTTP_200_OK)
 
+class ResultadosMedicoVeterinarioView(APIView):
+    permission_classes = [EsMedicoExterno]  # médico externo ve sus resultados
+    def get(self, request, pk):
+        medico = MedicoVeterinario.objects.get(pk=pk)
+        resultados = medico.resultados.filter(solicitud__medico=medico)
+        return Response(MedicoVeterinarioSerializer(medico, context={'resultados': resultados}).data)
