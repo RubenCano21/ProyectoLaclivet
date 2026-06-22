@@ -10,6 +10,7 @@ class MedicoVeterinario(models.Model):
 
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
+    ci = models.CharField(max_length=10, blank=True, null=True, unique=True)
     especialidad = models.CharField(max_length=100, blank=True, null=True)
     genero = models.CharField(max_length=20, choices=GENERO_CHOICES, blank=True, null=True)
     correo = models.EmailField(max_length=100, unique=True, blank=True, null=True)
