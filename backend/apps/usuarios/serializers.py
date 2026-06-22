@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import Usuario, Rol, Permiso, RolPermiso
+from .models import Usuario, Rol, Permiso
+from apps.core.validators import validar_formato_ci, validar_ci_unico_global
 
 
 class RolSerializer(serializers.ModelSerializer):
@@ -42,7 +43,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'telefono', 'direccion', 'fecha_nacimiento', 'rol', 'permisos',
+            'ci','telefono', 'direccion', 'fecha_nacimiento', 'rol', 'permisos',
             'fecha_creacion', 'fecha_actualizacion', 'is_active', 'is_staff'
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
@@ -79,7 +80,7 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'email', 'password', 'password2',
-            'first_name', 'last_name', 'telefono',
+            'first_name', 'last_name','ci', 'telefono',
             'direccion', 'fecha_nacimiento', 'rol_id'
         ]
         extra_kwargs = {
@@ -95,6 +96,15 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
                 "password": "Las contraseñas no coinciden."
             })
         return attrs
+
+    def validate_ci(self, value):
+        validar_formato_ci(value)
+        instance = getattr(self, 'instance', None)
+        validar_ci_unico_global(
+            value,
+            exclude_usuario_pk=instance.pk if instance else None
+        )
+        return value
 
     def validate_email(self, value):
         """Validar que el email no esté registrado"""
@@ -215,7 +225,7 @@ class ActualizarUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'first_name', 'last_name', 'email', 'telefono',
+            'first_name', 'last_name', 'email', 'ci', 'telefono',
             'direccion', 'fecha_nacimiento'
         ]
         extra_kwargs = {
@@ -242,7 +252,7 @@ class AdminActualizarUsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'first_name', 'last_name', 'email', 'telefono',
+            'first_name', 'last_name', 'email', 'ci', 'telefono',
             'direccion', 'fecha_nacimiento', 'is_active', 'is_staff', 'rol_id'
         ]
 

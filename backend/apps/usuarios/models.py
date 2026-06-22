@@ -60,6 +60,7 @@ class Usuario(AbstractUser):
     )
 
     # Campos adicionales
+    ci = models.CharField(max_length=10, blank=True, null=True, unique=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
     direccion = models.TextField(blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
