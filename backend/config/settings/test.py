@@ -1,5 +1,4 @@
 from .base import *  # noqa
-from .base import BASE_DIR
 
 SECRET_KEY = "test-secret-key-not-for-production"
 DEBUG = False
