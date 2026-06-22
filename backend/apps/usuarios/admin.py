@@ -27,14 +27,14 @@ class RolPermisoAdmin(admin.ModelAdmin):
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    list_display = ['email', 'username', 'first_name', 'last_name', 'rol', 'is_active', 'fecha_creacion']
+    list_display = ['email', 'username', 'first_name', 'last_name', 'ci', 'rol', 'is_active', 'fecha_creacion']
     list_filter = ['is_active', 'is_staff', 'rol', 'fecha_creacion']
-    search_fields = ['email', 'username', 'first_name', 'last_name']
+    search_fields = ['email', 'username', 'first_name', 'last_name', 'ci']
     ordering = ['-fecha_creacion']
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Información Personal', {'fields': ('username', 'first_name', 'last_name', 'telefono', 'direccion', 'fecha_nacimiento')}),
+        ('Información Personal', {'fields': ('username', 'first_name', 'last_name', 'ci', 'telefono', 'direccion', 'fecha_nacimiento')}),
         ('Permisos y Rol', {'fields': ('rol', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Fechas Importantes', {'fields': ('last_login', 'date_joined', 'fecha_creacion', 'fecha_actualizacion')}),
     )
@@ -44,7 +44,7 @@ class UsuarioAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2', 'first_name', 'last_name', 'rol'),
+            'fields': ('email', 'username', 'password1', 'password2', 'first_name', 'last_name', 'ci', 'rol'),
         }),
     )
 

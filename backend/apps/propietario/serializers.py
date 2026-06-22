@@ -1,5 +1,6 @@
 from apps.propietario.models import Propietario
 from rest_framework import serializers
+from apps.core.validators import validar_formato_ci, validar_ci_unico_global
 
 
 class PropietarioSerializer(serializers.ModelSerializer):
@@ -20,8 +21,12 @@ class PropietarioCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate_ci(self, value):
-        if Propietario.objects.filter(ci=value).exists():
-            raise serializers.ValidationError("Ya existe un propietario con este CI.")
+        validar_formato_ci(value)
+        instance = getattr(self, 'instance', None)
+        validar_ci_unico_global(
+            value,
+            exclude_propietario_pk=instance.pk if instance else None
+        )
         return value
 
     def validate_correo(self, value):
