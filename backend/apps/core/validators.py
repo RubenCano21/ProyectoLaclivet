@@ -16,9 +16,9 @@ def validar_ci_unico_global(value,
     if not value:
         return
 
-    from usuarios.models import Usuario
-    from propietario.models import Propietario
-    from medico.models import MedicoVeterinario
+    from apps.usuarios.models import Usuario
+    from apps.propietario.models import Propietario
+    from apps.medico.models import MedicoVeterinario
 
     qs_usuario = Usuario.objects.filter(ci=value)
     if exclude_usuario_pk:
