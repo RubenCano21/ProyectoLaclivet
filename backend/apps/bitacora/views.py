@@ -1,11 +1,9 @@
-from django.shortcuts import render
+from config.pagination import StandardPagination
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-
-from config.pagination import StandardPagination
 from .models import Bitacora
 from .serializers import BitacoraSerializer, BitacoraCreateSerializer
 
