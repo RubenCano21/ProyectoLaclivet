@@ -29,7 +29,7 @@ CSRF_COOKIE_SECURE = True
 # Archivos media en Cloud Storage en producción
 DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
 GS_BUCKET_NAME = env("GS_BUCKET_NAME", default="")
-GS_PROJECT_ID = env("GCP_PROJECT_ID")
+GS_PROJECT_ID = env("GCP_PROJECT_ID", default="")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="")
