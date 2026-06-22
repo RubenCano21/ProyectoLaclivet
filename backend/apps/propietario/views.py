@@ -1,3 +1,6 @@
+from apps.core.permissions import EsStaffInterno, EsPropietario
+from apps.muestra.models import Resultado
+from apps.muestra.serializers import ResultadoSerializer
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,7 +18,7 @@ from .serializers import (
 
 class PropietarioListCreateView(APIView):
     """Lista todos los propietarios o crea uno nuevo"""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(
         operation_summary="Listar propietarios",
@@ -46,7 +49,7 @@ class PropietarioListCreateView(APIView):
 
 class PropietarioDetailView(APIView):
     """Obtiene, actualiza o elimina un propietario por ID"""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -106,3 +109,10 @@ class PropietarioDetailView(APIView):
             {'mensaje': 'Propietario eliminado exitosamente'},
             status=status.HTTP_200_OK
         )
+
+class ResultadosPropietarioView(APIView):
+    permission_classes = [EsPropietario]  # propietario ve resultados de sus mascotas
+    def get(self, request):
+        propietario = request.user.propietario_perfil
+        resultados = Resultado.objects.filter(solicitud__paciente__propietario=propietario)
+        return Response(ResultadoSerializer(resultados, many=True).data)

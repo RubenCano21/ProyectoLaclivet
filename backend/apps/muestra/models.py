@@ -40,3 +40,63 @@ class IncidenciaMuestra(models.Model):
 
     def __str__(self):
         return f"Incidencia #{self.pk} - {self.muestra.codigo}"
+
+class Resultado(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_proceso', 'En proceso'),
+        ('completado', 'Completado'),
+        ('validado', 'Validado'),
+    ]
+
+    detalle_solicitud = models.OneToOneField(
+        'recepcion.DetalleSolicitud',
+        on_delete=models.CASCADE,
+        related_name='resultado'
+    )
+    muestra = models.ForeignKey(
+        Muestra,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='resultados'
+    )
+    veterinario_responsable = models.ForeignKey(
+        'usuarios.Usuario',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='resultados_emitidos'
+    )
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    valores_obtenidos = models.JSONField(
+        blank=True, null=True,
+        help_text="Valores del examen en formato JSON. Ej: {'glucosa': '95 mg/dL'}"
+    )
+    observaciones = models.TextField(blank=True, null=True)
+    fecha_emision = models.DateTimeField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    archivo_pdf = models.FileField(
+        upload_to='resultados/',
+        blank=True, null=True,
+        help_text="PDF del resultado generado"
+    )
+
+    class Meta:
+        verbose_name = 'Resultado'
+        verbose_name_plural = 'Resultados'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Resultado #{self.pk} - {self.detalle_solicitud.solicitud.codigo}"
+
+    @property
+    def paciente(self):
+        return self.detalle_solicitud.solicitud.paciente
+
+    @property
+    def medico_solicitante(self):
+        return self.detalle_solicitud.solicitud.medico_veterinario
+
+    @property
+    def examen(self):
+        return self.detalle_solicitud.examen
