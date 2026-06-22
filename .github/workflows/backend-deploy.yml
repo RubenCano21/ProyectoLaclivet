@@ -54,7 +54,7 @@ jobs:
             echo "ENV_NAME=prod" >> $GITHUB_ENV
             echo "SERVICE_NAME=vetlab-backend" >> $GITHUB_ENV
             echo "SETTINGS_MODULE=config.settings.prod" >> $GITHUB_ENV
-            echo "FRONTEND_URL=https://vetlab-frontend-7574522149.us-central1.run.app" >> $GITHUB_ENV
+            echo "FRONTEND_URL=https://vetlab-frontend-wywxkt3ffa-uc.a.run.app" >> $GITHUB_ENV
           else
             echo "ENV_NAME=staging" >> $GITHUB_ENV
             echo "SERVICE_NAME=vetlab-backend-staging" >> $GITHUB_ENV
