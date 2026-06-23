@@ -1,3 +1,4 @@
+# backend/config/settings/prod.py
 from .base import *  # noqa
 
 env = environ.Env()
@@ -15,8 +16,46 @@ if env("CLOUD_SQL_CONNECTION_NAME", default=None):
     DATABASES["default"]["HOST"] = f'/cloudsql/{env("CLOUD_SQL_CONNECTION_NAME")}'
     DATABASES["default"]["PORT"] = ""
 
+# CORS - Configuración mejorada
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+# Si no hay orígenes configurados, usar los valores predeterminados para producción
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS = [
+        "https://vetlab-frontend-7574522149.us-central1.run.app",
+        "https://vetlab-frontend.uc.r.appspot.com",
+        "https://vetlab-frontend-wywxkt3ffa-uc.a.run.app",
+    ]
+    CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
+
+# También permitir usando regex para mayor flexibilidad
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://vetlab-frontend-.*\.run\.app$",
+    r"^https://vetlab-frontend-.*\.uc\.r\.appspot\.com$",
+]
+
+# Configuración adicional de CORS
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
