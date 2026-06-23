@@ -1,8 +1,8 @@
-import type { Propietario } from '@/models/propietario'
 import api from './apiClient'
 import type { Especie } from '@/models/especie'
 import type { Raza } from '@/models/raza'
 import type { Paciente } from '@/models/paciente'
+import type {Propietario} from "@/stores/propietarios.ts";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
