@@ -24,8 +24,8 @@ import {
   Plus, Trash2, Check, X, ClipboardList, History, Stethoscope,
 } from 'lucide-vue-next'
 import type { Especie } from '@/models/especie'
-import type { Propietario } from '@/models/propietario'
 import type { Raza } from '@/models/raza'
+import type { Propietario } from '@/stores/propietarios'
 
 const route  = useRoute()
 const router = useRouter()
@@ -430,7 +430,7 @@ const ESTADO_VARIANT: Record<string, string> = {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem v-for="p in propietarios" :key="p.id" :value="String(p.id)">
-                      {{ p.nombre }} {{ p.apellido }} — {{ p.ci }}
+                      {{ p.usuario?.first_name }} {{ p.usuario?.last_name }} — {{ p.usuario?.ci }}
                     </SelectItem>
                   </SelectContent>
                 </Select>

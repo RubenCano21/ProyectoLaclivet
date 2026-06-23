@@ -5,23 +5,33 @@ import { ref } from 'vue'
 
 export interface Medico {
   id: number
-  nombre: string
-  apellido: string
   especialidad: string | null
+  clinica_procedencia: string | null
   genero: 'M' | 'F' | 'O' | null
-  correo: string | null
-  telefono: string | null
-  direccion: string | null
+  // Datos del usuario vinculado
+  usuario: {
+    id: number
+    first_name: string
+    last_name: string
+    ci: string | null
+    email: string
+    telefono: string | null
+    direccion: string | null
+  }
 }
 
 export interface MedicoForm {
-  nombre: string
-  apellido: string
-  especialidad?: string | null
-  genero?: 'M' | 'F' | 'O' | null
-  correo?: string | null
+  // Datos del usuario
+  first_name: string
+  last_name: string
+  ci: string
+  email: string
   telefono?: string | null
   direccion?: string | null
+  // Datos específicos del médico
+  especialidad?: string | null
+  clinica_procedencia?: string | null
+  genero?: 'M' | 'F' | 'O' | null
 }
 
 interface ApiResult {

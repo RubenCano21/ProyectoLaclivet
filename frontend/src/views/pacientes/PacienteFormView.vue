@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import {especieService, razaService, pacienteService
 } from '@/services/pacienteService'
-import { usePropietariosStore } from '@/stores/propietarios'
+import { usePropietariosStore, type Propietario } from '@/stores/propietarios'
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,6 @@ import {
 import PropietarioForm from './PropietarioForm.vue'
 import type { Especie } from '@/models/especie.ts'
 import type { Paciente } from '@/models/paciente.ts'
-import type { Propietario } from '@/models/propietario.ts'
 import type { Raza } from '@/models/raza.ts'
 
 const props = defineProps<{
@@ -252,9 +251,9 @@ function close() {
               class="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-muted/40 transition-colors"
             >
               <div>
-                <p class="text-sm font-medium">{{ p.nombre }} {{ p.apellido }}</p>
+                <p class="text-sm font-medium">{{ p.usuario?.first_name }} {{ p.usuario?.last_name }}</p>
                 <p class="text-xs text-muted-foreground">
-                  CI: {{ p.ci }}<span v-if="p.telefono"> · {{ p.telefono }}</span>
+                  CI: {{ p.usuario?.ci }}<span v-if="p.usuario?.telefono"> · {{ p.usuario.telefono }}</span>
                 </p>
               </div>
             </button>
@@ -288,8 +287,8 @@ function close() {
           <div class="flex items-center gap-2 text-sm">
             <User class="h-4 w-4 text-muted-foreground" />
             <span v-if="propietarioSeleccionado" class="font-medium">
-              {{ propietarioSeleccionado.nombre }} {{ propietarioSeleccionado.apellido }}
-              <span class="text-muted-foreground font-normal">· CI {{ propietarioSeleccionado.ci }}</span>
+              {{ propietarioSeleccionado.usuario?.first_name }} {{ propietarioSeleccionado.usuario?.last_name }}
+              <span class="text-muted-foreground font-normal">· CI {{ propietarioSeleccionado.usuario?.ci }}</span>
             </span>
             <span v-else class="text-muted-foreground">Sin propietario seleccionado</span>
           </div>
