@@ -77,8 +77,10 @@ class PacienteSerializer(serializers.ModelSerializer):
         ]
 
     def get_propietario_nombre(self, obj):
-        if obj.propietario:
-            return f"{obj.propietario.nombre} {obj.propietario.apellido}"
+        # ← corregido: los datos personales ahora viven en usuario
+        if obj.propietario and obj.propietario.usuario:
+            u = obj.propietario.usuario
+            return f"{u.first_name} {u.last_name}"
         return None
 
 
@@ -124,7 +126,6 @@ class AntecedentePacienteUpdateSerializer(serializers.ModelSerializer):
 
 # ── Historial Dinámico ────────────────────────────────────
 class HistorialSolicitudSerializer(serializers.Serializer):
-    """Serializer de solo lectura para el historial dinámico del paciente"""
     id = serializers.IntegerField()
     codigo = serializers.CharField()
     fecha_solicitud = serializers.DateTimeField()
@@ -134,8 +135,10 @@ class HistorialSolicitudSerializer(serializers.Serializer):
     examenes = serializers.SerializerMethodField()
 
     def get_medico_veterinario(self, obj):
-        if obj.medico_veterinario:
-            return f"{obj.medico_veterinario.nombre} {obj.medico_veterinario.apellido}"
+        # ← corregido: los datos personales ahora viven en usuario
+        if obj.medico_veterinario and obj.medico_veterinario.usuario:
+            u = obj.medico_veterinario.usuario
+            return f"{u.first_name} {u.last_name}"
         return None
 
     def get_examenes(self, obj):

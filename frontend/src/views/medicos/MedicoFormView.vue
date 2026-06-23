@@ -25,23 +25,21 @@ const saving = ref(false)
 const isEdit = computed(() => !!props.medico)
 
 interface LocalForm {
-  nombre: string
-  apellido: string
-  especialidad: string
-  genero: string
-  correo: string
+  first_name: string
+  last_name: string
+  ci: string
+  email: string
   telefono: string
   direccion: string
+  especialidad: string
+  clinica_procedencia: string
+  genero: string
 }
 
 const emptyForm = (): LocalForm => ({
-  nombre: '',
-  apellido: '',
-  especialidad: '',
-  genero: '',
-  correo: '',
-  telefono: '',
-  direccion: '',
+  first_name: '', last_name: '', ci: '', email: '',
+  telefono: '', direccion: '',
+  especialidad: '', clinica_procedencia: '', genero: '',
 })
 
 const form = ref<LocalForm>(emptyForm())
@@ -51,21 +49,18 @@ watch(
   (val) => {
     if (!val) return
     formError.value = null
-    if (props.medico) {
-      const m = props.medico
-      form.value = {
-        nombre: m.nombre ?? '',
-        apellido: m.apellido ?? '',
-        especialidad: m.especialidad ?? '',
-        genero: m.genero ?? '',
-        correo: m.correo ?? '',
-        telefono: m.telefono ?? '',
-        direccion: m.direccion ?? '',
-      }
-    } else {
-      form.value = emptyForm()
-    }
-  },
+    form.value = props.medico ? {
+      first_name: props.medico.usuario.first_name,
+      last_name: props.medico.usuario.last_name,
+      ci: props.medico.usuario.ci ?? '',
+      email: props.medico.usuario.email,
+      telefono: props.medico.usuario.telefono ?? '',
+      direccion: props.medico.usuario.direccion ?? '',
+      especialidad: props.medico.especialidad ?? '',
+      clinica_procedencia: props.medico.clinica_procedencia ?? '',
+      genero: props.medico.genero ?? '',
+    } : emptyForm()
+  }
 )
 
 function close() {
@@ -77,13 +72,15 @@ async function handleSubmit() {
   saving.value = true
 
   const payload: MedicoForm = {
-    nombre: form.value.nombre,
-    apellido: form.value.apellido,
-    especialidad: form.value.especialidad || null,
-    genero: (form.value.genero || null) as MedicoForm['genero'],
-    correo: form.value.correo || null,
+    first_name: form.value.first_name,
+    last_name: form.value.last_name,
+    ci: form.value.ci,
+    email: form.value.email,
     telefono: form.value.telefono || null,
     direccion: form.value.direccion || null,
+    especialidad: form.value.especialidad || null,
+    clinica_procedencia: form.value.clinica_procedencia || null,
+    genero: (form.value.genero || null) as MedicoForm['genero'],
   }
 
   const result = isEdit.value && props.medico
@@ -104,11 +101,7 @@ async function handleSubmit() {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        @mousedown.self="close"
-      >
+      <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center p-4" @mousedown.self="close">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
         <div class="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -123,11 +116,8 @@ async function handleSubmit() {
                   : 'Completa el formulario para registrar un nuevo médico veterinario.' }}
               </p>
             </div>
-            <button
-              type="button"
-              @click="close"
-              class="ml-4 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            >
+            <button type="button" @click="close"
+              class="ml-4 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
               <X class="h-5 w-5" />
             </button>
           </div>
@@ -138,14 +128,29 @@ async function handleSubmit() {
                 <label class="block text-sm font-medium text-mineral-green-800">
                   Nombre <span class="text-red-500">*</span>
                 </label>
-                <Input v-model="form.nombre" placeholder="Juan" required maxlength="100" />
+                <Input v-model="form.first_name" placeholder="Juan" required maxlength="100" />
               </div>
               <div class="space-y-1.5">
                 <label class="block text-sm font-medium text-mineral-green-800">
                   Apellido <span class="text-red-500">*</span>
                 </label>
-                <Input v-model="form.apellido" placeholder="Pérez" required maxlength="100" />
+                <Input v-model="form.last_name" placeholder="Pérez" required maxlength="100" />
               </div>
+              <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-mineral-green-800">
+                  CI <span class="text-red-500">*</span>
+                </label>
+                <Input v-model="form.ci" placeholder="Ej: 12345678" required maxlength="10"
+                  @input="form.ci = form.ci.replace(/\D/g, '')" />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-mineral-green-800">
+                  Correo electrónico <span class="text-red-500">*</span>
+                </label>
+                <Input v-model="form.email" type="email" placeholder="medico@correo.com" required />
+              </div>
+
             </div>
 
             <div class="space-y-1.5">
@@ -168,8 +173,15 @@ async function handleSubmit() {
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-sm font-medium text-mineral-green-800">Correo electrónico</label>
-              <Input v-model="form.correo" type="email" placeholder="medico@correo.com" maxlength="100" />
+              <label class="block text-sm font-medium text-mineral-green-800">Clínica / Procedencia</label>
+              <Input v-model="form.clinica_procedencia" placeholder="Ej: Clínica Veterinaria San Martín" maxlength="200" />
+            </div>
+
+            <!-- Aviso contraseña -->
+            <div v-if="!medico" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              🔑 Contraseña inicial:
+              <strong>{{ form.last_name ? form.last_name.trim().split(' ')[0].toLowerCase() : 'apellido' }}.{{ form.ci
+                || 'ci' }}</strong>
             </div>
 
             <div class="space-y-1.5">
@@ -183,10 +195,8 @@ async function handleSubmit() {
             </div>
 
             <Transition name="fade">
-              <div
-                v-if="formError"
-                class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-              >
+              <div v-if="formError"
+                class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{{ formError }}</span>
               </div>
@@ -194,11 +204,8 @@ async function handleSubmit() {
 
             <div class="flex justify-end gap-3 pt-2 border-t mt-2">
               <Button type="button" variant="outline" @click="close">Cancelar</Button>
-              <Button
-                type="submit"
-                :disabled="saving"
-                class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white min-w-32"
-              >
+              <Button type="submit" :disabled="saving"
+                class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white min-w-32">
                 <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
                 {{ saving
                   ? (isEdit ? 'Guardando…' : 'Registrando…')
@@ -217,23 +224,35 @@ async function handleSubmit() {
 .modal-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .modal-enter-active .relative,
 .modal-leave-active .relative {
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-from .relative {
   transform: scale(0.96) translateY(8px);
   opacity: 0;
 }
+
 .modal-leave-to .relative {
   transform: scale(0.96) translateY(8px);
   opacity: 0;
 }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 </style>

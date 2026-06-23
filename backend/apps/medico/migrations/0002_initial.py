@@ -10,14 +10,14 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('bitacora', '0001_initial'),
+        ('medico', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='bitacora',
+            model_name='medicoveterinario',
             name='usuario',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='bitacoras', to=settings.AUTH_USER_MODEL),
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='medico_perfil', to=settings.AUTH_USER_MODEL),
         ),
     ]

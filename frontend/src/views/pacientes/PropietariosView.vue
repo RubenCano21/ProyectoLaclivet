@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { usePropietariosStore } from '@/stores/propietarios'
+import { usePropietariosStore, type Propietario } from '@/stores/propietarios'
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import {
   SidebarInset, SidebarProvider, SidebarTrigger,
@@ -17,25 +17,25 @@ import {
   AlertCircle, Users, X, Check, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import RegisterPropietarioView from './PropietarioForm.vue'
-import type { Propietario } from '@/models/propietario.ts'
 
 const store = usePropietariosStore()
 
-// ── Búsqueda ────────────────────────────────────────────────────────────────
 const search = ref('')
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return store.items
-  return store.items.filter(p =>
-    p.nombre.toLowerCase().includes(q) ||
-    p.apellido.toLowerCase().includes(q) ||
-    p.ci.toLowerCase().includes(q) ||
-    p.correo.toLowerCase().includes(q) ||
-    p.telefono.includes(q),
-  )
+  return store.items.filter(p => {
+    if (!p.usuario) return false
+    return (
+      p.usuario.first_name.toLowerCase().includes(q) ||
+      p.usuario.last_name.toLowerCase().includes(q) ||
+      (p.usuario.ci ?? '').toLowerCase().includes(q) ||
+      p.usuario.email.toLowerCase().includes(q) ||
+      (p.usuario.telefono ?? '').includes(q)
+    )
+  })
 })
 
-// ── Modal ────────────────────────────────────────────────────────────────────
 const modalOpen = ref(false)
 const editingPropietario = ref<Propietario | null>(null)
 
@@ -49,7 +49,6 @@ function openEdit(p: Propietario) {
   modalOpen.value = true
 }
 
-// ── Eliminar ─────────────────────────────────────────────────────────────────
 const confirmDeleteId = ref<number | null>(null)
 
 async function handleDelete(id: number) {
@@ -92,7 +91,7 @@ onMounted(() => store.fetchAll())
         <!-- Título + botón nuevo -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg 
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg
             bg-mineral-green-100 text-mineral-green-700">
               <Users class="h-5 w-5" />
             </div>
@@ -112,11 +111,7 @@ onMounted(() => store.fetchAll())
         <!-- Buscador -->
         <div class="relative max-w-sm">
           <Search class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-muted-foreground" />
-          <Input
-            v-model="search"
-            placeholder="Buscar por nombre, CI, correo…"
-            class="pl-9"
-          />
+          <Input v-model="search" placeholder="Buscar por nombre, CI, correo…" class="pl-9" />
         </div>
 
         <!-- Estado de carga -->
@@ -126,7 +121,7 @@ onMounted(() => store.fetchAll())
         </div>
 
         <!-- Error al cargar -->
-        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200 
+        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border border-red-200
         bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ store.error }}
@@ -160,13 +155,25 @@ onMounted(() => store.fetchAll())
                   :key="p.id"
                   class="border-b last:border-0 hover:bg-mineral-green-50/40 transition-colors"
                 >
-                  <td class="px-4 py-3 font-mono text-xs text-mineral-green-700">{{ p.ci }}</td>
-                  <td class="px-4 py-3 font-medium text-mineral-green-950">{{ p.nombre }}</td>
-                  <td class="px-4 py-3 text-mineral-green-800">{{ p.apellido }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ p.correo }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ p.telefono }}</td>
-                  <td class="px-4 py-3 text-mineral-green-600 max-w-40 truncate" 
-                    :title="p.direccion">{{ p.direccion }}</td>
+                  <td class="px-4 py-3 font-mono text-xs text-mineral-green-700">
+                    {{ p.usuario?.ci ?? '—' }}
+                  </td>
+                  <td class="px-4 py-3 font-medium text-mineral-green-950">
+                    {{ p.usuario?.first_name ?? '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-mineral-green-800">
+                    {{ p.usuario?.last_name ?? '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-mineral-green-700">
+                    {{ p.usuario?.email ?? '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-mineral-green-700">
+                    {{ p.usuario?.telefono ?? '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-mineral-green-600 max-w-40 truncate"
+                    :title="p.usuario?.direccion ?? ''">
+                    {{ p.usuario?.direccion ?? '—' }}
+                  </td>
                   <td class="px-4 py-3">
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
@@ -210,26 +217,19 @@ onMounted(() => store.fetchAll())
           </div>
 
           <!-- Paginación -->
-          <div v-if="store.paginas > 1" class="flex items-center justify-between px-4 py-3 border-t bg-mineral-green-50/30">
+          <div v-if="store.paginas > 1"
+            class="flex items-center justify-between px-4 py-3 border-t bg-mineral-green-50/30">
             <span class="text-sm text-muted-foreground">
               Página {{ store.paginaActual }} de {{ store.paginas }} — {{ store.total }} registros
             </span>
             <div class="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="store.paginaActual <= 1"
-                @click="goToPage(store.paginaActual - 1)"
-              >
+              <Button variant="outline" size="sm" :disabled="store.paginaActual <= 1"
+                @click="goToPage(store.paginaActual - 1)">
                 <ChevronLeft class="h-4 w-4" />
               </Button>
               <span class="px-2 text-sm font-medium">{{ store.paginaActual }}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="store.paginaActual >= store.paginas"
-                @click="goToPage(store.paginaActual + 1)"
-              >
+              <Button variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
+                @click="goToPage(store.paginaActual + 1)">
                 <ChevronRight class="h-4 w-4" />
               </Button>
             </div>
@@ -244,10 +244,18 @@ onMounted(() => store.fetchAll())
   <RegisterPropietarioView
     v-model:open="modalOpen"
     :propietario="editingPropietario"
+    @saved="store.fetchAll(store.paginaActual)"
   />
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 </style>
