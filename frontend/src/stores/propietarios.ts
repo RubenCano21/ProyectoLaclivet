@@ -1,11 +1,31 @@
-import type { Propietario } from '@/models/propietario'
 import api from '@/services/apiClient'
 import type { AxiosError } from 'axios'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export interface Propietario {
+  id: number
+  usuario: {
+    id: number
+    first_name: string
+    last_name: string
+    ci: string | null
+    email: string
+    telefono: string | null
+    direccion: string | null
+    fecha_nacimiento: string | null
+  } | null
+}
 
-export type PropietarioForm = Omit<Propietario, 'id'>
+export interface PropietarioForm {
+  first_name: string
+  last_name: string
+  ci: string
+  email: string
+  telefono: string
+  direccion: string
+  fecha_nacimiento: string
+}
 
 interface ApiResult {
   ok: boolean
@@ -53,6 +73,7 @@ export const usePropietariosStore = defineStore('propietarios', () => {
     try {
       const { data } = await api.post('/propietarios/', form)
       items.value.unshift(data)
+      total.value += 1
       return { ok: true }
     } catch (err) {
       return { ok: false, error: extractError(err) }
@@ -79,6 +100,7 @@ export const usePropietariosStore = defineStore('propietarios', () => {
     try {
       await api.delete(`/propietarios/${id}/`)
       items.value = items.value.filter(p => p.id !== id)
+      total.value = Math.max(0, total.value - 1)
       return { ok: true }
     } catch (err) {
       return { ok: false, error: extractError(err) }

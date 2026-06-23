@@ -21,14 +21,15 @@ import MedicoFormView from './MedicoFormView.vue'
 const store = useMedicosStore()
 
 const search = ref('')
+// filtered — script
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return store.items
   return store.items.filter(m =>
-    m.nombre.toLowerCase().includes(q) ||
-    m.apellido.toLowerCase().includes(q) ||
+    m.usuario.first_name.toLowerCase().includes(q) ||
+    m.usuario.last_name.toLowerCase().includes(q) ||
     (m.especialidad ?? '').toLowerCase().includes(q) ||
-    (m.correo ?? '').toLowerCase().includes(q),
+    m.usuario.email.toLowerCase().includes(q),
   )
 })
 
@@ -110,11 +111,7 @@ onMounted(() => store.fetchAll())
 
         <div class="relative max-w-sm">
           <Search class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-muted-foreground" />
-          <Input
-            v-model="search"
-            placeholder="Buscar por nombre, especialidad, correo…"
-            class="pl-9"
-          />
+          <Input v-model="search" placeholder="Buscar por nombre, especialidad, correo…" class="pl-9" />
         </div>
 
         <div v-if="store.loading" class="flex items-center justify-center py-16 gap-3 text-muted-foreground">
@@ -150,49 +147,38 @@ onMounted(() => store.fetchAll())
                   </td>
                 </tr>
 
-                <tr
-                  v-for="(m, index) in filtered"
-                  :key="m.id"
-                  class="border-b last:border-0 hover:bg-mineral-green-50/40 transition-colors"
-                >
+                <tr v-for="(m, index) in filtered" :key="m.id"
+                  class="border-b last:border-0 hover:bg-mineral-green-50/40 transition-colors">
                   <td class="px-4 py-3 font-medium text-mineral-green-950">{{ index + 1 }}</td>
-                  <td class="px-4 py-3 text-mineral-green-800">{{ m.nombre }}</td>
-                  <td class="px-4 py-3 text-mineral-green-800">{{ m.apellido }}</td>
+                  <!-- tabla — template -->
+                  <td class="px-4 py-3 text-mineral-green-800">{{ m.usuario.first_name }}</td>
+                  <td class="px-4 py-3 text-mineral-green-800">{{ m.usuario.last_name }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ m.especialidad || '—' }}</td>
                   <td class="px-4 py-3 text-mineral-green-700">{{ generoLabel(m.genero) }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ m.correo || '—' }}</td>
-                  <td class="px-4 py-3 text-mineral-green-700">{{ m.telefono || '—' }}</td>
+                  <td class="px-4 py-3 text-mineral-green-700">{{ m.usuario.email || '—' }}</td>
+                  <td class="px-4 py-3 text-mineral-green-700">{{ m.usuario.telefono || '—' }}</td>
                   <td class="px-4 py-3">
                     <div v-if="confirmDeleteId !== m.id" class="flex items-center justify-center gap-1">
-                      <button
-                        @click="openEdit(m)"
+                      <button @click="openEdit(m)"
                         class="p-1.5 rounded-md text-mineral-green-600 hover:bg-mineral-green-100 transition-colors"
-                        title="Editar"
-                      >
+                        title="Editar">
                         <Pencil class="h-4 w-4" />
                       </button>
-                      <button
-                        @click="confirmDeleteId = m.id"
-                        class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
-                        title="Eliminar"
-                      >
+                      <button @click="confirmDeleteId = m.id"
+                        class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors" title="Eliminar">
                         <Trash2 class="h-4 w-4" />
                       </button>
                     </div>
 
                     <div v-else class="flex items-center justify-center gap-1">
-                      <button
-                        @click="handleDelete(m.id)"
+                      <button @click="handleDelete(m.id)"
                         class="p-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        title="Confirmar eliminación"
-                      >
+                        title="Confirmar eliminación">
                         <Check class="h-4 w-4" />
                       </button>
-                      <button
-                        @click="confirmDeleteId = null"
+                      <button @click="confirmDeleteId = null"
                         class="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
-                        title="Cancelar"
-                      >
+                        title="Cancelar">
                         <X class="h-4 w-4" />
                       </button>
                     </div>
@@ -202,26 +188,19 @@ onMounted(() => store.fetchAll())
             </table>
           </div>
 
-          <div v-if="store.paginas > 1" class="flex items-center justify-between px-4 py-3 border-t bg-mineral-green-50/30">
+          <div v-if="store.paginas > 1"
+            class="flex items-center justify-between px-4 py-3 border-t bg-mineral-green-50/30">
             <span class="text-sm text-muted-foreground">
               Página {{ store.paginaActual }} de {{ store.paginas }} — {{ store.total }} registros
             </span>
             <div class="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="store.paginaActual <= 1"
-                @click="goToPage(store.paginaActual - 1)"
-              >
+              <Button variant="outline" size="sm" :disabled="store.paginaActual <= 1"
+                @click="goToPage(store.paginaActual - 1)">
                 <ChevronLeft class="h-4 w-4" />
               </Button>
               <span class="px-2 text-sm font-medium">{{ store.paginaActual }}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="store.paginaActual >= store.paginas"
-                @click="goToPage(store.paginaActual + 1)"
-              >
+              <Button variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
+                @click="goToPage(store.paginaActual + 1)">
                 <ChevronRight class="h-4 w-4" />
               </Button>
             </div>
@@ -232,14 +211,18 @@ onMounted(() => store.fetchAll())
     </SidebarInset>
   </SidebarProvider>
 
-  <MedicoFormView
-    v-model:open="modalOpen"
-    :medico="editingMedico"
-    @saved="store.fetchAll(store.paginaActual)"
-  />
+  <MedicoFormView v-model:open="modalOpen" :medico="editingMedico" @saved="store.fetchAll(store.paginaActual)" />
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 </style>

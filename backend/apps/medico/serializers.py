@@ -1,81 +1,205 @@
+import re
 from rest_framework import serializers
+from django.db import transaction
 from .models import MedicoVeterinario
+from apps.usuarios.models import Usuario, Rol
 from apps.core.validators import validar_formato_ci, validar_ci_unico_global
 
 
+class UsuarioMedicoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ['id', 'first_name', 'last_name', 'ci', 'email', 'telefono', 'direccion']
+
+
 class MedicoVeterinarioSerializer(serializers.ModelSerializer):
+    usuario = UsuarioMedicoSerializer(read_only=True)
+
     class Meta:
         model = MedicoVeterinario
-        fields = ['id', 'nombre', 'apellido', 'ci', 'especialidad', 'genero', 'correo', 'telefono', 'direccion']  # ← ci
+        fields = ['id', 'usuario', 'especialidad', 'clinica_procedencia', 'genero']
 
 
-class MedicoVeterinarioCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MedicoVeterinario
-        fields = ['nombre', 'apellido', 'ci', 'especialidad', 'genero', 'correo', 'telefono', 'direccion']  # ← ci
-        extra_kwargs = {
-            'nombre': {'required': True},
-            'apellido': {'required': True},
-        }
+class MedicoVeterinarioCreateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=True, max_length=100)
+    last_name = serializers.CharField(required=True, max_length=100)
+    ci = serializers.CharField(required=True, max_length=10)
+    email = serializers.EmailField(required=True)
+    telefono = serializers.CharField(required=False, allow_blank=True, max_length=8)
+    direccion = serializers.CharField(required=False, allow_blank=True)
+    especialidad = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    clinica_procedencia = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    genero = serializers.ChoiceField(
+        choices=[('M', 'Masculino'), ('F', 'Femenino'), ('O', 'Otro')],
+        required=False, allow_null=True
+    )
 
     def validate_ci(self, value):
         validar_formato_ci(value)
         validar_ci_unico_global(value)
         return value
 
-    def validate_correo(self, value):
-        if value and MedicoVeterinario.objects.filter(correo=value).exists():
-            raise serializers.ValidationError("Ya existe un médico registrado con este correo.")
-        return value
-
-    def validate_nombre(self, value):
-        import re
+    def validate_first_name(self, value):
         if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', value):
             raise serializers.ValidationError("El nombre solo puede contener letras.")
         return value.strip()
 
-    def validate_apellido(self, value):
-        import re
+    def validate_last_name(self, value):
         if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', value):
             raise serializers.ValidationError("El apellido solo puede contener letras.")
         return value.strip()
 
     def validate_telefono(self, value):
-        import re
         if value and not re.match(r'^\d{7,8}$', value):
             raise serializers.ValidationError("El teléfono debe contener solo números (7 u 8 dígitos).")
         return value
 
+    def validate_email(self, value):
+        if Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Este email ya está registrado.")
+        return value
 
-class MedicoVeterinarioUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MedicoVeterinario
-        fields = ['nombre', 'apellido', 'ci', 'especialidad', 'genero', 'correo', 'telefono', 'direccion']  # ← ci
+    def _generar_username(self, email):
+        base = (email or '').split('@')[0][:140] or 'user'
+        username = base
+        i = 1
+        while Usuario.objects.filter(username=username).exists():
+            i += 1
+            username = f"{base}{i}"[:150]
+        return username
+
+    def _generar_password_default(self, data):
+        last_name = data.get('last_name', '').strip().lower()
+        primer_apellido = last_name.split()[0] if last_name else 'usuario'
+        ci = data.get('ci', '').strip()
+        return f"{primer_apellido}.{ci}" if ci else primer_apellido
+
+    @transaction.atomic
+    def create(self, validated_data):
+        rol_medico, _ = Rol.objects.get_or_create(
+            nombre='Medico Externo',
+            defaults={'descripcion': 'Solo resultados de sus solicitudes'}
+        )
+        password = self._generar_password_default(validated_data)
+        username = self._generar_username(validated_data['email'])
+
+        usuario = Usuario.objects.create(
+            username=username,
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            ci=validated_data['ci'],
+            telefono=validated_data.get('telefono', ''),
+            direccion=validated_data.get('direccion', ''),
+            rol=rol_medico,
+        )
+        usuario.set_password(password)
+        usuario.save()
+
+        medico = MedicoVeterinario.objects.create(
+            usuario=usuario,
+            especialidad=validated_data.get('especialidad', ''),
+            clinica_procedencia=validated_data.get('clinica_procedencia', ''),
+            genero=validated_data.get('genero'),
+        )
+        return medico
+
+
+class MedicoVeterinarioUpdateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=False, max_length=100)
+    last_name = serializers.CharField(required=False, max_length=100)
+    ci = serializers.CharField(required=False, max_length=10)
+    email = serializers.EmailField(required=False)
+    telefono = serializers.CharField(required=False, allow_blank=True, max_length=8)
+    direccion = serializers.CharField(required=False, allow_blank=True)
+    especialidad = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    clinica_procedencia = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    genero = serializers.ChoiceField(
+        choices=[('M', 'Masculino'), ('F', 'Femenino'), ('O', 'Otro')],
+        required=False, allow_null=True
+    )
 
     def validate_ci(self, value):
         validar_formato_ci(value)
-        validar_ci_unico_global(value, exclude_medico_pk=self.instance.pk)  # ← excluye el actual
+        instance = self.instance
+        validar_ci_unico_global(
+            value,
+            exclude_usuario_pk=instance.usuario.pk if instance and instance.usuario else None,
+        )
         return value
 
-    def validate_correo(self, value):
-        if value and MedicoVeterinario.objects.exclude(pk=self.instance.pk).filter(correo=value).exists():
-            raise serializers.ValidationError("Ya existe un médico registrado con este correo.")
+    def validate_email(self, value):
+        instance = self.instance
+        usuario_pk = instance.usuario.pk if instance and instance.usuario else None
+        if Usuario.objects.exclude(pk=usuario_pk).filter(email=value).exists():
+            raise serializers.ValidationError("Este email ya está registrado por otro usuario.")
         return value
 
-    def validate_nombre(self, value):
-        import re
+    def validate_first_name(self, value):
         if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', value):
             raise serializers.ValidationError("El nombre solo puede contener letras.")
         return value.strip()
 
-    def validate_apellido(self, value):
-        import re
+    def validate_last_name(self, value):
         if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', value):
             raise serializers.ValidationError("El apellido solo puede contener letras.")
         return value.strip()
 
     def validate_telefono(self, value):
-        import re
         if value and not re.match(r'^\d{7,8}$', value):
             raise serializers.ValidationError("El teléfono debe contener solo números (7 u 8 dígitos).")
         return value
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        usuario = instance.usuario
+
+        # Si no tiene usuario vinculado, crear uno nuevo
+        if usuario is None:
+            rol_medico, _ = Rol.objects.get_or_create(
+                nombre='Medico Externo',
+                defaults={'descripcion': 'Solo resultados de sus solicitudes'}
+            )
+            base_email = validated_data.get('email', f'medico{instance.pk}@laclivet.com')
+            base = base_email.split('@')[0][:140] or 'medico'
+            username = base
+            i = 1
+            while Usuario.objects.filter(username=username).exists():
+                i += 1
+                username = f"{base}{i}"[:150]
+
+            last_name = validated_data.get('last_name', '').strip().lower()
+            primer_apellido = last_name.split()[0] if last_name else 'usuario'
+            ci = validated_data.get('ci', '')
+            password = f"{primer_apellido}.{ci}" if ci else primer_apellido
+
+            usuario = Usuario.objects.create(
+                username=username,
+                email=base_email,
+                first_name=validated_data.get('first_name', ''),
+                last_name=validated_data.get('last_name', ''),
+                ci=validated_data.get('ci'),
+                telefono=validated_data.get('telefono', ''),
+                direccion=validated_data.get('direccion', ''),
+                rol=rol_medico,
+            )
+            usuario.set_password(password)
+            usuario.save()
+            instance.usuario = usuario
+            instance.save()
+        else:
+            # Actualizar usuario existente
+            campos_usuario = ['first_name', 'last_name', 'ci', 'email', 'telefono', 'direccion']
+            for campo in campos_usuario:
+                if campo in validated_data:
+                    setattr(usuario, campo, validated_data[campo])
+            usuario.save()
+
+        # Actualizar campos del médico
+        campos_medico = ['especialidad', 'clinica_procedencia', 'genero']
+        for campo in campos_medico:
+            if campo in validated_data:
+                setattr(instance, campo, validated_data[campo])
+        instance.save()
+
+        return instance

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { usePropietariosStore, type PropietarioForm } from '@/stores/propietarios'
+import { usePropietariosStore, type PropietarioForm, type Propietario } from '@/stores/propietarios'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertCircle, Loader2 } from 'lucide-vue-next'
-import type { Propietario } from '@/models/propietario'
 
 const props = defineProps<{
   open: boolean
@@ -23,25 +22,32 @@ const store = usePropietariosStore()
 const formError = ref<string | null>(null)
 
 const emptyForm = (): PropietarioForm => ({
-  ci: '', nombre: '', apellido: '', correo: '', telefono: '', direccion: '',
+  first_name: '',
+  last_name: '',
+  ci: '',
+  email: '',
+  telefono: '',
+  direccion: '',
+  fecha_nacimiento: '',
 })
 
 const form = ref<PropietarioForm>(emptyForm())
 
-// Sincroniza el form cuando cambia el propietario (edición) o se abre para crear
 watch(
   () => props.open,
   (val) => {
     if (!val) return
     formError.value = null
-    form.value = props.propietario
+    const u = props.propietario?.usuario
+    form.value = u
       ? {
-          ci: props.propietario.ci,
-          nombre: props.propietario.nombre,
-          apellido: props.propietario.apellido,
-          correo: props.propietario.correo,
-          telefono: props.propietario.telefono,
-          direccion: props.propietario.direccion,
+          first_name: u.first_name,
+          last_name: u.last_name,
+          ci: u.ci ?? '',
+          email: u.email,
+          telefono: u.telefono ?? '',
+          direccion: u.direccion ?? '',
+          fecha_nacimiento: u.fecha_nacimiento ?? '',
         }
       : emptyForm()
   },
@@ -74,19 +80,13 @@ async function handleSubmit() {
           {{ propietario ? 'Editar propietario' : 'Nuevo propietario' }}
         </DialogTitle>
         <DialogDescription>
-          {{ propietario ? 'Modifica los datos del propietario.' : 'Completa el formulario para registrar un nuevo propietario.' }}
+          {{ propietario
+            ? 'Modifica los datos del propietario.'
+            : 'Completa el formulario para registrar un nuevo propietario.' }}
         </DialogDescription>
       </DialogHeader>
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
-
-        <!-- CI -->
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium">
-            Cédula de identidad <span class="text-red-500">*</span>
-          </label>
-          <Input v-model="form.ci" placeholder="Ej: 12345678" required maxlength="10" />
-        </div>
 
         <!-- Nombre + Apellido -->
         <div class="grid grid-cols-2 gap-4">
@@ -94,14 +94,28 @@ async function handleSubmit() {
             <label class="block text-sm font-medium">
               Nombre <span class="text-red-500">*</span>
             </label>
-            <Input v-model="form.nombre" placeholder="Juan" required maxlength="50" />
+            <Input v-model="form.first_name" placeholder="Juan" required maxlength="50" />
           </div>
           <div class="space-y-1.5">
             <label class="block text-sm font-medium">
               Apellido <span class="text-red-500">*</span>
             </label>
-            <Input v-model="form.apellido" placeholder="Pérez" required maxlength="50" />
+            <Input v-model="form.last_name" placeholder="Pérez" required maxlength="50" />
           </div>
+        </div>
+
+        <!-- CI -->
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium">
+            CI <span class="text-red-500">*</span>
+          </label>
+          <Input
+            v-model="form.ci"
+            placeholder="Ej: 12345678"
+            required
+            maxlength="10"
+            @input="form.ci = form.ci.replace(/\D/g, '')"
+          />
         </div>
 
         <!-- Correo -->
@@ -109,21 +123,51 @@ async function handleSubmit() {
           <label class="block text-sm font-medium">
             Correo electrónico <span class="text-red-500">*</span>
           </label>
-          <Input v-model="form.correo" type="email" placeholder="juan@correo.com" required />
+          <Input v-model="form.email" type="email" placeholder="juan@correo.com" required />
         </div>
 
-        <!-- Teléfono -->
-        <div class="space-y-1.5">
-          <label class="block text-sm font-medium">
-            Teléfono <span class="text-red-500">*</span>
-          </label>
-          <Input v-model="form.telefono" type="tel" placeholder="Ej: 70012345" required maxlength="15" />
+        <!-- Teléfono + Fecha de nacimiento -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium">Teléfono</label>
+            <Input
+              v-model="form.telefono"
+              type="tel"
+              placeholder="Ej: 70012345"
+              maxlength="8"
+              @input="form.telefono = form.telefono.replace(/\D/g, '')"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium">Fecha de nacimiento</label>
+            <Input
+              v-model="form.fecha_nacimiento"
+              type="date"
+              :max="new Date().toISOString().split('T')[0]"
+            />
+          </div>
         </div>
 
         <!-- Dirección -->
         <div class="space-y-1.5">
           <label class="block text-sm font-medium">Dirección</label>
-          <Input v-model="form.direccion" placeholder="Calle, barrio, ciudad" maxlength="100" />
+          <Input
+            v-model="form.direccion"
+            placeholder="Calle, barrio, ciudad"
+            maxlength="100"
+          />
+        </div>
+
+        <!-- Aviso contraseña automática (solo creación) -->
+        <div
+          v-if="!propietario"
+          class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
+        >
+          🔑 Contraseña inicial:
+          <strong>
+            {{ form.last_name ? form.last_name.trim().split(' ')[0].toLowerCase() : 'apellido' }}.{{ form.ci || 'ci' }}
+          </strong>
+          — el propietario deberá cambiarla al ingresar.
         </div>
 
         <!-- Error del servidor -->
