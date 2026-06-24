@@ -15,8 +15,8 @@ const userName = computed(() =>
     : ''
 )
 
-function logout() {
-  authStore.logout()
+async function logout() {
+  await authStore.logout()
   router.push({ name: 'login' })
 }
 </script>

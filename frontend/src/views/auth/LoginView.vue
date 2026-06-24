@@ -10,7 +10,7 @@ import {
 const auth = useAuthStore()
 const router = useRouter()
 
-const email    = ref('')
+const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 
@@ -23,7 +23,9 @@ async function handleLogin() {
 <template>
   <!-- Playfair Display + DM Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+    rel="stylesheet" />
 
   <div class="min-h-screen flex items-stretch font-['DM_Sans',sans-serif]">
 
@@ -50,10 +52,9 @@ async function handleLogin() {
 
       <!-- Partículas -->
       <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <span v-for="n in 16" :key="n"
-              class="absolute w-0.75 h-0.75 rounded-full bg-white/20
+        <span v-for="n in 16" :key="n" class="absolute w-0.75 h-0.75 rounded-full bg-white/20
                      animate-[floatUp_8s_ease-in-out_infinite]"
-              :style="`left:${n*6}%;top:${n*5+8}%;animation-delay:-${n*0.5}s;animation-duration:${7+n*0.4}s`" />
+          :style="`left:${n * 6}%;top:${n * 5 + 8}%;animation-delay:-${n * 0.5}s;animation-duration:${7 + n * 0.4}s`" />
       </div>
 
       <!-- Contenido -->
@@ -80,14 +81,9 @@ async function handleLogin() {
 
           <!-- Foto con anillos orbitantes -->
           <div class="relative w-52 h-52 animate-[heroIn_1s_ease_both]">
-            <img
-              src="@/assets/images/perrolab.jpeg"
-              alt="Laboratorio clínico veterinario"
-              class="w-full h-full rounded-full object-cover object-center
+            <img src="@/assets/images/perrolab.jpeg" alt="Laboratorio clínico veterinario" class="w-full h-full rounded-full object-cover object-center
                      opacity-60 border-2 border-white/15
-                     filter-[saturate(.9)_brightness(.95)]"
-              draggable="false"
-            />
+                     filter-[saturate(.9)_brightness(.95)]" draggable="false" />
             <span class="absolute -inset-3 rounded-full border border-white/10
                          pointer-events-none animate-[spinRing_25s_linear_infinite]" />
             <span class="absolute -inset-6 rounded-full border border-dashed border-white/[.07]
@@ -187,22 +183,15 @@ async function handleLogin() {
                            group-focus-within:text-mineral-green-700">
                 <Mail class="w-4 h-4" />
               </span>
-              <input
-                id="email"
-                v-model="email"
-                type="email"
-                autocomplete="email"
-                required
-                placeholder="ejemplo@laclivet.com"
-                class="w-full rounded-[.875rem] border-[1.5px] border-mineral-green-200
+              <input id="email" v-model="email" type="email" autocomplete="email" required
+                placeholder="ejemplo@laclivet.com" class="w-full rounded-[.875rem] border-[1.5px] border-mineral-green-200
                        bg-mineral-green-50/60 py-3 pl-10 pr-4
                        text-sm text-mineral-green-950 placeholder-mineral-green-400/70
                        font-['DM_Sans',sans-serif]
                        transition
                        focus:border-mineral-green-600 focus:bg-white
                        focus:outline-none focus:ring-[3px] focus:ring-mineral-green-500/15
-                       focus:shadow-[0_0_18px_rgba(74,222,128,.14)]"
-              />
+                       focus:shadow-[0_0_18px_rgba(74,222,128,.14)]" />
             </div>
           </div>
 
@@ -217,31 +206,19 @@ async function handleLogin() {
                            group-focus-within:text-mineral-green-700">
                 <Lock class="w-4 h-4" />
               </span>
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                autocomplete="current-password"
-                required
-                placeholder="••••••••"
-                class="w-full rounded-[.875rem] border-[1.5px] border-mineral-green-200
+              <input id="password" v-model="password" :type="showPassword ? 'text' : 'password'"
+                autocomplete="current-password" required placeholder="••••••••" class="w-full rounded-[.875rem] border-[1.5px] border-mineral-green-200
                        bg-mineral-green-50/60 py-3 pl-10 pr-11
                        text-sm text-mineral-green-950 placeholder-mineral-green-400/70
                        font-['DM_Sans',sans-serif]
                        transition
                        focus:border-mineral-green-600 focus:bg-white
                        focus:outline-none focus:ring-[3px] focus:ring-mineral-green-500/15
-                       focus:shadow-[0_0_18px_rgba(74,222,128,.14)]"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 flex items-center pr-3.5
+                       focus:shadow-[0_0_18px_rgba(74,222,128,.14)]" />
+              <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center pr-3.5
                        text-mineral-green-400 hover:text-mineral-green-700
-                       transition-colors bg-transparent border-none cursor-pointer"
-                tabindex="-1"
-                :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-              >
+                       transition-colors bg-transparent border-none cursor-pointer" tabindex="-1"
+                :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
                 <EyeOff v-if="showPassword" class="w-4 h-4" />
                 <Eye v-else class="w-4 h-4" />
               </button>
@@ -250,21 +227,15 @@ async function handleLogin() {
 
           <!-- Error -->
           <transition name="fade">
-            <div
-              v-if="auth.error"
-              class="flex items-start gap-2.5 rounded-[.875rem]
-                     border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-            >
+            <div v-if="auth.error" class="flex items-start gap-2.5 rounded-[.875rem]
+                     border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               <AlertCircle class="mt-0.5 w-4 h-4 shrink-0" />
               <span>{{ auth.error }}</span>
             </div>
           </transition>
 
           <!-- Botón submit -->
-          <button
-            type="submit"
-            :disabled="auth.loading"
-            class="relative overflow-hidden mt-1
+          <button type="submit" :disabled="auth.loading" class="relative overflow-hidden mt-1
                    flex w-full items-center justify-center gap-2
                    rounded-[.875rem]
                    bg-[linear-gradient(135deg,#1a4a2e_0%,#2d6e47_100%)]
@@ -296,6 +267,24 @@ async function handleLogin() {
         </div>
 
         <!-- Footer -->
+        <div
+          class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-5 max-w-sm mx-auto mt-4">
+
+          <div
+            class="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium px-2.5 py-1 rounded-md mb-4">
+            Usuario de prueba
+          </div>
+          <div class="flex items-center gap-2.5 py-2.5 border-t border-zinc-100 dark:border-zinc-800">
+            <span class="text-xs text-zinc-400 w-20 shrink-0">Correo</span>
+            <span
+              class="text-xs text-zinc-700 dark:text-zinc-300 flex-1 truncate">admin@production.laclivet.com</span>
+          </div>
+
+          <div class="flex items-center gap-2.5 py-2.5 border-t border-zinc-100 dark:border-zinc-800">
+            <span class="text-xs text-zinc-400 w-20 shrink-0">Contraseña</span>
+            <span class="text-xs text-zinc-700 dark:text-zinc-300 flex-1 tracking-widest">admin123</span>
+          </div>
+        </div>
         <p class="mt-3 text-center text-[.68rem] text-mineral-green-300 tracking-wide">
           Acceso restringido · Solo personal autorizado
         </p>
@@ -309,52 +298,133 @@ async function handleLogin() {
 /* Keyframes: declarados aquí, invocados via clases arbitrarias [animation:...] de Tailwind */
 
 @keyframes drift {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(28px, 18px) scale(1.08); }
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(28px, 18px) scale(1.08);
+  }
 }
+
 @keyframes pulseOrb {
-  0%, 100% { opacity: .4; transform: translate(-50%, -50%) scale(1); }
-  50%       { opacity: .75; transform: translate(-50%, -50%) scale(1.15); }
+
+  0%,
+  100% {
+    opacity: .4;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    opacity: .75;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
 }
+
 @keyframes floatUp {
-  0%   { transform: translateY(0) scale(1);    opacity: .55; }
-  50%  { transform: translateY(-38px) scale(1.4); opacity: 1; }
-  100% { transform: translateY(-76px) scale(.8);  opacity: 0; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: .55;
+  }
+
+  50% {
+    transform: translateY(-38px) scale(1.4);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-76px) scale(.8);
+    opacity: 0;
+  }
 }
+
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: .3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .3;
+  }
 }
+
 @keyframes heroIn {
-  from { opacity: 0; transform: scale(.86) translateY(18px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(.86) translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
+
 @keyframes spinRing {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(22px) scale(.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
+
 @keyframes shimmerLine {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
 }
+
 @keyframes shimmerBtn {
-  0%   { left: -100%; }
-  60%  { left: 160%; }
-  100% { left: 160%; }
+  0% {
+    left: -100%;
+  }
+
+  60% {
+    left: 160%;
+  }
+
+  100% {
+    left: 160%;
+  }
 }
 
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity .2s ease, transform .2s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
