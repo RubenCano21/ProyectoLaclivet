@@ -1,3 +1,4 @@
+from apps.core.permissions import EsStaffInterno
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,8 +17,36 @@ from .serializers import (
 _del_response = openapi.Response('Eliminado exitosamente')
 
 
+def _permisos_lectura_o_staff(request):
+    """
+    GET/HEAD/OPTIONS: cualquier usuario autenticado puede ver.
+    POST/PUT/PATCH/DELETE: solo staff interno (Administrador, Veterinario, Recepcionista)
+    puede gestionar.
+    """
+    if request.method in permissions.SAFE_METHODS:
+        return permissions.IsAuthenticated().has_permission(request, None)
+    return EsStaffInterno().has_permission(request, None)
+
+
+class _CatalogoBasePermissionMixin:
+    """
+    Mixin que aplica la regla: lectura abierta a cualquier autenticado,
+    escritura restringida a EsStaffInterno. No declarar permission_classes
+    en las subclases que usen este mixin (se deja IsAuthenticated solo
+    como base para que DRF no bloquee antes de tiempo).
+    """
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if not _permisos_lectura_o_staff(request):
+            self.permission_denied(
+                request,
+                message="No tiene permiso para realizar esta acción.",
+            )
+
+
 # ── CatalogoExamen ────────────────────────────────────────
-class CatalogoExamenListCreateView(APIView):
+class CatalogoExamenListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar catálogos de examen", responses={200: CatalogoExamenSerializer(many=True)})
@@ -35,7 +64,7 @@ class CatalogoExamenListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CatalogoExamenDetailView(APIView):
+class CatalogoExamenDetailView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
@@ -81,12 +110,15 @@ class CatalogoExamenDetailView(APIView):
 
 
 # ── Examen ────────────────────────────────────────────────
-class ExamenListCreateView(APIView):
+class ExamenListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar exámenes", responses={200: ExamenSerializer(many=True)})
     def get(self, request):
         qs = Examen.objects.select_related('catalogo').all()
+        catalogo_id = request.query_params.get('catalogo')
+        if catalogo_id:
+            qs = qs.filter(catalogo_id=catalogo_id)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ExamenSerializer(pagina, many=True).data)
@@ -99,7 +131,7 @@ class ExamenListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ExamenDetailView(APIView):
+class ExamenDetailView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
@@ -145,12 +177,15 @@ class ExamenDetailView(APIView):
 
 
 # ── Parametro ─────────────────────────────────────────────
-class ParametroListCreateView(APIView):
+class ParametroListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar parámetros", responses={200: ParametroSerializer(many=True)})
     def get(self, request):
         qs = Parametro.objects.select_related('examen').all()
+        examen_id = request.query_params.get('examen')
+        if examen_id:
+            qs = qs.filter(examen_id=examen_id)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ParametroSerializer(pagina, many=True).data)
@@ -163,7 +198,7 @@ class ParametroListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ParametroDetailView(APIView):
+class ParametroDetailView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
@@ -209,12 +244,15 @@ class ParametroDetailView(APIView):
 
 
 # ── ValorReferencia ───────────────────────────────────────
-class ValorReferenciaListCreateView(APIView):
+class ValorReferenciaListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar valores de referencia", responses={200: ValorReferenciaSerializer(many=True)})
     def get(self, request):
         qs = ValorReferencia.objects.select_related('parametro').all()
+        parametro_id = request.query_params.get('parametro')
+        if parametro_id:
+            qs = qs.filter(parametro_id=parametro_id)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ValorReferenciaSerializer(pagina, many=True).data)
@@ -227,7 +265,7 @@ class ValorReferenciaListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ValorReferenciaDetailView(APIView):
+class ValorReferenciaDetailView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
