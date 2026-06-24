@@ -41,6 +41,8 @@ class Command(BaseCommand):
             {'nombre': 'Crear Consulta', 'codigo': 'crear_consulta', 'descripcion': 'Registrar consultas médicas'},
             {'nombre': 'Ver Consultas', 'codigo': 'ver_consultas', 'descripcion': 'Ver historial de consultas'},
             {'nombre': 'Ver Reportes', 'codigo': 'ver_reportes', 'descripcion': 'Acceso a reportes del sistema'},
+            {'nombre': 'Ver Catálogo', 'codigo': 'ver_catalogo', 'descripcion': 'Ver catálogo de exámenes'},
+            {'nombre': 'Gestionar Catálogo', 'codigo': 'gestionar_catalogo','descripcion': 'Crear, editar y eliminar catálogo de exámenes'},
         ]
 
         permisos = {}
@@ -65,7 +67,8 @@ class Command(BaseCommand):
         permisos_veterinario = [
             'ver_usuarios', 'ver_mascotas', 'editar_mascota',
             'crear_cita', 'editar_cita', 'ver_citas',
-            'crear_consulta', 'ver_consultas', 'ver_reportes'
+            'crear_consulta', 'ver_consultas', 'ver_reportes',
+            'ver_catalogo',
         ]
         for codigo in permisos_veterinario:
             RolPermiso.objects.get_or_create(rol=roles['Veterinario'], permiso=permisos[codigo])
@@ -73,13 +76,14 @@ class Command(BaseCommand):
 
         permisos_recepcionista = [
             'ver_usuarios', 'crear_mascota', 'editar_mascota', 'ver_mascotas',
-            'crear_cita', 'editar_cita', 'cancelar_cita', 'ver_citas'
+            'crear_cita', 'editar_cita', 'cancelar_cita', 'ver_citas',
+            'ver_catalogo',
         ]
         for codigo in permisos_recepcionista:
             RolPermiso.objects.get_or_create(rol=roles['Recepcionista'], permiso=permisos[codigo])
         self.stdout.write(f"Recepcionista: {len(permisos_recepcionista)} permisos asignados")
 
-        permisos_cliente = ['ver_mascotas', 'crear_cita', 'ver_citas', 'ver_consultas']
+        permisos_cliente = ['ver_mascotas', 'crear_cita', 'ver_citas', 'ver_consultas', 'ver_catalogo']
         for codigo in permisos_cliente:
             RolPermiso.objects.get_or_create(rol=roles['Cliente'], permiso=permisos[codigo])
         self.stdout.write(f"Cliente: {len(permisos_cliente)} permisos asignados")

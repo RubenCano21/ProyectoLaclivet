@@ -1,4 +1,4 @@
-from apps.core.permissions import EsStaffInterno, EsMedicoExterno
+from apps.core.permissions import EsStaffInterno, EsMedicoExternoReadOnly
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -83,7 +83,7 @@ class MedicoVeterinarioDetailView(APIView):
 
 
 class ResultadosMedicoVeterinarioView(APIView):
-    permission_classes = [EsMedicoExterno]
+    permission_classes = [EsMedicoExternoReadOnly]
 
     def get(self, request):
         # El médico autenticado ve solo sus propios resultados
