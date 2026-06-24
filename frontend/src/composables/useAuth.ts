@@ -17,8 +17,8 @@ export function useAuth() {
     return ok
   }
 
-  function logout() {
-    authStore.logout()
+  async function logout() {
+    await authStore.logout()
     router.push({ name: 'login' })
   }
 
