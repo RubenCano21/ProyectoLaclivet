@@ -1,9 +1,7 @@
 from rest_framework import serializers
 from apps.propietario.models import Propietario
-from apps.usuarios.serializers import RegistroUsuarioSerializer
 from apps.usuarios.models import Usuario, Rol
 from apps.core.validators import validar_formato_ci, validar_ci_unico_global, generar_username, generar_password_default
-from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 
 
