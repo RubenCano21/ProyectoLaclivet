@@ -51,7 +51,7 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
 
     def get_medico_nombre(self, obj):
         if obj.medico_veterinario:
-            return f"{obj.medico_veterinario.nombre} {obj.medico_veterinario.apellido}"
+            return f"{obj.medico_veterinario.usuario.first_name} {obj.medico_veterinario.usuario.last_name}"
         return None
 
     def get_paciente_nombre(self, obj):
@@ -62,7 +62,7 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
     def get_propietario_nombre(self, obj):
         if obj.paciente and obj.paciente.propietario:
             p = obj.paciente.propietario
-            return f"{p.nombre} {p.apellido}"
+            return f"{p.usuario.first_name} {p.usuario.last_name}"
         return None
 
 
