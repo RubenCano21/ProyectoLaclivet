@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import {
   Plus, Search, Pencil, Trash2, Loader2,
   AlertCircle, PawPrint, Check, X, ChevronLeft, ChevronRight,
+  FileDiff,
 } from 'lucide-vue-next'
 import PacienteFormView from './PacienteFormView.vue'
 import type { Paciente } from '@/models/paciente.ts'
@@ -112,6 +113,10 @@ function onSaved() {
   loadPacientes(paginaActual.value)
 }
 
+function verDetalle(id: number){
+  router.push({ name: 'detalle-paciente', params: { id }})
+}
+
 </script>
 
 <template>
@@ -207,6 +212,10 @@ function onSaved() {
                   <td class="px-4 py-3">{{ p.propietario_nombre }}</td>
                   <td class="px-4 py-3">
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
+                      <button @click="verDetalle(p.id)"
+                      title="detalle">
+                        <FileDiff class="h-4 w-4"/>
+                      </button>
                       <button @click="abrirEditar(p)" class="p-1.5 rounded-md text-primary hover:bg-primary/10"
                         title="Editar">
                         <Pencil class="h-4 w-4" />
