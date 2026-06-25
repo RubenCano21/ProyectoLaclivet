@@ -20,8 +20,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Loader2, PawPrint, AlertCircle, Save, ArrowLeft,
+  Loader2, PawPrint, AlertCircle, ArrowLeft,
   Plus, Trash2, Check, X, ClipboardList, History, Stethoscope,
+  ChevronDown, User, Phone, Mail, MapPin,
 } from 'lucide-vue-next'
 import type { Especie } from '@/models/especie'
 import type { Raza } from '@/models/raza'
@@ -49,6 +50,16 @@ const paciente     = computed(() => historial.value?.paciente ?? null)
 const antecedentes = computed(() => historial.value?.antecedentes ?? [])
 const solicitudes  = computed(() => historial.value?.solicitudes ?? [])
 
+// Propietario completo seleccionado (para el panel de datos)
+const propietarioActivo = computed(() => {
+  if (!paciente.value?.propietario) return null
+  return propietarios.value.find(p => p.id === paciente.value!.propietario) ?? null
+})
+
+function iniciales(nombre?: string, apellido?: string) {
+  return `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase() || '?'
+}
+
 // ── Formulario edición ────────────────────────────────────────────────────────
 const editEspecieId = ref('')
 const editForm = ref({
@@ -60,17 +71,6 @@ const editForm = ref({
   propietario:      '',
   raza:             '',
 })
-const saving      = ref(false)
-const saveSuccess = ref(false)
-const saveError   = ref<string | null>(null)
-
-const razasFiltradas = computed(() =>
-  todasRazas.value.filter(r => String(r.especie) === editEspecieId.value),
-)
-
-function onEspecieChange() {
-  editForm.value.raza = ''
-}
 
 function prefillForm() {
   const p = paciente.value
@@ -82,7 +82,6 @@ function prefillForm() {
   editForm.value.fecha_nacimiento = p.fecha_nacimiento ?? ''
   editForm.value.propietario      = p.propietario ? String(p.propietario) : ''
   editForm.value.raza             = p.raza ? String(p.raza) : ''
-  // Determinar especie desde la raza actual
   const razaActual = todasRazas.value.find(r => r.id === p.raza)
   editEspecieId.value = razaActual ? String(razaActual.especie) : ''
 }
@@ -116,42 +115,6 @@ onMounted(async () => {
   }
   await loadHistorial()
 })
-
-// ── Guardar datos del paciente ────────────────────────────────────────────────
-async function handleSaveDatos() {
-  saveError.value   = null
-  saveSuccess.value = false
-  if (!editForm.value.nombre.trim()) {
-    saveError.value = 'El nombre es requerido'
-    return
-  }
-  saving.value = true
-  try {
-    await pacienteService.patch(pacienteId.value, {
-      nombre:           editForm.value.nombre.trim(),
-      sexo:             editForm.value.sexo || '',
-      tamanio:          editForm.value.tamanio || '',
-      color:            editForm.value.color.trim(),
-      fecha_nacimiento: editForm.value.fecha_nacimiento || null,
-      propietario:      editForm.value.propietario ? Number(editForm.value.propietario) : (null as any),
-      raza:             editForm.value.raza ? Number(editForm.value.raza) : (null as any),
-    } as any)
-    saveSuccess.value = true
-    await loadHistorial()
-    setTimeout(() => { saveSuccess.value = false }, 3000)
-  } catch (e: any) {
-    const data = e.response?.data
-    if (data && typeof data === 'object') {
-      saveError.value = Object.entries(data)
-        .map(([k, v]) => `${k}: ${Array.isArray(v) ? (v as string[]).join(', ') : v}`)
-        .join(' | ')
-    } else {
-      saveError.value = 'Error al guardar'
-    }
-  } finally {
-    saving.value = false
-  }
-}
 
 // ── Antecedentes ──────────────────────────────────────────────────────────────
 const showAddAntecedente       = ref(false)
@@ -220,11 +183,23 @@ function formatFechaHora(dt: string) {
   })
 }
 
+function formatFecha(dt: string) {
+  return new Date(dt).toLocaleDateString('es-BO', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+}
+
 const ESTADO_VARIANT: Record<string, string> = {
   pendiente:  'secondary',
   en_proceso: 'default',
   completada: 'outline',
   cancelada:  'destructive',
+}
+
+// ── Timeline expandible (estilo Angular) ──────────────────────────────────────
+const historialAbierto = ref<number | null>(null)
+function toggleHistorial(id: number) {
+  historialAbierto.value = historialAbierto.value === id ? null : id
 }
 </script>
 
@@ -273,27 +248,20 @@ const ESTADO_VARIANT: Record<string, string> = {
 
       <main v-else class="flex flex-1 flex-col gap-0">
 
-        <!-- Cabecera del paciente -->
-        <div class="border-b bg-muted/20 px-6 py-5">
-          <div class="flex items-center gap-4">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PawPrint class="h-6 w-6" />
-            </div>
-            <div>
-              <h1 class="text-xl font-bold leading-tight">{{ paciente?.nombre }}</h1>
-              <p class="text-sm text-muted-foreground">
-                {{ paciente?.especie_nombre }} · {{ paciente?.raza_nombre }}
-                <span v-if="paciente?.propietario_nombre"> · {{ paciente?.propietario_nombre }}</span>
-              </p>
-            </div>
-            <Button variant="outline" size="sm" class="ml-auto gap-1.5" @click="router.push('/pacientes')">
-              <ArrowLeft class="h-4 w-4" />
-              Volver
-            </Button>
-          </div>
+        <!-- Botón volver -->
+        <div class="px-6 pt-5">
+          <button
+            @click="router.push('/pacientes')"
+            class="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-4 transition-colors"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            Volver a la lista
+          </button>
+        </div>
 
-          <!-- Tabs -->
-          <div class="mt-4 flex gap-1">
+        <!-- Tabs -->
+        <div class="px-6">
+          <div class="flex gap-1 border-b pb-0">
             <button
               v-for="tab in ([
                 { id: 'datos',         label: 'Datos',         icon: PawPrint },
@@ -303,10 +271,10 @@ const ESTADO_VARIANT: Record<string, string> = {
               :key="tab.id"
               @click="activeTab = tab.id"
               :class="[
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-t-md px-3 py-2 text-sm font-medium transition-colors border-b-2',
                 activeTab === tab.id
-                  ? 'bg-white shadow-sm text-primary border'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-white/60',
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
@@ -329,140 +297,112 @@ const ESTADO_VARIANT: Record<string, string> = {
           </div>
         </div>
 
-        <!-- ── Tab: DATOS ─────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'datos'" class="p-6">
-          <div class="mx-auto max-w-2xl space-y-5">
+        <!-- ── Tab: DATOS (estilo Angular: 2 paneles) ───────────────────────── -->
+        <div v-if="activeTab === 'datos'" class="p-6 space-y-6">
 
-            <!-- Éxito guardado -->
-            <div v-if="saveSuccess" class="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-              <Check class="h-4 w-4 shrink-0" />
-              Datos guardados correctamente
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            
+
+            <!-- ── PANEL DERECHO: Propietario ─────────────────────────────── -->
+            <div class="rounded-xl border bg-white shadow-xs overflow-hidden">
+
+              <div class="flex items-center gap-2 px-5 py-4 border-b">
+                <User class="h-4 w-4 text-muted-foreground" />
+                <h2 class="text-sm font-semibold text-foreground">Propietario</h2>
+              </div>
+
+              <template v-if="propietarioActivo">
+                <div class="flex items-center gap-4 px-5 py-5 border-b">
+                  <div class="w-14 h-14 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 text-xl font-bold shrink-0">
+                    {{ iniciales(propietarioActivo.usuario?.first_name, propietarioActivo.usuario?.last_name) }}
+                  </div>
+                  <div>
+                    <p class="text-lg font-semibold text-foreground">
+                      {{ propietarioActivo.usuario?.first_name }} {{ propietarioActivo.usuario?.last_name }}
+                    </p>
+                    <p class="text-sm text-muted-foreground">CI: {{ propietarioActivo.usuario?.ci }}</p>
+                  </div>
+                </div>
+
+                <div class="divide-y">
+                  <div class="flex px-5 py-3.5 items-center gap-2">
+                    <Phone class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span class="text-sm font-medium text-muted-foreground w-32 shrink-0">Teléfono</span>
+                    <span class="text-sm text-foreground">{{ propietarioActivo.usuario?.telefono || '—' }}</span>
+                  </div>
+                  <div class="flex px-5 py-3.5 items-center gap-2">
+                    <Mail class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span class="text-sm font-medium text-muted-foreground w-32 shrink-0">Correo</span>
+                    <span class="text-sm text-foreground">{{ propietarioActivo.usuario?.email || '—' }}</span>
+                  </div>
+                  <div class="flex px-5 py-3.5 items-center gap-2">
+                    <MapPin class="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span class="text-sm font-medium text-muted-foreground w-32 shrink-0">Dirección</span>
+                    <span class="text-sm text-foreground">{{ propietarioActivo.usuario?.direccion || '—' }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <div v-else class="px-5 py-10 text-center text-sm text-muted-foreground">
+                Sin propietario asignado
+              </div>
             </div>
 
-            <!-- Error guardado -->
-            <div v-if="saveError" class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-              <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
-              {{ saveError }}
+            <!-- ── PANEL IZQUIERDO: Paciente (avatar + datos) ────────────── -->
+            <div class="rounded-xl border bg-white shadow-xs overflow-hidden">
+
+              <div class="flex items-center gap-2 px-5 py-4 border-b">
+                <PawPrint class="h-4 w-4 text-muted-foreground" />
+                <h2 class="text-sm font-semibold text-foreground">Paciente</h2>
+              </div>
+
+              <div class="flex items-center gap-4 px-5 py-5 border-b">
+                <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary text-xl font-bold shrink-0">
+                  {{ iniciales(paciente?.nombre) }}
+                </div>
+                <div>
+                  <p class="text-lg font-semibold text-foreground">{{ paciente?.nombre }}</p>
+                  <p class="text-sm text-muted-foreground">
+                    {{ paciente?.especie_nombre }} · {{ paciente?.raza_nombre }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="divide-y">
+                <div class="flex px-5 py-3.5">
+                  <span class="text-sm font-medium text-muted-foreground w-36 shrink-0">Sexo</span>
+                  <span class="text-sm text-foreground capitalize">{{ paciente?.sexo || '—' }}</span>
+                </div>
+                <div class="flex px-5 py-3.5">
+                  <span class="text-sm font-medium text-muted-foreground w-36 shrink-0">Tamaño</span>
+                  <span class="text-sm text-foreground capitalize">{{ paciente?.tamanio || '—' }}</span>
+                </div>
+                <div class="flex px-5 py-3.5">
+                  <span class="text-sm font-medium text-muted-foreground w-36 shrink-0">Color</span>
+                  <span class="text-sm text-foreground">{{ paciente?.color || '—' }}</span>
+                </div>
+                <div class="flex px-5 py-3.5">
+                  <span class="text-sm font-medium text-muted-foreground w-36 shrink-0">F. nacimiento</span>
+                  <span class="text-sm text-foreground">
+                    {{ paciente?.fecha_nacimiento ? formatFecha(paciente.fecha_nacimiento) : '—' }}
+                  </span>
+                </div>
+              </div>
             </div>
-
-            <form @submit.prevent="handleSaveDatos" class="rounded-xl border bg-white p-6 shadow-xs space-y-5">
-
-              <!-- Nombre -->
-              <div class="space-y-1.5">
-                <label class="text-sm font-medium">Nombre <span class="text-red-500">*</span></label>
-                <Input v-model="editForm.nombre" placeholder="Nombre del paciente" />
-              </div>
-
-              <!-- Especie + Raza -->
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Especie</label>
-                  <Select v-model="editEspecieId" @update:model-value="onEspecieChange">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar especie…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="e in especies" :key="e.id" :value="String(e.id)">
-                        {{ e.nombre }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Raza</label>
-                  <Select v-model="editForm.raza" :disabled="!editEspecieId || razasFiltradas.length === 0">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar raza…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="r in razasFiltradas" :key="r.id" :value="String(r.id)">
-                        {{ r.nombre }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <!-- Sexo + Tamaño -->
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Sexo</label>
-                  <Select v-model="editForm.sexo">
-                    <SelectTrigger><SelectValue placeholder="Seleccionar…" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="macho">Macho</SelectItem>
-                      <SelectItem value="hembra">Hembra</SelectItem>
-                      <SelectItem value="desconocido">Desconocido</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Tamaño</label>
-                  <Select v-model="editForm.tamanio">
-                    <SelectTrigger><SelectValue placeholder="Seleccionar…" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pequeño">Pequeño</SelectItem>
-                      <SelectItem value="mediano">Mediano</SelectItem>
-                      <SelectItem value="grande">Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <!-- Color + Fecha nacimiento -->
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Color</label>
-                  <Input v-model="editForm.color" placeholder="Ej: café, negro y blanco…" />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium">Fecha de nacimiento</label>
-                  <Input type="date" v-model="editForm.fecha_nacimiento" />
-                </div>
-              </div>
-
-              <!-- Propietario -->
-              <div class="space-y-1.5">
-                <label class="text-sm font-medium">Propietario</label>
-                <Select v-model="editForm.propietario">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar propietario…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="p in propietarios" :key="p.id" :value="String(p.id)">
-                      {{ p.usuario?.first_name }} {{ p.usuario?.last_name }} — {{ p.usuario?.ci }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <!-- Acciones -->
-              <div class="flex items-center justify-end gap-3 pt-2 border-t">
-                <Button type="button" variant="outline" @click="prefillForm">
-                  Descartar cambios
-                </Button>
-                <Button type="submit" :disabled="saving" class="gap-2">
-                  <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
-                  <Save v-else class="h-4 w-4" />
-                  Guardar cambios
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
 
-        <!-- ── Tab: ANTECEDENTES ──────────────────────────────────────────── -->
+        <!-- ── Tab: ANTECEDENTES (sin cambios de formato) ────────────────── -->
         <div v-else-if="activeTab === 'antecedentes'" class="p-6">
           <div class="mx-auto max-w-3xl space-y-4">
 
-            <!-- Error -->
             <div v-if="antecedenteError" class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               <AlertCircle class="h-4 w-4 shrink-0" />
               {{ antecedenteError }}
               <button class="ml-auto" @click="antecedenteError = null"><X class="h-4 w-4" /></button>
             </div>
 
-            <!-- Cabecera sección -->
             <div class="flex items-center justify-between">
               <div>
                 <h2 class="text-base font-semibold">Antecedentes clínicos</h2>
@@ -476,7 +416,6 @@ const ESTADO_VARIANT: Record<string, string> = {
               </Button>
             </div>
 
-            <!-- Formulario agregar -->
             <div v-if="showAddAntecedente" class="rounded-xl border bg-white p-4 shadow-xs space-y-3">
               <h3 class="text-sm font-semibold">Nuevo antecedente</h3>
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -513,7 +452,6 @@ const ESTADO_VARIANT: Record<string, string> = {
               </div>
             </div>
 
-            <!-- Lista antecedentes -->
             <div class="rounded-xl border bg-white shadow-xs overflow-hidden">
               <div v-if="antecedentes.length === 0" class="px-4 py-10 text-center text-sm text-muted-foreground">
                 No hay antecedentes registrados para este paciente.
@@ -576,72 +514,98 @@ const ESTADO_VARIANT: Record<string, string> = {
           </div>
         </div>
 
-        <!-- ── Tab: HISTORIAL ────────────────────────────────────────────── -->
+        <!-- ── Tab: HISTORIAL (timeline expandible estilo Angular) ────────── -->
         <div v-else-if="activeTab === 'historial'" class="p-6">
-          <div class="mx-auto max-w-4xl space-y-4">
+          <div class="mx-auto max-w-4xl">
 
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-base font-semibold">Historial de solicitudes</h2>
-                <p class="text-sm text-muted-foreground">
-                  {{ historial?.total_visitas ?? 0 }} visita{{ (historial?.total_visitas ?? 0) !== 1 ? 's' : '' }} registrada{{ (historial?.total_visitas ?? 0) !== 1 ? 's' : '' }}
-                </p>
+            <div class="rounded-xl border bg-white shadow-xs overflow-hidden">
+
+              <!-- Header historial -->
+              <div class="flex items-center gap-3 px-5 py-4 border-b">
+                <History class="h-4 w-4 text-muted-foreground" />
+                <h2 class="text-sm font-semibold text-foreground">
+                  Historial de solicitudes — {{ paciente?.nombre }}
+                </h2>
+                <Badge variant="secondary" class="text-[10px]">
+                  {{ historial?.total_visitas ?? 0 }} visita{{ (historial?.total_visitas ?? 0) !== 1 ? 's' : '' }}
+                </Badge>
               </div>
-            </div>
 
-            <div v-if="solicitudes.length === 0" class="rounded-xl border bg-white p-10 text-center text-sm text-muted-foreground shadow-xs">
-              No hay solicitudes registradas para este paciente.
-            </div>
+              <!-- Vacío -->
+              <div v-if="solicitudes.length === 0" class="py-12 text-center text-muted-foreground">
+                <ClipboardList class="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
+                <p class="text-sm">Sin solicitudes registradas para {{ paciente?.nombre }}</p>
+                <p class="text-xs mt-1 text-muted-foreground/60">El historial se genera al registrar una solicitud de examen</p>
+              </div>
 
-            <div v-else class="space-y-3">
-              <div
-                v-for="s in solicitudes"
-                :key="s.id"
-                class="rounded-xl border bg-white p-4 shadow-xs space-y-3"
-              >
-                <!-- Cabecera solicitud -->
-                <div class="flex items-start justify-between gap-4">
-                  <div class="flex items-center gap-2">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Stethoscope class="h-4 w-4" />
+              <!-- Timeline de solicitudes -->
+              <div v-else class="divide-y">
+                <div v-for="s in solicitudes" :key="s.id" class="px-5 py-4">
+
+                  <!-- Fila resumen (siempre visible) -->
+                  <div
+                    @click="toggleHistorial(s.id)"
+                    class="flex items-center gap-4 cursor-pointer group"
+                  >
+                    <!-- Dot timeline -->
+                    <div class="w-3 h-3 rounded-full bg-primary shrink-0 ring-2 ring-primary/20"></div>
+
+                    <!-- Código + fecha + estado -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-3 flex-wrap">
+                        <span class="text-sm font-semibold text-foreground">{{ s.codigo }}</span>
+                        <span class="text-sm text-muted-foreground">{{ formatFechaHora(s.fecha_solicitud) }}</span>
+                        <Badge :variant="(ESTADO_VARIANT[s.estado] ?? 'outline') as any" class="capitalize text-[10px]">
+                          {{ s.estado.replace('_', ' ') }}
+                        </Badge>
+                      </div>
+                      <div class="flex items-center gap-4 mt-1 text-xs text-muted-foreground flex-wrap">
+                        <span v-if="s.medico_veterinario" class="flex items-center gap-1">
+                          <Stethoscope class="h-3 w-3" />
+                          Dr. {{ s.medico_veterinario }}
+                        </span>
+                        <span v-if="s.examenes.length">
+                          {{ s.examenes.length }} examen{{ s.examenes.length !== 1 ? 'es' : '' }}
+                        </span>
+                      </div>
                     </div>
+
+                    <!-- Chevron -->
+                    <ChevronDown
+                      :class="['h-4 w-4 text-muted-foreground transition-transform shrink-0', historialAbierto === s.id ? 'rotate-180' : '']"
+                    />
+                  </div>
+
+                  <!-- Detalle expandible -->
+                  <div v-if="historialAbierto === s.id" class="mt-4 ml-7 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm border-t pt-4">
+
+                    <div v-if="s.observaciones" class="md:col-span-2">
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Observaciones</p>
+                      <p class="text-foreground italic">"{{ s.observaciones }}"</p>
+                    </div>
+
+                    <div v-if="s.examenes.length" class="md:col-span-2">
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Exámenes</p>
+                      <div class="flex flex-wrap gap-2">
+                        <div
+                          v-for="(ex, i) in s.examenes"
+                          :key="i"
+                          class="rounded-md border bg-muted/40 px-2.5 py-1 text-xs"
+                        >
+                          {{ ex.examen ?? '—' }}
+                          <span class="ml-1 text-muted-foreground">Bs {{ ex.precio_aplicado }}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
-                      <span class="font-semibold text-sm">{{ s.codigo }}</span>
-                      <p class="text-xs text-muted-foreground">{{ formatFechaHora(s.fecha_solicitud) }}</p>
-                    </div>
-                  </div>
-                  <Badge :variant="(ESTADO_VARIANT[s.estado] ?? 'outline') as any" class="capitalize shrink-0">
-                    {{ s.estado.replace('_', ' ') }}
-                  </Badge>
-                </div>
-
-                <!-- Médico -->
-                <p v-if="s.medico_veterinario" class="text-sm text-muted-foreground">
-                  <span class="font-medium text-foreground">Médico:</span> {{ s.medico_veterinario }}
-                </p>
-
-                <!-- Observaciones -->
-                <p v-if="s.observaciones" class="text-sm text-muted-foreground italic">
-                  "{{ s.observaciones }}"
-                </p>
-
-                <!-- Exámenes -->
-                <div v-if="s.examenes.length > 0">
-                  <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Exámenes</p>
-                  <div class="flex flex-wrap gap-2">
-                    <div
-                      v-for="(ex, i) in s.examenes"
-                      :key="i"
-                      class="rounded-md border bg-muted/40 px-2.5 py-1 text-xs"
-                    >
-                      {{ ex.examen ?? '—' }}
-                      <span class="ml-1 text-muted-foreground">Bs {{ ex.precio_aplicado }}</span>
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Fecha de solicitud</p>
+                      <p class="text-muted-foreground text-xs">{{ formatFechaHora(s.fecha_solicitud) }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -649,4 +613,3 @@ const ESTADO_VARIANT: Record<string, string> = {
     </SidebarInset>
   </SidebarProvider>
 </template>
-
