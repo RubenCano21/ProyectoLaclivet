@@ -22,15 +22,39 @@ export interface Examen {
 
 export type ExamenForm = Omit<Examen, 'id' | 'catalogo_nombre'>
 
+// tipo_dato del backend: 'NUM' (numérico) | 'TXT' (texto libre) | 'SEL' (selección)
+export type TipoDatoParametro = 'NUM' | 'TXT' | 'SEL'
+
+export const TIPO_DATO_LABELS: Record<TipoDatoParametro, string> = {
+  NUM: 'Numérico',
+  TXT: 'Texto libre',
+  SEL: 'Selección',
+}
+
 export interface Parametro {
+  opciones_seleccion: string
   id: number
   nombre_parametro: string
   unidad_medida: string | null
   examen: number
   examen_nombre?: string
+  // ── nuevos ──
+  grupo: string | null
+  tipo_dato: TipoDatoParametro
+  opciones: string[] | null
+  orden: number
 }
 
 export type ParametroForm = Omit<Parametro, 'id' | 'examen_nombre'>
+
+// sexo del backend: 'A' (Ambos) | 'M' (Macho) | 'H' (Hembra)
+export type SexoReferencia = 'A' | 'M' | 'H'
+
+export const SEXO_LABELS: Record<SexoReferencia, string> = {
+  A: 'Ambos',
+  M: 'Macho',
+  H: 'Hembra',
+}
 
 export interface ValorReferencia {
   id: number
@@ -39,9 +63,79 @@ export interface ValorReferencia {
   especie: string | null
   parametro: number
   parametro_nombre?: string
+  // ── nuevos ──
+  sexo: SexoReferencia
+  texto_referencia: string | null
 }
 
 export type ValorReferenciaForm = Omit<ValorReferencia, 'id' | 'parametro_nombre'>
+
+// ── Plantilla agrupada (para el formulario de captura de resultados) ──────
+export interface ParametroPlantilla extends Parametro {
+  valores_referencia: ValorReferencia[]
+}
+
+export interface GrupoPlantilla {
+  nombre: string
+  parametros: ParametroPlantilla[]
+}
+
+export interface ExamenPlantilla extends Examen {
+  grupos: GrupoPlantilla[]
+}
+
+// ── Resultados ─────────────────────────────────────────────────────────────
+export interface OrdenTrabajo {
+  id: number
+  paciente: number
+  paciente_nombre?: string
+  veterinario_solicitante: string
+  fecha_creacion: string
+  estado: 'PEND' | 'PROC' | 'VALD' | 'ENTR' | 'ANUL'
+  observaciones_generales: string
+}
+
+export type OrdenTrabajoForm = Pick<OrdenTrabajo, 'paciente' | 'veterinario_solicitante' | 'observaciones_generales'>
+
+export interface ResultadoParametro {
+  id: number
+  parametro: number
+  parametro_nombre?: string
+  valor_numerico: string | null
+  valor_texto: string
+  interpretacion: 'BAJO' | 'NORMAL' | 'ALTO' | ''
+}
+
+export interface OrdenExamen {
+  id: number
+  orden: number
+  examen: number
+  examen_nombre?: string
+  muestra: number | null
+  realizado_por: string
+  validado_por: string
+  fecha_resultado: string | null
+  observaciones: string
+  alteraciones: string
+  diagnostico: string
+  pronostico: string
+  resultados: ResultadoParametro[]
+}
+
+export interface ResultadoParametroInput {
+  parametro: number
+  valor_numerico?: string | number | null
+  valor_texto?: string
+}
+
+export interface OrdenExamenResultadosForm {
+  observaciones?: string
+  alteraciones?: string
+  diagnostico?: string
+  pronostico?: string
+  realizado_por?: string
+  resultados: ResultadoParametroInput[]
+}
 
 // ─── Servicios ────────────────────────────────────────────────────────────────
 
@@ -79,6 +173,10 @@ export const examenService = {
   delete(id: number) {
     return api.delete(`/catalogos/examenes/${id}/`)
   },
+  // Plantilla agrupada (grupos -> parametros -> valores_referencia), solo lectura
+  getPlantilla(id: number) {
+    return api.get<ExamenPlantilla>(`/catalogos/examenes/${id}/plantilla/`)
+  },
 }
 
 export const parametroService = {
@@ -114,5 +212,41 @@ export const valorReferenciaService = {
   },
   delete(id: number) {
     return api.delete(`/catalogos/valores-referencia/${id}/`)
+  },
+}
+
+export const ordenTrabajoService = {
+  getAll(params?: { paciente?: number; estado?: string }) {
+    return api.get('/catalogos/ordenes-trabajo/', { params })
+  },
+  getById(id: number) {
+    return api.get(`/catalogos/ordenes-trabajo/${id}/`)
+  },
+  create(form: OrdenTrabajoForm) {
+    return api.post('/catalogos/ordenes-trabajo/', form)
+  },
+  update(id: number, form: Partial<OrdenTrabajoForm>) {
+    return api.patch(`/catalogos/ordenes-trabajo/${id}/`, form)
+  },
+  delete(id: number) {
+    return api.delete(`/catalogos/ordenes-trabajo/${id}/`)
+  },
+}
+
+export const ordenExamenService = {
+  getAll(params?: { orden?: number }) {
+    return api.get('/catalogos/orden-examenes/', { params })
+  },
+  getById(id: number) {
+    return api.get<OrdenExamen>(`/catalogos/orden-examenes/${id}/`)
+  },
+  create(form: { orden: number; examen: number; muestra?: number | null }) {
+    return api.post<OrdenExamen>('/catalogos/orden-examenes/', form)
+  },
+  delete(id: number) {
+    return api.delete(`/catalogos/orden-examenes/${id}/`)
+  },
+  guardarResultados(id: number, form: OrdenExamenResultadosForm) {
+    return api.patch<OrdenExamen>(`/catalogos/orden-examenes/${id}/resultados/`, form)
   },
 }
