@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
+    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+    .header h1 { margin: 0; font-size: 18px; }
+    .info-grid { display: flex; justify-content: space-between; margin-bottom: 15px; }
+    .info-box { width: 48%; }
+    .info-box p { margin: 2px 0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; font-size: 11px; }
+    th { background: #f0f0f0; }
+    .grupo-titulo { background: #e8e8e8; font-weight: bold; padding: 4px 8px; margin-top: 10px; }
+    .alto { color: #c0392b; font-weight: bold; }
+    .bajo { color: #2980b9; font-weight: bold; }
+    .normal { color: #27ae60; }
+    .footer { margin-top: 30px; display: flex; justify-content: space-between; }
+    .firma { width: 45%; text-align: center; border-top: 1px solid #333; padding-top: 5px; }
+</style>
+</head>
+<body>
+    <div class="header">
+        <h1>Laboratorio Clínico Veterinario</h1>
+        <p>Reporte de Resultado de Examen</p>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-box">
+            <p><strong>Paciente:</strong> {{ paciente.nombre }}</p>
+            <p><strong>Especie:</strong> {{ paciente.especie.nombre|default:"-" }}</p>
+            <p><strong>Raza:</strong> {{ paciente.raza.nombre|default:"-" }}</p>
+            {% if propietario %}
+            <p><strong>Propietario:</strong> {{ propietario.usuario.first_name }} {{ propietario.usuario.last_name }}</p>
+            {% endif %}
+        </div>
+        <div class="info-box">
+            <p><strong>Solicitud:</strong> {{ solicitud.codigo }}</p>
+            <p><strong>Examen:</strong> {{ examen.nombre_examen }}</p>
+            {% if medico_solicitante %}
+            <p><strong>Médico solicitante:</strong> Dr(a). {{ medico_solicitante.usuario.first_name }} {{ medico_solicitante.usuario.last_name }}</p>
+            {% endif %}
+            <p><strong>Fecha emisión:</strong> {{ fecha_emision|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+
+    {% for grupo, items in grupos.items %}
+        <div class="grupo-titulo">{{ grupo }}</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Resultado</th>
+                    <th>Unidad</th>
+                    <th>Interpretación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rp in items %}
+                <tr>
+                    <td>{{ rp.parametro.nombre_parametro }}</td>
+                    <td>{{ rp.valor_numerico|default:rp.valor_texto }}</td>
+                    <td>{{ rp.parametro.unidad_medida|default:"-" }}</td>
+                    <td class="{{ rp.interpretacion|lower }}">{{ rp.interpretacion|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+    {% if resultado.observaciones %}
+        <p><strong>Observaciones:</strong> {{ resultado.observaciones }}</p>
+    {% endif %}
+
+    <div class="footer">
+        <div class="firma">
+            {% if veterinario %}{{ veterinario.first_name }} {{ veterinario.last_name }}<br>Veterinario responsable{% endif %}
+        </div>
+        <div class="firma">Sello del laboratorio</div>
+    </div>
+</body>
+</html>

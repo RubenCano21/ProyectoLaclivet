@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/recepcion/', include('apps.recepcion.urls')),
     path('api/bitacora/', include('apps.bitacora.urls')),
     path('api/muestras/', include('apps.muestra.urls')),
+    path('api/bi/',       include('apps.bi.urls')),
 
     # --- RUTAS DE SWAGGER ---
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

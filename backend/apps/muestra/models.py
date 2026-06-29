@@ -3,15 +3,21 @@ from django.db import models
 
 class Muestra(models.Model):
     ESTADO_CHOICES = [
-        ('recibida', 'Recibida'),
+        ('pendiente',  'Pendiente'),
         ('en_proceso', 'En proceso'),
-        ('procesada', 'Procesada'),
-        ('descartada', 'Descartada'),
+        ('completada', 'Completada'),
+        ('rechazada',  'Rechazada'),
     ]
 
     codigo = models.CharField(max_length=50, unique=True)
     tipo_muestra = models.CharField(max_length=100, blank=True, null=True)
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='recibida')
+    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_recepcion = models.DateField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    paciente = models.ForeignKey(
+        'paciente.Paciente', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='muestras'
+    )
     solicitud = models.ForeignKey(
         'recepcion.SolicitudExamen', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='muestras'

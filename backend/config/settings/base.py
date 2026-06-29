@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "apps.medico",
     "apps.recepcion",
     "apps.bitacora",
+    "apps.bi",
 ]
 
 MIDDLEWARE = [

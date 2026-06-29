@@ -18,6 +18,7 @@ import {
   AlertCircle, FlaskConical, Check, X, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import type { Muestra } from '@/models/muestra';
+import MuestraFormModal from '@/views/muestras/MuestraFormModal.vue'
 
 const router = useRouter();
 const route = useRoute();

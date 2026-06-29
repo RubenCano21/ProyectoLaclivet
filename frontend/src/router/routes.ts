@@ -93,6 +93,12 @@ export const protectedRoutes: RouteRecordRaw[] = [
     name: 'incidencias',
     component: () => import('@/views/muestras/IncidenciasView.vue'),
   },
+  // ── Business Intelligence ─────────────────────────────────────────
+  {
+    path: '/bi',
+    name: 'bi',
+    component: () => import('@/views/bi/BIView.vue'),
+  },
   // ── Resultados ────────────────────────────────────────────────────
   {
     path: '/resultados/captura',
