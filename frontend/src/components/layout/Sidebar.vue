@@ -16,6 +16,7 @@ import {
   ScrollText,
   ClipboardPlus,
   Microscope,
+  BarChart3,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -146,6 +147,13 @@ const data = {
           icon: Microscope,
         },
       ],
+    },
+    {
+      title: "Business Intelligence",
+      url: "/bi",
+      icon: BarChart3,
+      isActive: false,
+      items: [],
     },
   ],
   projects: [],

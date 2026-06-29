@@ -1,11 +1,3 @@
-"""
-Uso:
-    python manage.py seed_hemograma
-
-Crea CatalogoExamen "Hematología" -> Examen "Hemograma Completo" ->
-Parametros (con su grupo visual) -> ValorReferencia para Bovino,
-replicando exactamente la hoja de resultados de ejemplo.
-"""
 from django.core.management.base import BaseCommand
 from apps.catalogo.models import CatalogoExamen, Examen, Parametro, ValorReferencia, TipoDato
 

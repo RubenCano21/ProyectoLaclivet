@@ -38,6 +38,28 @@ class EsPropietario(BasePermission):
             return obj.mascota.propietario == request.user
         return False
 
+class EsVeterinario(BasePermission):
+    """Permite acceso solo a usuarios con rol 'Veterinario' (interno)."""
+    message = "Solo un usuario con rol Veterinario puede realizar esta acción."
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user and user.is_authenticated and
+            user.rol and user.rol.nombre == 'Veterinario'
+        )
+
+
+class EsRecepcionOAdmin(BasePermission):
+    message = "Solo Recepción o Administrador pueden realizar esta acción."
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user and user.is_authenticated and
+            user.rol and user.rol.nombre in ('Recepcionista', 'Administrador')
+        )
+
 def _usuario_tiene_permiso(usuario, codigo_permiso):
     if not usuario or not usuario.is_authenticated:
         return False

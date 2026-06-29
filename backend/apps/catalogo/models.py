@@ -22,6 +22,10 @@ class Examen(models.Model):
     descripcion = models.TextField(blank=True, null=True)
     catalogo = models.ForeignKey(CatalogoExamen, on_delete=models.CASCADE, related_name='examenes')
 
+    # NUEVO: para el flujo de verificación automática de muestra
+    requiere_muestra = models.BooleanField(default=True)
+    tipo_muestra_sugerida = models.CharField(max_length=100, blank=True, null=True)
+
     class Meta:
         verbose_name = 'Examen'
         verbose_name_plural = 'Examenes'
@@ -41,8 +45,6 @@ class Parametro(models.Model):
     nombre_parametro = models.CharField(max_length=100)
     unidad_medida = models.CharField(max_length=20, blank=True, null=True)
     examen = models.ForeignKey(Examen, on_delete=models.CASCADE, related_name='parametros')
-
-    # --- NUEVO: lo mínimo para poder renderizar el formulario tipo hemograma ---
     grupo = models.CharField(
         max_length=60, blank=True, null=True,
         help_text="Sección visual, ej: 'Eritrograma', 'Leucograma %', 'Leucograma absoluto'"
@@ -66,7 +68,6 @@ class ValorReferencia(models.Model):
     valor_min = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     valor_max = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     especie = models.CharField(max_length=50, blank=True, null=True)
-    # --- NUEVO: opcional, default 'A' no rompe datos existentes ---
     sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, default="A")
     texto_referencia = models.CharField(
         max_length=100, blank=True, null=True,
@@ -85,7 +86,6 @@ class ValorReferencia(models.Model):
         return f"{self.parametro.nombre_parametro} [{self.texto_referencia}] ({self.especie})"
 
     def evaluar(self, valor):
-        """Devuelve 'BAJO' | 'NORMAL' | 'ALTO' | None si no aplica (texto libre)."""
         if self.valor_min is None and self.valor_max is None:
             return None
         try:
@@ -98,10 +98,6 @@ class ValorReferencia(models.Model):
             return "ALTO"
         return "NORMAL"
 
-
-# ---------------------------------------------------------------------------
-# Captura de resultados (tablas nuevas, no existían en tu app catalogo)
-# ---------------------------------------------------------------------------
 
 class OrdenTrabajo(models.Model):
     ESTADOS = [
@@ -117,6 +113,12 @@ class OrdenTrabajo(models.Model):
     estado = models.CharField(max_length=4, choices=ESTADOS, default="PEND")
     observaciones_generales = models.TextField(blank=True)
 
+    # NUEVO: trazabilidad hacia la solicitud de recepción que originó esta orden
+    solicitud = models.ForeignKey(
+        "recepcion.SolicitudExamen", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="ordenes_trabajo"
+    )
+
     def __str__(self):
         return f"OT-{self.id} / {self.paciente}"
 
@@ -129,6 +131,12 @@ class OrdenExamen(models.Model):
         related_name="ordenes_examen"
     )
 
+    # NUEVO: trazabilidad hacia el detalle de la solicitud (precio, examen pedido)
+    detalle_solicitud = models.OneToOneField(
+        "recepcion.DetalleSolicitud", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="orden_examen"
+    )
+
     realizado_por = models.CharField(max_length=120, blank=True)
     validado_por = models.CharField(max_length=120, blank=True)
     fecha_resultado = models.DateTimeField(null=True, blank=True)
@@ -137,6 +145,8 @@ class OrdenExamen(models.Model):
     alteraciones = models.TextField(blank=True)
     diagnostico = models.TextField(blank=True)
     pronostico = models.CharField(max_length=120, blank=True)
+
+    archivo_pdf = models.FileField(upload_to='resultados/', blank=True, null=True)
 
     class Meta:
         unique_together = ["orden", "examen"]
@@ -150,7 +160,7 @@ class ResultadoParametro(models.Model):
     parametro = models.ForeignKey(Parametro, on_delete=models.PROTECT, related_name="resultados")
     valor_numerico = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     valor_texto = models.CharField(max_length=150, blank=True)
-    interpretacion = models.CharField(max_length=10, blank=True)  # BAJO / NORMAL / ALTO
+    interpretacion = models.CharField(max_length=10, blank=True)
 
     class Meta:
         unique_together = ["orden_examen", "parametro"]
