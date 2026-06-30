@@ -2,6 +2,7 @@ from apps.core.permissions import EsStaffInterno
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -12,31 +13,21 @@ from .serializers import (
     ExamenSerializer, ExamenCreateSerializer, ExamenUpdateSerializer,
     ParametroSerializer, ParametroCreateSerializer, ParametroUpdateSerializer,
     ValorReferenciaSerializer, ValorReferenciaCreateSerializer, ValorReferenciaUpdateSerializer,
-    OrdenExamenResultadosUpdateSerializer, OrdenExamenSerializer, OrdenTrabajoCreateSerializer, OrdenTrabajoSerializer,
-    ExamenDetalleSerializer,
+    OrdenExamenResultadosUpdateSerializer, OrdenExamenSerializer, OrdenTrabajoCreateSerializer,
+    OrdenTrabajoSerializer, ExamenDetalleSerializer,
+    OrdenExamenFullDetailSerializer, RegistrarResultadoOrdenExamenSerializer,
 )
 
 _del_response = openapi.Response('Eliminado exitosamente')
 
 
 def _permisos_lectura_o_staff(request):
-    """
-    GET/HEAD/OPTIONS: cualquier usuario autenticado puede ver.
-    POST/PUT/PATCH/DELETE: solo staff interno (Administrador, Veterinario, Recepcionista)
-    puede gestionar.
-    """
     if request.method in permissions.SAFE_METHODS:
         return permissions.IsAuthenticated().has_permission(request, None)
     return EsStaffInterno().has_permission(request, None)
 
 
 class _CatalogoBasePermissionMixin:
-    """
-    Mixin que aplica la regla: lectura abierta a cualquier autenticado,
-    escritura restringida a EsStaffInterno. No declarar permission_classes
-    en las subclases que usen este mixin (se deja IsAuthenticated solo
-    como base para que DRF no bloquee antes de tiempo).
-    """
 
     def check_permissions(self, request):
         super().check_permissions(request)
@@ -51,14 +42,16 @@ class _CatalogoBasePermissionMixin:
 class CatalogoExamenListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(operation_summary="Listar catálogos de examen", responses={200: CatalogoExamenSerializer(many=True)})
+    @swagger_auto_schema(operation_summary="Listar catálogos de examen",
+                         responses={200: CatalogoExamenSerializer(many=True)})
     def get(self, request):
         qs = CatalogoExamen.objects.all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(CatalogoExamenSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear catálogo de examen", request_body=CatalogoExamenCreateSerializer, responses={201: CatalogoExamenSerializer})
+    @swagger_auto_schema(operation_summary="Crear catálogo de examen", request_body=CatalogoExamenCreateSerializer,
+                         responses={201: CatalogoExamenSerializer})
     def post(self, request):
         s = CatalogoExamenCreateSerializer(data=request.data)
         if s.is_valid():
@@ -75,14 +68,17 @@ class CatalogoExamenDetailView(_CatalogoBasePermissionMixin, APIView):
         except CatalogoExamen.DoesNotExist:
             return None
 
-    @swagger_auto_schema(operation_summary="Obtener catálogo de examen", responses={200: CatalogoExamenSerializer})
+    @swagger_auto_schema(operation_summary="Obtener catálogo de examen",
+                         responses={200: CatalogoExamenSerializer})
     def get(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Catálogo no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(CatalogoExamenSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar catálogo de examen", request_body=CatalogoExamenUpdateSerializer, responses={200: CatalogoExamenSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar catálogo de examen",
+                         request_body=CatalogoExamenUpdateSerializer,
+                         responses={200: CatalogoExamenSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -92,7 +88,9 @@ class CatalogoExamenDetailView(_CatalogoBasePermissionMixin, APIView):
             return Response(CatalogoExamenSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente catálogo", request_body=CatalogoExamenUpdateSerializer, responses={200: CatalogoExamenSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente catálogo",
+                         request_body=CatalogoExamenUpdateSerializer,
+                         responses={200: CatalogoExamenSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -125,7 +123,8 @@ class ExamenListCreateView(_CatalogoBasePermissionMixin, APIView):
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ExamenSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear examen", request_body=ExamenCreateSerializer, responses={201: ExamenSerializer})
+    @swagger_auto_schema(operation_summary="Crear examen", request_body=ExamenCreateSerializer,
+                         responses={201: ExamenSerializer})
     def post(self, request):
         s = ExamenCreateSerializer(data=request.data)
         if s.is_valid():
@@ -149,7 +148,8 @@ class ExamenDetailView(_CatalogoBasePermissionMixin, APIView):
             return Response({'error': 'Examen no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(ExamenSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar examen", request_body=ExamenUpdateSerializer, responses={200: ExamenSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar examen", request_body=ExamenUpdateSerializer,
+                         responses={200: ExamenSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -159,7 +159,8 @@ class ExamenDetailView(_CatalogoBasePermissionMixin, APIView):
             return Response(ExamenSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente examen", request_body=ExamenUpdateSerializer, responses={200: ExamenSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente examen", request_body=ExamenUpdateSerializer,
+                         responses={200: ExamenSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -192,7 +193,8 @@ class ParametroListCreateView(_CatalogoBasePermissionMixin, APIView):
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ParametroSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear parámetro", request_body=ParametroCreateSerializer, responses={201: ParametroSerializer})
+    @swagger_auto_schema(operation_summary="Crear parámetro", request_body=ParametroCreateSerializer,
+                         responses={201: ParametroSerializer})
     def post(self, request):
         s = ParametroCreateSerializer(data=request.data)
         if s.is_valid():
@@ -216,7 +218,8 @@ class ParametroDetailView(_CatalogoBasePermissionMixin, APIView):
             return Response({'error': 'Parámetro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         return Response(ParametroSerializer(obj).data)
 
-    @swagger_auto_schema(operation_summary="Actualizar parámetro", request_body=ParametroUpdateSerializer, responses={200: ParametroSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parámetro", request_body=ParametroUpdateSerializer,
+                         responses={200: ParametroSerializer})
     def put(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -226,7 +229,8 @@ class ParametroDetailView(_CatalogoBasePermissionMixin, APIView):
             return Response(ParametroSerializer(s.save()).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(operation_summary="Actualizar parcialmente parámetro", request_body=ParametroUpdateSerializer, responses={200: ParametroSerializer})
+    @swagger_auto_schema(operation_summary="Actualizar parcialmente parámetro", request_body=ParametroUpdateSerializer,
+                         responses={200: ParametroSerializer})
     def patch(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
@@ -249,7 +253,8 @@ class ParametroDetailView(_CatalogoBasePermissionMixin, APIView):
 class ValorReferenciaListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(operation_summary="Listar valores de referencia", responses={200: ValorReferenciaSerializer(many=True)})
+    @swagger_auto_schema(operation_summary="Listar valores de referencia",
+                         responses={200: ValorReferenciaSerializer(many=True)})
     def get(self, request):
         qs = ValorReferencia.objects.select_related('parametro').all()
         parametro_id = request.query_params.get('parametro')
@@ -259,7 +264,8 @@ class ValorReferenciaListCreateView(_CatalogoBasePermissionMixin, APIView):
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(ValorReferenciaSerializer(pagina, many=True).data)
 
-    @swagger_auto_schema(operation_summary="Crear valor de referencia", request_body=ValorReferenciaCreateSerializer, responses={201: ValorReferenciaSerializer})
+    @swagger_auto_schema(operation_summary="Crear valor de referencia",
+                         request_body=ValorReferenciaCreateSerializer, responses={201: ValorReferenciaSerializer})
     def post(self, request):
         s = ValorReferenciaCreateSerializer(data=request.data)
         if s.is_valid():
@@ -508,3 +514,95 @@ class OrdenExamenResultadosView(_CatalogoBasePermissionMixin, APIView):
             actualizado = s.save()
             return Response(OrdenExamenSerializer(actualizado).data)
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class OrdenExamenFullDetailView(APIView):
+    """Reemplaza al antiguo ResultadoDetailView (muestra). Misma lógica de permisos:
+    staff interno ve todo, médico externo solo lo suyo, propietario solo de sus mascotas."""
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return OrdenExamen.objects.select_related(
+                'examen', 'orden__paciente__raza__especie', 'muestra',
+                'detalle_solicitud__solicitud__medico_veterinario__usuario',
+                'veterinario_responsable',
+            ).prefetch_related('resultados__parametro').get(pk=pk)
+        except OrdenExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(operation_summary="Detalle completo del resultado (con permisos)",
+                         responses={200: OrdenExamenFullDetailSerializer})
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Registro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        if hasattr(user, 'rol') and user.rol and user.rol.nombre in ('Administrador', 'Veterinario', 'Recepcionista'):
+            return Response(OrdenExamenFullDetailSerializer(obj).data)
+
+        if hasattr(user, 'medico_perfil'):
+            if obj.medico_solicitante != user.medico_perfil:
+                return Response({'error': 'No autorizado'}, status=403)
+            return Response(OrdenExamenFullDetailSerializer(obj).data)
+
+        if hasattr(user, 'propietario_perfil'):
+            if not obj.paciente or obj.paciente.propietario != user.propietario_perfil:
+                return Response({'error': 'No autorizado'}, status=403)
+            return Response(OrdenExamenFullDetailSerializer(obj).data)
+
+        return Response({'error': 'No autorizado'}, status=403)
+
+
+class RegistrarResultadoOrdenExamenView(APIView):
+    """Solo Veterinario interno registra resultados (RF8: captura de resultados)."""
+    permission_classes = [IsAuthenticated, EsStaffInterno]  # ajustar a EsVeterinario si quieres restringir más
+
+    def get_object(self, pk):
+        try:
+            return OrdenExamen.objects.select_related('orden__paciente__raza__especie').get(pk=pk)
+        except OrdenExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(operation_summary="Registrar resultados (Veterinario)",
+                         request_body=RegistrarResultadoOrdenExamenSerializer,
+                         responses={200: OrdenExamenFullDetailSerializer})
+    def post(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Registro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        s = RegistrarResultadoOrdenExamenSerializer(obj, data=request.data, context={'request': request})
+        if s.is_valid():
+            actualizado = s.save()
+            return Response(OrdenExamenFullDetailSerializer(actualizado).data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrdenExamenGenerarPdfView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return OrdenExamen.objects.select_related(
+                'examen', 'orden__paciente__raza__especie',
+                'detalle_solicitud__solicitud__medico_veterinario__usuario',
+                'veterinario_responsable',
+            ).prefetch_related('resultados__parametro').get(pk=pk)
+        except OrdenExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(operation_summary="Generar PDF del resultado", responses={200: OrdenExamenFullDetailSerializer})
+    def post(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Registro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        if obj.estado not in ('completado', 'validado'):
+            return Response(
+                {'error': 'El examen debe estar completado antes de generar el PDF.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Import lazy: solo se carga cuando realmente se usa el endpoint
+        from apps.muestra.pdf import generar_pdf_orden_examen
+        obj = generar_pdf_orden_examen(obj)
+        return Response(OrdenExamenFullDetailSerializer(obj).data)

@@ -130,16 +130,27 @@ class OrdenExamen(models.Model):
         "muestra.Muestra", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="ordenes_examen"
     )
-
-    # NUEVO: trazabilidad hacia el detalle de la solicitud (precio, examen pedido)
     detalle_solicitud = models.OneToOneField(
         "recepcion.DetalleSolicitud", on_delete=models.SET_NULL,
         null=True, blank=True, related_name="orden_examen"
     )
 
-    realizado_por = models.CharField(max_length=120, blank=True)
+    # NUEVO: quién registró el resultado (para permisos y trazabilidad real, no texto libre)
+    veterinario_responsable = models.ForeignKey(
+        "usuarios.Usuario", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="examenes_responsable"
+    )
+
+    realizado_por = models.CharField(max_length=120, blank=True)  # se deja por compatibilidad/legado
     validado_por = models.CharField(max_length=120, blank=True)
     fecha_resultado = models.DateTimeField(null=True, blank=True)
+
+    estado = models.CharField(
+        max_length=20,
+        choices=[('pendiente', 'Pendiente'), ('en_proceso', 'En proceso'),
+                 ('completado', 'Completado'), ('validado', 'Validado')],
+        default='pendiente'
+    )
 
     observaciones = models.TextField(blank=True)
     alteraciones = models.TextField(blank=True)
@@ -154,6 +165,16 @@ class OrdenExamen(models.Model):
     def __str__(self):
         return f"{self.examen.nombre_examen} - OT{self.orden_id}"
 
+    # ── Properties para reusar la lógica de permisos que ya tenías en Resultado ──
+    @property
+    def paciente(self):
+        return self.orden.paciente
+
+    @property
+    def medico_solicitante(self):
+        if self.detalle_solicitud:
+            return self.detalle_solicitud.solicitud.medico_veterinario
+        return None
 
 class ResultadoParametro(models.Model):
     orden_examen = models.ForeignKey(OrdenExamen, on_delete=models.CASCADE, related_name="resultados")

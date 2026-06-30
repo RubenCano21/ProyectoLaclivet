@@ -43,10 +43,10 @@ interface Stat {
 const stats = ref<Stat[]>([
   { label: 'Pacientes',    value: null, icon: PawPrint,        color: 'text-violet-600',  bg: 'bg-violet-50',  href: '/pacientes' },
   { label: 'Propietarios', value: null, icon: Users,           color: 'text-blue-600',    bg: 'bg-blue-50',    href: '/propietarios' },
-  { label: 'Solicitudes',  value: null, icon: ClipboardList,   color: 'text-amber-600',   bg: 'bg-amber-50',   href: '/solicitudes/nueva', sub: 'pendientes' },
+  { label: 'Solicitudes',  value: null, icon: ClipboardList,   color: 'text-amber-600',   bg: 'bg-amber-50',   href: '/solicitudes', sub: 'pendientes' },
   { label: 'Exámenes',     value: null, icon: FlaskConical,    color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/solicitudes/catalogo' },
   { label: 'Catálogos',    value: null, icon: BookOpen,        color: 'text-pink-600',    bg: 'bg-pink-50',    href: '/solicitudes/catalogo' },
-  { label: 'Muestras',     value: null, icon: SoapDispenserDroplet, color: 'text-cyan-600', bg: 'bg-cyan-50', href: '/muestras/recepcion' },
+  { label: 'Muestras',     value: null, icon: SoapDispenserDroplet, color: 'text-cyan-600', bg: 'bg-cyan-50', href: '/muestras/incidencias' },
   { label: 'Usuarios',     value: null, icon: Users,           color: 'text-slate-600',   bg: 'bg-slate-50',   href: '/usuarios' },
 ])
 
@@ -189,7 +189,7 @@ onMounted(loadDashboard)
             </div>
             <button
               class="text-xs text-primary hover:underline flex items-center gap-1"
-              @click="router.push('/solicitudes/nueva')"
+              @click="router.push('/solicitudes')"
             >
               Nueva <ArrowRight class="h-3.5 w-3.5" />
             </button>
@@ -226,7 +226,7 @@ onMounted(loadDashboard)
                 v-for="sol in recientes"
                 :key="sol.id"
                 class="hover:bg-muted/20 transition-colors cursor-pointer"
-                @click="router.push('/solicitudes/nueva')"
+                @click="router.push({ name: 'solicitud-detalle', params: { id: sol.id } })"
               >
                 <td class="px-5 py-2.5 font-mono text-xs font-medium">{{ sol.codigo }}</td>
                 <td class="px-4 py-2.5 text-sm">{{ sol.paciente_nombre ?? '—' }}</td>

@@ -272,7 +272,7 @@ class SolicitudExamenFullDetailView(APIView):
         try:
             return SolicitudExamen.objects.select_related(
                 'cobro', 'paciente', 'medico_veterinario'
-            ).prefetch_related('detalles__examen', 'detalles__muestras').get(pk=pk)
+            ).prefetch_related('detalles__examen', 'detalles__orden_examen__muestra').get(pk=pk)
         except SolicitudExamen.DoesNotExist:
             return None
 
@@ -299,7 +299,7 @@ class SolicitudExamenListFiltradaView(APIView):
     def get(self, request):
         qs = SolicitudExamen.objects.select_related(
             'paciente', 'medico_veterinario'
-        ).prefetch_related('detalles__examen', 'detalles__muestras').all()
+        ).prefetch_related('detalles__examen', 'detalles__orden_examen__muestra')
 
         estado = request.query_params.get('estado')
         if estado:
@@ -332,4 +332,12 @@ class SolicitudExamenCambiarEstadoView(APIView):
         if not s.is_valid():
             return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
         cambiar_estado_solicitud(obj, s.validated_data['estado'])
+
+        # Refrescar con los prefetch necesarios para el serializer completo
+        obj = SolicitudExamen.objects.select_related(
+            'cobro', 'paciente', 'medico_veterinario'
+        ).prefetch_related(
+            'detalles__examen', 'detalles__orden_examen__muestra'
+        ).get(pk=pk)
+
         return Response(SolicitudExamenFullDetailSerializer(obj).data)

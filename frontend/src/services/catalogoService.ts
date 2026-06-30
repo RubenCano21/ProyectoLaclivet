@@ -155,6 +155,9 @@ export const catalogoService = {
   delete(id: number) {
     return api.delete(`/catalogos/${id}/`)
   },
+  getExamenes(search = '') {
+    return api.get('/catalogos/examenes/', { params: { search, page_size: 50 } })
+  }
 }
 
 export const examenService = {
@@ -177,6 +180,7 @@ export const examenService = {
   getPlantilla(id: number) {
     return api.get<ExamenPlantilla>(`/catalogos/examenes/${id}/plantilla/`)
   },
+  
 }
 
 export const parametroService = {
@@ -248,5 +252,85 @@ export const ordenExamenService = {
   },
   guardarResultados(id: number, form: OrdenExamenResultadosForm) {
     return api.patch<OrdenExamen>(`/catalogos/orden-examenes/${id}/resultados/`, form)
+  },
+}
+
+export interface MuestraResumenOrden {
+  id: number
+  codigo: string
+  tipo_muestra: string | null
+  estado: string
+}
+
+export interface PacienteResumen {
+  id: number
+  nombre: string
+  sexo: string
+  especie: string | null
+  raza: string | null
+}
+
+export interface PropietarioResumen {
+  id: number
+  nombre_completo: string | null
+  email: string | null
+  telefono: string | null
+}
+
+export interface MedicoResumen {
+  id: number
+  nombre_completo: string | null
+  especialidad: string | null
+  clinica_procedencia: string | null
+}
+
+export interface VeterinarioResumen {
+  id: number
+  nombre_completo: string
+}
+
+export interface OrdenExamenCompleto {
+  id: number
+  estado: 'pendiente' | 'en_proceso' | 'completado' | 'validado'
+  examen: number
+  examen_nombre: string
+  solicitud_codigo: string | null
+  fecha_solicitud: string | null
+  paciente: PacienteResumen | null
+  propietario: PropietarioResumen | null
+  medico_solicitante: MedicoResumen | null
+  veterinario_responsable: number | null
+  veterinario_nombre: VeterinarioResumen | null
+  muestra: MuestraResumenOrden | null
+  resultados: ResultadoParametro[]
+  observaciones: string
+  alteraciones: string
+  diagnostico: string
+  pronostico: string
+  fecha_resultado: string | null
+  archivo_pdf: string | null
+}
+
+// ─── Servicios extendidos ────────────────────────────────────────────────────
+
+export const resultadoFlujoService = {
+  /** Lista de OrdenExamen, opcionalmente filtrado por estado (para la bandeja del Veterinario) */
+  getAll(params?: { orden?: number; estado?: string; page?: number }) {
+    return api.get('/catalogos/orden-examenes/', { params })
+  },
+
+  /** Detalle completo con paciente, propietario, médico, PDF — respeta permisos por rol en backend */
+  getCompleto(id: number) {
+    return api.get<OrdenExamenCompleto>(`/catalogos/orden-examenes/${id}/completo/`)
+  },
+
+  /** Registra resultados + cambia estado a completado (solo rol Veterinario) */
+  registrar(id: number, form: OrdenExamenResultadosForm) {
+    return api.post<OrdenExamenCompleto>(`/catalogos/orden-examenes/${id}/registrar-resultado/`, form)
+  },
+
+  /** Genera (o regenera) el PDF del resultado */
+  generarPdf(id: number) {
+    return api.post<OrdenExamenCompleto>(`/catalogos/orden-examenes/${id}/generar-pdf/`)
   },
 }
