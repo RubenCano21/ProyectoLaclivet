@@ -1,6 +1,8 @@
 from itertools import groupby
+
+from apps.muestra.models import Muestra
 from rest_framework import serializers
-from .models import (
+from apps.catalogo.models import (
     CatalogoExamen, Examen, Parametro, ValorReferencia,
     OrdenTrabajo, OrdenExamen, ResultadoParametro,
 )
@@ -255,4 +257,160 @@ class OrdenExamenResultadosUpdateSerializer(serializers.Serializer):
                 valor_texto=r.get('valor_texto', ''),
                 interpretacion=interpretacion,
             )
+        return instance
+
+class MuestraResumenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Muestra
+        fields = ['id', 'codigo', 'tipo_muestra', 'estado']
+
+
+class PacienteResumenSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre = serializers.CharField()
+    sexo = serializers.CharField()
+    especie = serializers.SerializerMethodField()
+    raza = serializers.SerializerMethodField()
+
+    def get_especie(self, paciente):
+        return paciente.raza.especie.nombre if paciente.raza else None
+
+    def get_raza(self, paciente):
+        return paciente.raza.nombre if paciente.raza else None
+
+
+class PropietarioResumenSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre_completo = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+    telefono = serializers.SerializerMethodField()
+
+    def get_nombre_completo(self, propietario):
+        if propietario.usuario:
+            return f"{propietario.usuario.first_name} {propietario.usuario.last_name}"
+        return None
+
+    def get_email(self, propietario):
+        return propietario.usuario.email if propietario.usuario else None
+
+    def get_telefono(self, propietario):
+        return propietario.usuario.telefono if propietario.usuario else None
+
+
+class MedicoResumenSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre_completo = serializers.SerializerMethodField()
+    especialidad = serializers.CharField()
+    clinica_procedencia = serializers.CharField()
+
+    def get_nombre_completo(self, medico):
+        if medico.usuario:
+            return f"Dr(a). {medico.usuario.first_name} {medico.usuario.last_name}"
+        return None
+
+
+class VeterinarioResumenSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre_completo = serializers.SerializerMethodField()
+
+    def get_nombre_completo(self, usuario):
+        return f"{usuario.first_name} {usuario.last_name}"
+
+
+class OrdenExamenFullDetailSerializer(serializers.ModelSerializer):
+    """Reemplaza al antiguo ResultadoSerializer (JSON). Misma forma de salida,
+    pero los datos vienen de ResultadoParametro real, no de un JSON suelto."""
+    examen_nombre = serializers.CharField(source='examen.nombre_examen', read_only=True)
+    solicitud_codigo = serializers.SerializerMethodField()
+    fecha_solicitud = serializers.SerializerMethodField()
+    paciente = serializers.SerializerMethodField()
+    propietario = serializers.SerializerMethodField()
+    medico_solicitante = serializers.SerializerMethodField()
+    veterinario_nombre = serializers.SerializerMethodField()
+    muestra = MuestraResumenSerializer(read_only=True)
+    resultados = ResultadoParametroSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = OrdenExamen
+        fields = [
+            'id', 'estado', 'examen', 'examen_nombre', 'solicitud_codigo', 'fecha_solicitud',
+            'paciente', 'propietario', 'medico_solicitante', 'veterinario_responsable',
+            'veterinario_nombre', 'muestra', 'resultados',
+            'observaciones', 'alteraciones', 'diagnostico', 'pronostico',
+            'fecha_resultado', 'archivo_pdf',
+        ]
+
+    def get_solicitud_codigo(self, obj):
+        return obj.detalle_solicitud.solicitud.codigo if obj.detalle_solicitud else None
+
+    def get_fecha_solicitud(self, obj):
+        return obj.detalle_solicitud.solicitud.fecha_solicitud if obj.detalle_solicitud else None
+
+    def get_paciente(self, obj):
+        return PacienteResumenSerializer(obj.paciente).data if obj.paciente else None
+
+    def get_propietario(self, obj):
+        if obj.paciente and getattr(obj.paciente, 'propietario', None):
+            return PropietarioResumenSerializer(obj.paciente.propietario).data
+        return None
+
+    def get_medico_solicitante(self, obj):
+        medico = obj.medico_solicitante
+        return MedicoResumenSerializer(medico).data if medico else None
+
+    def get_veterinario_nombre(self, obj):
+        if obj.veterinario_responsable:
+            return VeterinarioResumenSerializer(obj.veterinario_responsable).data
+        return None
+
+
+class RegistrarResultadoOrdenExamenSerializer(serializers.Serializer):
+    """Usado por el Veterinario para registrar resultados + cambiar estado a completado."""
+    observaciones = serializers.CharField(required=False, allow_blank=True)
+    alteraciones = serializers.CharField(required=False, allow_blank=True)
+    diagnostico = serializers.CharField(required=False, allow_blank=True)
+    pronostico = serializers.CharField(required=False, allow_blank=True)
+    resultados = ResultadoParametroInputSerializer(many=True)
+
+    def update(self, instance, validated_data):
+        from django.utils import timezone
+        resultados_data = validated_data.pop('resultados', [])
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        paciente = instance.orden.paciente
+        especie_nombre = paciente.raza.especie.nombre if paciente.raza_id else None
+        sexo_codigo = "M" if getattr(paciente, 'sexo', '').lower().startswith('m') else "H"
+
+        instance.resultados.all().delete()
+        for r in resultados_data:
+            parametro = r['parametro']
+            qs_ref = parametro.valores_referencia.all()
+            ref = None
+            if especie_nombre:
+                ref = qs_ref.filter(especie__iexact=especie_nombre, sexo=sexo_codigo).first() \
+                      or qs_ref.filter(especie__iexact=especie_nombre, sexo='A').first()
+            interpretacion = ''
+            if ref and r.get('valor_numerico') is not None:
+                interpretacion = ref.evaluar(r['valor_numerico']) or ''
+            ResultadoParametro.objects.create(
+                orden_examen=instance,
+                parametro=parametro,
+                valor_numerico=r.get('valor_numerico'),
+                valor_texto=r.get('valor_texto', ''),
+                interpretacion=interpretacion,
+            )
+
+        instance.estado = 'completado'
+        instance.fecha_resultado = timezone.now()
+        instance.veterinario_responsable = self.context['request'].user
+        instance.save()
+
+        # Si todos los OrdenExamen de la orden están completados, marcar la SolicitudExamen
+        orden = instance.orden
+        if all(oe.estado in ('completado', 'validado') for oe in orden.examenes.all()):
+            if orden.solicitud:
+                orden.solicitud.estado = 'completado'
+                orden.solicitud.save(update_fields=['estado'])
+
         return instance

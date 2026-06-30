@@ -1,49 +1,48 @@
 from io import BytesIO
 from django.template.loader import render_to_string
 from django.core.files.base import ContentFile
-from weasyprint import HTML
-
-from .models import Resultado
+from xhtml2pdf import pisa
 
 
-def generar_pdf_resultado(resultado: Resultado) -> Resultado:
-    detalle = resultado.detalle_solicitud
-    solicitud = detalle.solicitud
-    paciente = solicitud.paciente
-    propietario = getattr(paciente, 'propietario', None)
-    examen = detalle.examen
+def _link_callback(uri, rel):
+    """Necesario para xhtml2pdf: resuelve rutas de archivos estáticos/media."""
+    return uri
 
-    parametros_resultado = (
-        resultado.resultados_parametro
-        .select_related('parametro')
-        .order_by('parametro__orden', 'parametro__grupo')
+
+def generar_pdf_orden_examen(orden_examen):
+    resultados = orden_examen.resultados.select_related('parametro').order_by(
+        'parametro__orden', 'parametro__grupo'
     )
 
     grupos = {}
-    for rp in parametros_resultado:
+    for rp in resultados:
         grupo = rp.parametro.grupo or 'General'
         grupos.setdefault(grupo, []).append(rp)
 
-    veterinario = resultado.veterinario_responsable
-    medico_solicitante = solicitud.medico_veterinario
-
     contexto = {
-        'resultado': resultado,
-        'solicitud': solicitud,
-        'paciente': paciente,
-        'propietario': propietario,
-        'examen': examen,
+        'orden_examen': orden_examen,
+        'paciente': orden_examen.paciente,
+        'examen': orden_examen.examen,
+        'medico_solicitante': orden_examen.medico_solicitante,
+        'veterinario': orden_examen.veterinario_responsable,
         'grupos': grupos,
-        'veterinario': veterinario,
-        'medico_solicitante': medico_solicitante,
-        'fecha_emision': resultado.fecha_emision,
+        'fecha_emision': orden_examen.fecha_resultado,
     }
 
     html_string = render_to_string('pdf/resultado_examen.html', contexto)
-    pdf_file = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_file)
-    pdf_file.seek(0)
 
-    nombre_archivo = f"resultado_{solicitud.codigo}_{examen.id}.pdf"
-    resultado.archivo_pdf.save(nombre_archivo, ContentFile(pdf_file.read()), save=True)
-    return resultado
+    pdf_buffer = BytesIO()
+    resultado_pisa = pisa.CreatePDF(
+        html_string,
+        dest=pdf_buffer,
+        link_callback=_link_callback,
+        encoding='utf-8',
+    )
+
+    if resultado_pisa.err:
+        raise RuntimeError(f"Error generando PDF: {resultado_pisa.err}")
+
+    pdf_buffer.seek(0)
+    nombre_archivo = f"resultado_OE{orden_examen.id}.pdf"
+    orden_examen.archivo_pdf.save(nombre_archivo, ContentFile(pdf_buffer.read()), save=True)
+    return orden_examen

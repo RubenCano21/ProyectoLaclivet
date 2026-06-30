@@ -5,6 +5,7 @@ from .views import (
     ParametroListCreateView, ParametroDetailView,
     ValorReferenciaListCreateView, ValorReferenciaDetailView, ExamenPlantillaView, OrdenTrabajoListCreateView,
     OrdenTrabajoDetailView, OrdenExamenListCreateView, OrdenExamenDetailView, OrdenExamenResultadosView,
+    OrdenExamenFullDetailView, RegistrarResultadoOrdenExamenView, OrdenExamenGenerarPdfView,
 )
 
 urlpatterns = [
@@ -25,4 +26,8 @@ urlpatterns = [
     path('orden-examenes/', OrdenExamenListCreateView.as_view(), name='orden-examen-list-create'),
     path('orden-examenes/<int:pk>/', OrdenExamenDetailView.as_view(), name='orden-examen-detail'),
     path('orden-examenes/<int:pk>/resultados/', OrdenExamenResultadosView.as_view(), name='orden-examen-resultados'),
+
+    path('orden-examenes/<int:pk>/completo/', OrdenExamenFullDetailView.as_view(), name='orden-examen-full-detail'),
+    path('orden-examenes/<int:pk>/registrar-resultado/', RegistrarResultadoOrdenExamenView.as_view(), name='orden-examen-registrar'),
+    path('orden-examenes/<int:pk>/generar-pdf/', OrdenExamenGenerarPdfView.as_view(), name='orden-examen-pdf'),
 ]

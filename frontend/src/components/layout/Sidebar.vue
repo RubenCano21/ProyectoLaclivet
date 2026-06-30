@@ -125,9 +125,21 @@ const data = {
           icon: BookOpen,
         },
         {
-          title: "Nueva Solicitud",
-          url: "/solicitudes/nueva",
+          title: "Listado de Solicitudes",
+          url: "/solicitudes",
           icon: FilePlus,
+        },
+      ],
+    },
+    {
+      title: "Resultados",
+      url: "",
+      icon: Microscope,
+      items: [
+        {
+          title: "Pendientes de Resultado",
+          url: "/resultados",
+          icon: ClipboardPlus,
         },
       ],
     },

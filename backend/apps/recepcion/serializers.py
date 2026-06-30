@@ -117,21 +117,33 @@ class MuestraMiniSerializer(serializers.ModelSerializer):
 
 class DetalleSolicitudConMuestraSerializer(serializers.ModelSerializer):
     """Variante de DetalleSolicitudSerializer con info de muestra y resultado.
-    Se usa en el detalle de la solicitud (SolicitudExamenFullDetailView)."""
+    La muestra se obtiene vía OrdenExamen.muestra (no hay FK directa Muestra->DetalleSolicitud)."""
     examen_nombre = serializers.CharField(source='examen.nombre_examen', read_only=True)
     requiere_muestra = serializers.BooleanField(source='examen.requiere_muestra', read_only=True)
-    muestras = MuestraMiniSerializer(many=True, read_only=True)
+    muestra = serializers.SerializerMethodField()
     tiene_resultado = serializers.SerializerMethodField()
+    estado_resultado = serializers.SerializerMethodField()
 
     class Meta:
         model = DetalleSolicitud
         fields = [
             'id', 'precio_aplicado', 'examen', 'examen_nombre',
-            'requiere_muestra', 'muestras', 'tiene_resultado',
+            'requiere_muestra', 'muestra', 'tiene_resultado', 'estado_resultado',
         ]
 
+    def get_muestra(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        if orden_examen and orden_examen.muestra:
+            return MuestraMiniSerializer(orden_examen.muestra).data
+        return None
+
     def get_tiene_resultado(self, obj):
-        return hasattr(obj, 'resultado')
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return bool(orden_examen and orden_examen.resultados.exists())
+
+    def get_estado_resultado(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return orden_examen.estado if orden_examen else None
 
 
 class SolicitudExamenFullDetailSerializer(serializers.ModelSerializer):

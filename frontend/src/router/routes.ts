@@ -78,16 +78,16 @@ export const protectedRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/solicitudes/CatalogView.vue'),
   },
   {
-    path: '/solicitudes/nueva',
-    name: 'nueva-solicitud',
-    component: () => import('@/views/solicitudes/NuevaSolicitudView.vue'),
+    path: '/solicitudes',
+    name: 'solicitudes',
+    component: () => import('@/views/solicitudes/SolicitudesView.vue'),
   },
-  // ── Muestras ─────────────────────────────────────────────────────
   {
-    path: '/muestras/recepcion',
-    name: 'recepcion',
-    component: () => import('@/views/muestras/RecepcionView.vue'),
+    path: '/solicitudes/:id',
+    name: 'solicitud-detalle',
+    component: () => import('@/views/solicitudes/SolicitudDetailView.vue'),
   },
+
   {
     path: '/muestras/incidencias',
     name: 'incidencias',
@@ -101,9 +101,15 @@ export const protectedRoutes: RouteRecordRaw[] = [
   },
   // ── Resultados ────────────────────────────────────────────────────
   {
-    path: '/resultados/captura',
+    path: '/resultados',
+    name: 'resultados',
+    component: () => import('@/views/resultados/ResultadosListView.vue'),
+  },
+  {
+    path: '/resultados/:id',
     name: 'captura-resultados',
     component: () => import('@/views/resultados/CapturaResultadosView.vue'),
+    meta: { permiso: 'registrar_resultados' },
   },
   {
     path: '/resultados/validacion',
@@ -123,5 +129,5 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/NotFound.vue'),
     meta: { public: true },
   },
-  
+
 ]
