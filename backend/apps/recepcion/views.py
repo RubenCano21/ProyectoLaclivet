@@ -291,6 +291,48 @@ class SolicitudExamenFullDetailView(APIView):
         return Response(SolicitudExamenFullDetailSerializer(obj, context={'request': request}).data)
 
 
+class SolicitudExamenAgendaView(APIView):
+    """Devuelve todas las solicitudes en un rango de fechas (sin paginación).
+    Usado por la vista de Agenda (calendario día / semana / mes)."""
+    permission_classes = [EsStaffInterno]
+
+    @swagger_auto_schema(
+        operation_summary="Agenda de solicitudes por rango de fechas",
+        manual_parameters=[
+            openapi.Parameter('fecha_desde', openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                              description='YYYY-MM-DD', required=True),
+            openapi.Parameter('fecha_hasta', openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                              description='YYYY-MM-DD', required=True),
+            openapi.Parameter('estado', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=False),
+        ],
+        responses={200: SolicitudExamenFullDetailSerializer(many=True)},
+    )
+    def get(self, request):
+        fecha_desde = request.query_params.get('fecha_desde')
+        fecha_hasta = request.query_params.get('fecha_hasta')
+
+        if not fecha_desde or not fecha_hasta:
+            return Response(
+                {'error': 'Se requieren los parámetros fecha_desde y fecha_hasta (YYYY-MM-DD)'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        qs = SolicitudExamen.objects.select_related(
+            'paciente', 'medico_veterinario'
+        ).prefetch_related(
+            'detalles__examen', 'detalles__orden_examen__muestra'
+        ).filter(
+            fecha_solicitud__date__gte=fecha_desde,
+            fecha_solicitud__date__lte=fecha_hasta,
+        ).order_by('fecha_solicitud')
+
+        estado = request.query_params.get('estado')
+        if estado:
+            qs = qs.filter(estado=estado)
+
+        return Response(SolicitudExamenFullDetailSerializer(qs, many=True, context={'request': request}).data)
+
+
 class SolicitudExamenListFiltradaView(APIView):
     """Lista de solicitudes con filtro opcional por ?estado=pendiente.
     Es la vista que alimenta la 'lista de exámenes' después de registrarlos."""
