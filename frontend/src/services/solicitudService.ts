@@ -141,6 +141,13 @@ export const solicitudFlujoService = {
     return api.get('/recepcion/solicitudes/listado/', { params: { page, estado: estado || undefined } })
   },
 
+  /** Agenda: solicitudes en un rango de fechas (sin paginación) para el calendario */
+  getAgenda(fechaDesde: string, fechaHasta: string) {
+    return api.get<SolicitudCompleta[]>('/recepcion/solicitudes/agenda/', {
+      params: { fecha_desde: fechaDesde, fecha_hasta: fechaHasta },
+    })
+  },
+
   /** Detalle completo: exámenes, muestras, estado de resultado */
   getCompleto(id: number) {
     return api.get(`/recepcion/solicitudes/${id}/completo/`)
