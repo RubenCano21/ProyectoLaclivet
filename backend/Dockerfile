@@ -28,6 +28,12 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
     EMAIL_HOST_PASSWORD=dummy \
     python manage.py collectstatic --noinput
 
+# Seguridad: no correr el proceso de la aplicación como root dentro del
+# contenedor (defensa en profundidad si el contenedor llega a ser comprometido).
+RUN addgroup --system app && adduser --system --ingroup app --home /app app \
+    && chown -R app:app /app
+USER app
+
 EXPOSE 8080
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8080", "--workers", "3"]

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+from apps.core.permissions import EsStaffInterno
 from config.pagination import StandardPagination
 from .models import Cobro, SolicitudExamen, DetalleSolicitud
 from .serializers import (
@@ -12,12 +13,27 @@ from .serializers import (
     DetalleSolicitudSerializer, DetalleSolicitudCreateSerializer, DetalleSolicitudUpdateSerializer,
 )
 
+from apps.paciente.models import Paciente
+from apps.medico.models import MedicoVeterinario
+from .serializers import (
+    SolicitudExamenFullDetailSerializer,
+    CrearSolicitudConExamenesSerializer,
+    CambiarEstadoSolicitudSerializer,
+)
+from .services import crear_solicitud_con_muestras, cambiar_estado_solicitud
+
 _del_response = openapi.Response('Eliminado exitosamente')
 
 
 # ── Cobro ─────────────────────────────────────────────────
+# NOTA DE SEGURIDAD: toda esta app maneja cobros, montos y solicitudes de
+# examen — son operaciones internas de recepción/administración. Antes
+# usaban `IsAuthenticated` genérico, lo que permitía a CUALQUIER usuario
+# autenticado (incluido un Propietario o Médico Externo) crear, editar o
+# eliminar cobros y solicitudes de otras personas. Se restringe a
+# `EsStaffInterno` (Administrador, Veterinario, Recepcionista).
 class CobroListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar cobros", responses={200: CobroSerializer(many=True)})
     def get(self, request):
@@ -34,7 +50,7 @@ class CobroListCreateView(APIView):
 
 
 class CobroDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -80,7 +96,7 @@ class CobroDetailView(APIView):
 
 # ── SolicitudExamen ───────────────────────────────────────
 class SolicitudExamenListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar solicitudes de examen", responses={200: SolicitudExamenSerializer(many=True)})
     def get(self, request):
@@ -98,7 +114,7 @@ class SolicitudExamenListCreateView(APIView):
 
 
 class SolicitudExamenDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -144,7 +160,7 @@ class SolicitudExamenDetailView(APIView):
 
 # ── DetalleSolicitud ──────────────────────────────────────
 class DetalleSolicitudListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar detalles de solicitud", responses={200: DetalleSolicitudSerializer(many=True)})
     def get(self, request):
@@ -162,7 +178,7 @@ class DetalleSolicitudListCreateView(APIView):
 
 
 class DetalleSolicitudDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -204,3 +220,131 @@ class DetalleSolicitudDetailView(APIView):
             return Response({'error': 'Detalle no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         obj.delete()
         return Response({'mensaje': 'Detalle eliminado exitosamente'}, status=status.HTTP_200_OK)
+
+class SolicitudExamenCrearConExamenesView(APIView):
+    """
+    Crea una SolicitudExamen junto con sus DetalleSolicitud,
+    verificando automáticamente si cada Examen requiere Muestra
+    (Examen.requiere_muestra) y generándola si aplica.
+    """
+    permission_classes = [EsStaffInterno]
+
+    @swagger_auto_schema(
+        operation_summary="Crear solicitud con exámenes (verifica muestras automáticamente)",
+        request_body=CrearSolicitudConExamenesSerializer,
+        responses={201: SolicitudExamenFullDetailSerializer}
+    )
+    def post(self, request):
+        s = CrearSolicitudConExamenesSerializer(data=request.data)
+        if not s.is_valid():
+            return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = s.validated_data
+        try:
+            paciente = Paciente.objects.get(id=data['paciente'])
+        except Paciente.DoesNotExist:
+            return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        medico = None
+        if data.get('medico_veterinario'):
+            try:
+                medico = MedicoVeterinario.objects.get(id=data['medico_veterinario'])
+            except MedicoVeterinario.DoesNotExist:
+                return Response({'error': 'Médico veterinario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        solicitud, muestras = crear_solicitud_con_muestras(
+            paciente=paciente,
+            medico_veterinario=medico,
+            examenes_ids=data['examenes_ids'],
+            observaciones=data.get('observaciones', ''),
+        )
+
+        out = SolicitudExamenFullDetailSerializer(solicitud)
+        return Response(
+            {
+                'solicitud': out.data,
+                'muestras_generadas': len(muestras),
+                'mensaje': f"Solicitud creada. {len(muestras)} muestra(s) requerida(s)."
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+
+class SolicitudExamenFullDetailView(APIView):
+    """Detalle completo de la solicitud: exámenes, muestras, estado de resultado.
+    Usado por la lista de solicitudes / pantalla de seguimiento."""
+    permission_classes = [EsStaffInterno]
+
+    def get_object(self, pk):
+        try:
+            return SolicitudExamen.objects.select_related(
+                'cobro', 'paciente', 'medico_veterinario'
+            ).prefetch_related('detalles__examen', 'detalles__orden_examen__muestra').get(pk=pk)
+        except SolicitudExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(operation_summary="Detalle completo de solicitud", responses={200: SolicitudExamenFullDetailSerializer})
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Solicitud no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(SolicitudExamenFullDetailSerializer(obj, context={'request': request}).data)
+
+
+class SolicitudExamenListFiltradaView(APIView):
+    """Lista de solicitudes con filtro opcional por ?estado=pendiente.
+    Es la vista que alimenta la 'lista de exámenes' después de registrarlos."""
+    permission_classes = [EsStaffInterno]
+
+    @swagger_auto_schema(
+        operation_summary="Listar solicitudes (filtro por estado)",
+        manual_parameters=[
+            openapi.Parameter('estado', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=False)
+        ],
+        responses={200: SolicitudExamenFullDetailSerializer(many=True)}
+    )
+    def get(self, request):
+        qs = SolicitudExamen.objects.select_related(
+            'paciente', 'medico_veterinario'
+        ).prefetch_related('detalles__examen', 'detalles__orden_examen__muestra')
+
+        estado = request.query_params.get('estado')
+        if estado:
+            qs = qs.filter(estado=estado)
+
+        paginator = StandardPagination()
+        pagina = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(SolicitudExamenFullDetailSerializer(pagina, many=True, context={'request': request}).data)
+
+
+class SolicitudExamenCambiarEstadoView(APIView):
+    permission_classes = [EsStaffInterno]
+
+    def get_object(self, pk):
+        try:
+            return SolicitudExamen.objects.get(pk=pk)
+        except SolicitudExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(
+        operation_summary="Cambiar estado de una solicitud",
+        request_body=CambiarEstadoSolicitudSerializer,
+        responses={200: SolicitudExamenFullDetailSerializer}
+    )
+    def patch(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Solicitud no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        s = CambiarEstadoSolicitudSerializer(data=request.data)
+        if not s.is_valid():
+            return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+        cambiar_estado_solicitud(obj, s.validated_data['estado'])
+
+        # Refrescar con los prefetch necesarios para el serializer completo
+        obj = SolicitudExamen.objects.select_related(
+            'cobro', 'paciente', 'medico_veterinario'
+        ).prefetch_related(
+            'detalles__examen', 'detalles__orden_examen__muestra'
+        ).get(pk=pk)
+
+        return Response(SolicitudExamenFullDetailSerializer(obj, context={'request': request}).data)

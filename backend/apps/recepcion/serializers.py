@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Cobro, SolicitudExamen, DetalleSolicitud
+from apps.catalogo.models import Examen
+from apps.muestra.models import Muestra
 
 
 class CobroSerializer(serializers.ModelSerializer):
@@ -9,11 +11,21 @@ class CobroSerializer(serializers.ModelSerializer):
 
 
 class CobroCreateSerializer(serializers.ModelSerializer):
+    # Si se envía `solicitud`, el monto se calcula en el servidor a partir
+    # de la suma de `precio_aplicado` de sus detalles — el `monto_total`
+    # enviado por el cliente se IGNORA en ese caso (evita manipulación de
+    # precios desde el cliente). Si no se envía `solicitud`, se admite un
+    # monto manual (p. ej. cargos misceláneos), solo permitido a staff
+    # interno gracias al permission_classes de la vista.
+    solicitud = serializers.PrimaryKeyRelatedField(
+        queryset=SolicitudExamen.objects.all(), required=False, allow_null=True, write_only=True
+    )
+
     class Meta:
         model = Cobro
-        fields = ['monto_total', 'metodo_pago', 'fecha']
+        fields = ['monto_total', 'metodo_pago', 'fecha', 'solicitud']
         extra_kwargs = {
-            'monto_total': {'required': True},
+            'monto_total': {'required': False},
             'metodo_pago': {'required': True},
             'fecha': {'required': True},
         }
@@ -22,6 +34,30 @@ class CobroCreateSerializer(serializers.ModelSerializer):
         if value is not None and value <= 0:
             raise serializers.ValidationError("El monto total debe ser mayor a 0.")
         return value
+
+    def validate(self, attrs):
+        solicitud = attrs.get('solicitud')
+        if solicitud is None and attrs.get('monto_total') is None:
+            raise serializers.ValidationError({
+                "monto_total": "Debe indicar un monto o vincular una solicitud para calcularlo automáticamente."
+            })
+        return attrs
+
+    def create(self, validated_data):
+        solicitud = validated_data.pop('solicitud', None)
+
+        if solicitud is not None:
+            from django.db.models import Sum
+            total = solicitud.detalles.aggregate(total=Sum('precio_aplicado'))['total'] or 0
+            validated_data['monto_total'] = total
+
+        cobro = Cobro.objects.create(**validated_data)
+
+        if solicitud is not None:
+            solicitud.cobro = cobro
+            solicitud.save(update_fields=['cobro'])
+
+        return cobro
 
 
 class CobroUpdateSerializer(serializers.ModelSerializer):
@@ -51,7 +87,7 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
 
     def get_medico_nombre(self, obj):
         if obj.medico_veterinario:
-            return f"{obj.medico_veterinario.nombre} {obj.medico_veterinario.apellido}"
+            return f"{obj.medico_veterinario.usuario.first_name} {obj.medico_veterinario.usuario.last_name}"
         return None
 
     def get_paciente_nombre(self, obj):
@@ -62,7 +98,7 @@ class SolicitudExamenSerializer(serializers.ModelSerializer):
     def get_propietario_nombre(self, obj):
         if obj.paciente and obj.paciente.propietario:
             p = obj.paciente.propietario
-            return f"{p.nombre} {p.apellido}"
+            return f"{p.usuario.first_name} {p.usuario.last_name}"
         return None
 
 
@@ -105,3 +141,98 @@ class DetalleSolicitudUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetalleSolicitud
         fields = ['precio_aplicado', 'solicitud', 'examen']
+
+
+class MuestraMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Muestra
+        fields = ['id', 'codigo', 'tipo_muestra', 'estado']
+
+
+class DetalleSolicitudConMuestraSerializer(serializers.ModelSerializer):
+    """Variante de DetalleSolicitudSerializer con info de muestra y resultado.
+    La muestra se obtiene vía OrdenExamen.muestra (no hay FK directa Muestra->DetalleSolicitud)."""
+    examen_nombre = serializers.CharField(source='examen.nombre_examen', read_only=True)
+    requiere_muestra = serializers.BooleanField(source='examen.requiere_muestra', read_only=True)
+    muestra = serializers.SerializerMethodField()
+    tiene_resultado = serializers.SerializerMethodField()
+    estado_resultado = serializers.SerializerMethodField()
+    orden_examen_id = serializers.SerializerMethodField()
+    archivo_pdf_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DetalleSolicitud
+        fields = [
+            'id', 'precio_aplicado', 'examen', 'examen_nombre',
+            'requiere_muestra', 'muestra', 'tiene_resultado', 'estado_resultado',
+            'orden_examen_id', 'archivo_pdf_url',
+        ]
+
+    def get_muestra(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        if orden_examen and orden_examen.muestra:
+            return MuestraMiniSerializer(orden_examen.muestra).data
+        return None
+
+    def get_tiene_resultado(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return bool(orden_examen and orden_examen.resultados.exists())
+
+    def get_estado_resultado(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return orden_examen.estado if orden_examen else None
+
+    def get_orden_examen_id(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return orden_examen.id if orden_examen else None
+
+    def get_archivo_pdf_url(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        if orden_examen and orden_examen.archivo_pdf:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(orden_examen.archivo_pdf.url)
+            return orden_examen.archivo_pdf.url
+        return None
+
+
+class SolicitudExamenFullDetailSerializer(serializers.ModelSerializer):
+    """Detalle completo de una solicitud, con sus DetalleSolicitud + muestras + estado de resultado.
+    Se usa para la vista de detalle/lista que ve Recepción/Veterinario."""
+    detalles = DetalleSolicitudConMuestraSerializer(many=True, read_only=True)
+    paciente_nombre = serializers.CharField(source='paciente.nombre', read_only=True)
+    medico_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SolicitudExamen
+        fields = [
+            'id', 'codigo', 'fecha_solicitud', 'observaciones', 'estado',
+            'cobro', 'paciente', 'paciente_nombre', 'medico_veterinario',
+            'medico_nombre', 'detalles',
+        ]
+
+    def get_medico_nombre(self, obj):
+        if obj.medico_veterinario and obj.medico_veterinario.usuario:
+            u = obj.medico_veterinario.usuario
+            return f"{u.first_name} {u.last_name}"
+        return None
+
+
+class CrearSolicitudConExamenesSerializer(serializers.Serializer):
+    """Input para crear una solicitud junto con sus exámenes en un solo paso,
+    delegando a services.crear_solicitud_con_muestras (verifica muestras)."""
+    paciente = serializers.IntegerField()
+    medico_veterinario = serializers.IntegerField(required=False, allow_null=True)
+    examenes_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
+    observaciones = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_examenes_ids(self, value):
+        existentes = set(Examen.objects.filter(id__in=value).values_list('id', flat=True))
+        faltantes = set(value) - existentes
+        if faltantes:
+            raise serializers.ValidationError(f"Exámenes no encontrados: {faltantes}")
+        return value
+
+
+class CambiarEstadoSolicitudSerializer(serializers.Serializer):
+    estado = serializers.ChoiceField(choices=SolicitudExamen.ESTADO_CHOICES)

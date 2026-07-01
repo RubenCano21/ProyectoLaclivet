@@ -101,3 +101,57 @@ export const detalleService = {
     return api.delete(`/recepcion/detalles/${id}/`)
   },
 }
+
+export interface MuestraResumen {
+  id: number
+  codigo: string
+  tipo_muestra: string | null
+  estado: string
+}
+
+export interface DetalleSolicitudCompleto {
+  id: number
+  precio_aplicado: string | null
+  examen: number
+  examen_nombre: string
+  requiere_muestra: boolean
+  muestra: MuestraResumen | null
+  tiene_resultado: boolean
+  estado_resultado: string | null
+  orden_examen_id: number | null
+  archivo_pdf_url: string | null
+}
+
+export interface SolicitudCompleta extends SolicitudExamen {
+  detalles: DetalleSolicitudCompleto[]
+}
+
+export type CrearSolicitudConExamenesForm = {
+  paciente: number
+  medico_veterinario?: number | null
+  examenes_ids: number[]
+  observaciones?: string
+}
+
+// ─── Servicios extendidos ────────────────────────────────────────────────────
+
+export const solicitudFlujoService = {
+  /** Lista con filtro por estado, usando datos completos (detalles + muestras) */
+  getAllFiltrado(page = 1, estado?: string) {
+    return api.get('/recepcion/solicitudes/listado/', { params: { page, estado: estado || undefined } })
+  },
+
+  /** Detalle completo: exámenes, muestras, estado de resultado */
+  getCompleto(id: number) {
+    return api.get(`/recepcion/solicitudes/${id}/completo/`)
+  },
+
+  /** Crea la solicitud + detalles + verifica/genera muestras automáticamente */
+  crearConExamenes(form: CrearSolicitudConExamenesForm) {
+    return api.post('/recepcion/solicitudes/crear-con-examenes/', form)
+  },
+
+  cambiarEstado(id: number, estado: string) {
+    return api.patch(`/recepcion/solicitudes/${id}/cambiar-estado/`, { estado })
+  },
+}

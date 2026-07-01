@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+from apps.core.permissions import EsStaffInterno, tiene_rol
 from config.pagination import StandardPagination
 from .models import Especie, Raza, Paciente, AntecedentePaciente
 from .serializers import (
@@ -17,8 +18,29 @@ from .serializers import (
 _del_response = openapi.Response('Eliminado exitosamente')
 
 
+class _ReferenciaBasePermissionMixin:
+    """Especie/Raza son catálogos de referencia compartidos.
+    Lectura: cualquier usuario autenticado. Escritura: solo staff interno."""
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.method not in permissions.SAFE_METHODS:
+            if not EsStaffInterno().has_permission(request, self):
+                self.permission_denied(
+                    request, message="Solo el personal interno puede modificar el catálogo."
+                )
+
+
+def _es_dueno(request, paciente):
+    """True si el paciente pertenece al Propietario autenticado (o si el
+    usuario no tiene rol Propietario, en cuyo caso no aplica esta restricción)."""
+    if not tiene_rol(request.user, 'Propietario'):
+        return True
+    return bool(paciente and paciente.propietario and paciente.propietario.usuario_id == request.user.id)
+
+
 # ── Especie ──────────────────────────────────────────────
-class EspecieListCreateView(APIView):
+class EspecieListCreateView(_ReferenciaBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar especies",
@@ -38,7 +60,7 @@ class EspecieListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EspecieDetailView(APIView):
+class EspecieDetailView(_ReferenciaBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
@@ -91,7 +113,7 @@ class EspecieDetailView(APIView):
 
 
 # ── Raza ─────────────────────────────────────────────────
-class RazaListCreateView(APIView):
+class RazaListCreateView(_ReferenciaBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(operation_summary="Listar razas", responses={200: RazaSerializer(many=True)})
@@ -110,7 +132,7 @@ class RazaListCreateView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RazaDetailView(APIView):
+class RazaDetailView(_ReferenciaBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk):
@@ -165,7 +187,10 @@ class PacienteListCreateView(APIView):
 
     @swagger_auto_schema(operation_summary="Listar pacientes", responses={200: PacienteSerializer(many=True)})
     def get(self, request):
-        qs = Paciente.objects.select_related('raza__especie', 'propietario').all()
+        qs = Paciente.objects.select_related('raza__especie', 'propietario__usuario').all()
+        # Un Propietario solo puede ver sus propias mascotas (evita IDOR).
+        if tiene_rol(request.user, 'Propietario'):
+            qs = qs.filter(propietario__usuario=request.user)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(PacienteSerializer(pagina, many=True).data)
@@ -174,6 +199,12 @@ class PacienteListCreateView(APIView):
                          request_body=PacienteCreateSerializer,
                          responses={201: PacienteSerializer})
     def post(self, request):
+        # Registrar pacientes es una operación de recepción/veterinario, no del propietario.
+        if not EsStaffInterno().has_permission(request, self):
+            return Response(
+                {'error': 'Solo el personal interno puede registrar pacientes.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         s = PacienteCreateSerializer(data=request.data)
         if s.is_valid():
             return Response(PacienteSerializer(s.save()).data, status=status.HTTP_201_CREATED)
@@ -185,7 +216,7 @@ class PacienteDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Paciente.objects.select_related('raza__especie', 'propietario').get(pk=pk)
+            return Paciente.objects.select_related('raza__especie', 'propietario__usuario').get(pk=pk)
         except Paciente.DoesNotExist:
             return None
 
@@ -195,12 +226,16 @@ class PacienteDetailView(APIView):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        if not _es_dueno(request, obj):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         return Response(PacienteSerializer(obj).data)
 
     @swagger_auto_schema(operation_summary="Actualizar paciente",
                          request_body=PacienteUpdateSerializer,
                          responses={200: PacienteSerializer})
     def put(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -213,6 +248,8 @@ class PacienteDetailView(APIView):
                          request_body=PacienteUpdateSerializer,
                          responses={200: PacienteSerializer})
     def patch(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -223,6 +260,8 @@ class PacienteDetailView(APIView):
 
     @swagger_auto_schema(operation_summary="Eliminar paciente", responses={200: _del_response})
     def delete(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -244,9 +283,12 @@ class PacienteHistorialView(APIView):
     )
     def get(self, request, pk):
         try:
-            paciente = Paciente.objects.select_related('raza__especie', 'propietario').get(pk=pk)
+            paciente = Paciente.objects.select_related('raza__especie', 'propietario__usuario').get(pk=pk)
         except Paciente.DoesNotExist:
             return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not _es_dueno(request, paciente):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
 
         # Antecedentes persistentes
         antecedentes = paciente.antecedentes.select_related('registrado_por').all()
@@ -272,7 +314,10 @@ class AntecedentePacienteListCreateView(APIView):
     @swagger_auto_schema(operation_summary="Listar antecedentes de pacientes",
                          responses={200: AntecedentePacienteSerializer(many=True)})
     def get(self, request):
-        qs = AntecedentePaciente.objects.select_related('paciente', 'registrado_por').all()
+        qs = AntecedentePaciente.objects.select_related('paciente__propietario__usuario', 'registrado_por').all()
+        # Un Propietario solo ve antecedentes de sus propias mascotas.
+        if tiene_rol(request.user, 'Propietario'):
+            qs = qs.filter(paciente__propietario__usuario=request.user)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(AntecedentePacienteSerializer(pagina, many=True).data)
@@ -281,6 +326,11 @@ class AntecedentePacienteListCreateView(APIView):
                          request_body=AntecedentePacienteCreateSerializer,
                          responses={201: AntecedentePacienteSerializer})
     def post(self, request):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response(
+                {'error': 'Solo el personal interno puede registrar antecedentes.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         s = AntecedentePacienteCreateSerializer(data=request.data)
         if s.is_valid():
             return Response(AntecedentePacienteSerializer(s.save()).data, status=status.HTTP_201_CREATED)
@@ -292,7 +342,9 @@ class AntecedentePacienteDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return AntecedentePaciente.objects.select_related('paciente', 'registrado_por').get(pk=pk)
+            return AntecedentePaciente.objects.select_related(
+                'paciente__propietario__usuario', 'registrado_por'
+            ).get(pk=pk)
         except AntecedentePaciente.DoesNotExist:
             return None
 
@@ -302,12 +354,16 @@ class AntecedentePacienteDetailView(APIView):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        if not _es_dueno(request, obj.paciente):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         return Response(AntecedentePacienteSerializer(obj).data)
 
     @swagger_auto_schema(operation_summary="Actualizar antecedente",
                          request_body=AntecedentePacienteUpdateSerializer,
                          responses={200: AntecedentePacienteSerializer})
     def put(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -320,6 +376,8 @@ class AntecedentePacienteDetailView(APIView):
                          request_body=AntecedentePacienteUpdateSerializer,
                          responses={200: AntecedentePacienteSerializer})
     def patch(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -330,6 +388,8 @@ class AntecedentePacienteDetailView(APIView):
 
     @swagger_auto_schema(operation_summary="Eliminar antecedente", responses={200: _del_response})
     def delete(self, request, pk):
+        if not EsStaffInterno().has_permission(request, self):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Antecedente no encontrado'}, status=status.HTTP_404_NOT_FOUND)

@@ -12,9 +12,10 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Plus, Search, Pencil, Trash2, Loader2,
+  Plus, Search, Trash2, Loader2,
   AlertCircle, PawPrint, Check, X, ChevronLeft, ChevronRight,
-  FileDiff,
+  SquarePen,
+  FileCheck,
 } from 'lucide-vue-next'
 import PacienteFormView from './PacienteFormView.vue'
 import type { Paciente } from '@/models/paciente.ts'
@@ -113,8 +114,8 @@ function onSaved() {
   loadPacientes(paginaActual.value)
 }
 
-function verDetalle(id: number){
-  router.push({ name: 'detalle-paciente', params: { id }})
+function verDetalle(id: number) {
+  router.push({ name: 'detalle-paciente', params: { id } })
 }
 
 </script>
@@ -212,13 +213,13 @@ function verDetalle(id: number){
                   <td class="px-4 py-3">{{ p.propietario_nombre }}</td>
                   <td class="px-4 py-3">
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
-                      <button @click="verDetalle(p.id)"
+                      <button @click="verDetalle(p.id)" class="p-1.5 rounded-md text-primary hover:bg-primary/10" 
                       title="detalle">
-                        <FileDiff class="h-4 w-4"/>
+                        <FileCheck class="h-4 w-4" />
                       </button>
                       <button @click="abrirEditar(p)" class="p-1.5 rounded-md text-primary hover:bg-primary/10"
                         title="Editar">
-                        <Pencil class="h-4 w-4" />
+                        <SquarePen class="h-4 w-4" />
                       </button>
                       <button @click="confirmDeleteId = p.id"
                         class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors" title="Eliminar">
@@ -265,11 +266,5 @@ function verDetalle(id: number){
     </SidebarInset>
   </SidebarProvider>
 
-  <PacienteFormView
-  v-model:open="modalOpen"
-  :paciente="pacienteEditando"
-  @saved="onSaved"
-/>
+  <PacienteFormView v-model:open="modalOpen" :paciente="pacienteEditando" @saved="onSaved" />
 </template>
-
-

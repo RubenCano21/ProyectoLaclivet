@@ -3,15 +3,21 @@ from django.db import models
 
 class Muestra(models.Model):
     ESTADO_CHOICES = [
-        ('recibida', 'Recibida'),
+        ('pendiente',  'Pendiente'),
         ('en_proceso', 'En proceso'),
-        ('procesada', 'Procesada'),
-        ('descartada', 'Descartada'),
+        ('completada', 'Completada'),
+        ('rechazada',  'Rechazada'),
     ]
 
     codigo = models.CharField(max_length=50, unique=True)
     tipo_muestra = models.CharField(max_length=100, blank=True, null=True)
-    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='recibida')
+    estado = models.CharField(max_length=50, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_recepcion = models.DateField(blank=True, null=True)
+    observaciones = models.TextField(blank=True, null=True)
+    paciente = models.ForeignKey(
+        'paciente.Paciente', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='muestras'
+    )
     solicitud = models.ForeignKey(
         'recepcion.SolicitudExamen', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='muestras'
@@ -42,6 +48,22 @@ class IncidenciaMuestra(models.Model):
         return f"Incidencia #{self.pk} - {self.muestra.codigo}"
 
 class Resultado(models.Model):
+    """⚠️ MODELO LEGACY / EN DESUSO.
+
+    Este modelo ya NO es parte del flujo vigente de captura y entrega de
+    resultados. El flujo actual usa `apps.catalogo.models.OrdenExamen` +
+    `apps.catalogo.models.ResultadoParametro` (parámetros estructurados con
+    valores de referencia por especie/sexo), en vez del campo JSON libre
+    `valores_obtenidos` que se definió aquí originalmente.
+
+    Se conserva la clase (sin eliminarla) para no perder/romper filas ya
+    existentes en bases de datos desplegadas, pero NO debe usarse en código
+    nuevo. Antes existían dos vistas (`propietario.views.ResultadosPropietarioView`
+    y `medico.views.ResultadosMedicoVeterinarioView`) que consultaban este
+    modelo y un `ResultadoSerializer` que ni siquiera existía ya —lo que
+    provocaba un `ImportError` en cada llamada—; ambas fueron corregidas para
+    usar `OrdenExamen` en su lugar.
+    """
     ESTADO_CHOICES = [
         ('pendiente', 'Pendiente'),
         ('en_proceso', 'En proceso'),
