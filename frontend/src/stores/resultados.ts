@@ -94,8 +94,12 @@ export const useResultadosStore = defineStore('resultados', () => {
         error.value = null
         try {
             const { data } = await resultadoFlujoService.generarPdf(id)
-            actual.value = data
-            return { ok: true, data }
+            // El backend devuelve { success, message, pdf_url, pdf_name }, NO un OrdenExamenCompleto.
+            // Actualizamos solo el campo archivo_pdf del registro actual para que la vista pueda descargarlo.
+            if (data.success && data.pdf_url && actual.value) {
+                actual.value = { ...actual.value, archivo_pdf: data.pdf_url }
+            }
+            return { ok: data.success, data }
         } catch (err) {
             const msg = extractError(err)
             error.value = msg

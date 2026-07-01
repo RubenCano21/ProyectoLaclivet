@@ -82,6 +82,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Vista personalizada para obtener el token JWT"""
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_scope = 'login'  # máx. 8 intentos/min por IP (mitiga fuerza bruta)
 
 
 class RegistroView(generics.CreateAPIView):
@@ -89,6 +90,7 @@ class RegistroView(generics.CreateAPIView):
     queryset = Usuario.objects.all()
     serializer_class = RegistroUsuarioSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_scope = 'registro'  # máx. 5 registros/min por IP (mitiga spam de cuentas)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -112,6 +114,7 @@ class LoginView(APIView):
     """Vista para el login de usuarios (alternativa a JWT token)"""
     permission_classes = [permissions.AllowAny]
     serializer_class = LoginSerializer
+    throttle_scope = 'login'
 
     def post(self, request):
         serializer = self.serializer_class(

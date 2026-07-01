@@ -5,17 +5,28 @@ from .models import Muestra, IncidenciaMuestra
 # ── Muestra ───────────────────────────────────────────────
 class MuestraSerializer(serializers.ModelSerializer):
     solicitud_codigo = serializers.CharField(source='solicitud.codigo', read_only=True)
+    paciente_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = Muestra
-        fields = ['id', 'codigo', 'tipo_muestra', 'estado', 'solicitud', 'solicitud_codigo']
+        fields = [
+            'id', 'codigo', 'tipo_muestra', 'estado',
+            'fecha_recepcion', 'observaciones',
+            'paciente', 'paciente_nombre',
+            'solicitud', 'solicitud_codigo',
+        ]
+
+    def get_paciente_nombre(self, obj):
+        if obj.paciente:
+            return obj.paciente.nombre
+        return None
 
 
 class MuestraCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Muestra
-        fields = ['codigo', 'tipo_muestra', 'estado', 'solicitud']
-        extra_kwargs = {'codigo': {'required': True}}
+        fields = ['codigo', 'tipo_muestra', 'estado', 'solicitud', 'paciente', 'fecha_recepcion', 'observaciones']
+        extra_kwargs = {'codigo': {'required': False}}
 
     def validate_codigo(self, value):
         if Muestra.objects.filter(codigo=value).exists():
@@ -26,7 +37,7 @@ class MuestraCreateSerializer(serializers.ModelSerializer):
 class MuestraUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Muestra
-        fields = ['tipo_muestra', 'estado', 'solicitud']
+        fields = ['tipo_muestra', 'estado', 'solicitud', 'paciente', 'fecha_recepcion', 'observaciones']
 
 
 # ── IncidenciaMuestra ─────────────────────────────────────

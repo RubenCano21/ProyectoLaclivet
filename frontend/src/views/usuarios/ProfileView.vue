@@ -119,7 +119,11 @@ function onRolChange(newRolId: any) {
 
 function togglePermiso(id: number, checked: boolean) {
   const next = new Set(activePermisoIds.value);
-  checked ? next.add(id) : next.delete(id);
+  if (checked) {
+    next.add(id);
+  } else {
+    next.delete(id);
+  }
   activePermisoIds.value = next;
 }
 

@@ -11,11 +11,21 @@ class CobroSerializer(serializers.ModelSerializer):
 
 
 class CobroCreateSerializer(serializers.ModelSerializer):
+    # Si se envía `solicitud`, el monto se calcula en el servidor a partir
+    # de la suma de `precio_aplicado` de sus detalles — el `monto_total`
+    # enviado por el cliente se IGNORA en ese caso (evita manipulación de
+    # precios desde el cliente). Si no se envía `solicitud`, se admite un
+    # monto manual (p. ej. cargos misceláneos), solo permitido a staff
+    # interno gracias al permission_classes de la vista.
+    solicitud = serializers.PrimaryKeyRelatedField(
+        queryset=SolicitudExamen.objects.all(), required=False, allow_null=True, write_only=True
+    )
+
     class Meta:
         model = Cobro
-        fields = ['monto_total', 'metodo_pago', 'fecha']
+        fields = ['monto_total', 'metodo_pago', 'fecha', 'solicitud']
         extra_kwargs = {
-            'monto_total': {'required': True},
+            'monto_total': {'required': False},
             'metodo_pago': {'required': True},
             'fecha': {'required': True},
         }
@@ -24,6 +34,30 @@ class CobroCreateSerializer(serializers.ModelSerializer):
         if value is not None and value <= 0:
             raise serializers.ValidationError("El monto total debe ser mayor a 0.")
         return value
+
+    def validate(self, attrs):
+        solicitud = attrs.get('solicitud')
+        if solicitud is None and attrs.get('monto_total') is None:
+            raise serializers.ValidationError({
+                "monto_total": "Debe indicar un monto o vincular una solicitud para calcularlo automáticamente."
+            })
+        return attrs
+
+    def create(self, validated_data):
+        solicitud = validated_data.pop('solicitud', None)
+
+        if solicitud is not None:
+            from django.db.models import Sum
+            total = solicitud.detalles.aggregate(total=Sum('precio_aplicado'))['total'] or 0
+            validated_data['monto_total'] = total
+
+        cobro = Cobro.objects.create(**validated_data)
+
+        if solicitud is not None:
+            solicitud.cobro = cobro
+            solicitud.save(update_fields=['cobro'])
+
+        return cobro
 
 
 class CobroUpdateSerializer(serializers.ModelSerializer):

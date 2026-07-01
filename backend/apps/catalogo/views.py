@@ -1,3 +1,5 @@
+import logging
+
 from apps.core.permissions import EsStaffInterno
 from rest_framework import status, permissions
 from rest_framework.response import Response
@@ -17,6 +19,9 @@ from .serializers import (
     OrdenTrabajoSerializer, ExamenDetalleSerializer,
     OrdenExamenFullDetailSerializer, RegistrarResultadoOrdenExamenSerializer,
 )
+
+logger = logging.getLogger(__name__)
+
 
 _del_response = openapi.Response('Eliminado exitosamente')
 
@@ -414,19 +419,32 @@ class OrdenExamenListCreateView(_CatalogoBasePermissionMixin, APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_summary="Listar exámenes de una orden",
-        manual_parameters=[openapi.Parameter('orden', openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
-                                             description="Filtrar por orden de trabajo")],
-        responses={200: OrdenExamenSerializer(many=True)},
+        operation_summary="Listar exámenes de una orden (filtro por ?orden= y ?estado=)",
+        manual_parameters=[
+            openapi.Parameter('orden', openapi.IN_QUERY, type=openapi.TYPE_INTEGER,
+                              description="Filtrar por orden de trabajo"),
+            openapi.Parameter('estado', openapi.IN_QUERY, type=openapi.TYPE_STRING,
+                              description="Filtrar por estado (pendiente, en_proceso, completado, validado)"),
+        ],
+        responses={200: OrdenExamenFullDetailSerializer(many=True)},
     )
     def get(self, request):
-        qs = OrdenExamen.objects.select_related('examen', 'orden', 'muestra').prefetch_related('resultados')
+        qs = OrdenExamen.objects.select_related(
+            'examen', 'orden__paciente__raza__especie', 'muestra',
+            'detalle_solicitud__solicitud__medico_veterinario__usuario',
+            'veterinario_responsable',
+        ).prefetch_related('resultados__parametro')
+
         orden_id = request.query_params.get('orden')
+        estado = request.query_params.get('estado')
         if orden_id:
             qs = qs.filter(orden_id=orden_id)
+        if estado:
+            qs = qs.filter(estado=estado)
+
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
-        return paginator.get_paginated_response(OrdenExamenSerializer(pagina, many=True).data)
+        return paginator.get_paginated_response(OrdenExamenFullDetailSerializer(pagina, many=True).data)
 
     @swagger_auto_schema(
         operation_summary="Agregar examen a una orden",
@@ -587,22 +605,74 @@ class OrdenExamenGenerarPdfView(APIView):
                 'examen', 'orden__paciente__raza__especie',
                 'detalle_solicitud__solicitud__medico_veterinario__usuario',
                 'veterinario_responsable',
-            ).prefetch_related('resultados__parametro').get(pk=pk)
+            ).prefetch_related(
+                'resultados__parametro__valores_referencia'
+            ).get(pk=pk)
         except OrdenExamen.DoesNotExist:
             return None
 
-    @swagger_auto_schema(operation_summary="Generar PDF del resultado", responses={200: OrdenExamenFullDetailSerializer})
+    @swagger_auto_schema(
+        operation_summary="Generar PDF del resultado",
+        responses={
+            200: openapi.Response(
+                description="PDF generado exitosamente",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'success': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'pdf_url': openapi.Schema(type=openapi.TYPE_STRING),
+                        'pdf_name': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            )
+        }
+    )
     def post(self, request, pk):
         obj = self.get_object(pk)
         if obj is None:
-            return Response({'error': 'Registro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'Registro no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         if obj.estado not in ('completado', 'validado'):
             return Response(
                 {'error': 'El examen debe estar completado antes de generar el PDF.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Import lazy: solo se carga cuando realmente se usa el endpoint
-        from apps.muestra.pdf import generar_pdf_orden_examen
-        obj = generar_pdf_orden_examen(obj)
-        return Response(OrdenExamenFullDetailSerializer(obj).data)
+        try:
+            # Import lazy: solo se carga cuando realmente se usa el endpoint
+            from apps.muestra.pdf import generar_pdf_orden_examen
+
+            # Generar el PDF y guardarlo en el modelo
+            obj = generar_pdf_orden_examen(obj)
+
+            # Construir la URL completa para el frontend
+            if obj.archivo_pdf:
+                # Usar request.build_absolute_uri para obtener la URL completa
+                pdf_url = request.build_absolute_uri(obj.archivo_pdf.url)
+
+                return Response({
+                    'success': True,
+                    'message': 'PDF generado exitosamente',
+                    'pdf_url': pdf_url,
+                    'pdf_name': obj.archivo_pdf.name.split('/')[-1]  # Solo el nombre del archivo
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'No se pudo generar el PDF'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            # Se registra el detalle técnico solo en los logs del servidor;
+            # al cliente se le devuelve un mensaje genérico para no filtrar
+            # detalles internos (rutas, stack, nombres de librerías, etc.).
+            logger.exception("Error generando PDF para OrdenExamen id=%s", pk)
+            return Response({
+                'success': False,
+                'message': 'Ocurrió un error al generar el PDF. Intente nuevamente o contacte a soporte.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

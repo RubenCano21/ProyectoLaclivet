@@ -15,7 +15,9 @@ import {
   Stethoscope,
   ScrollText,
   ClipboardPlus,
+  ClipboardCheck,
   Microscope,
+  AlertTriangle,
   BarChart3,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
@@ -141,6 +143,11 @@ const data = {
           url: "/resultados",
           icon: ClipboardPlus,
         },
+        {
+          title: "Validación",
+          url: "/resultados/validacion",
+          icon: ClipboardCheck,
+        },
       ],
     },
     {
@@ -151,12 +158,12 @@ const data = {
         {
           title: "Incidencias",
           url: "/muestras/incidencias",
-          icon: Microscope,
+          icon: AlertTriangle,
         },
         {
           title: "Recepcion",
           url: "/muestras/recepcion",
-          icon: Microscope,
+          icon: FlaskConical,
         },
       ],
     },

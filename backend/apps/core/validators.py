@@ -57,6 +57,18 @@ def generar_username(email: str) -> str:
         username = f"{base}{i}"[:150]
     return username
 
-def generar_password_default(last_name: str, ci: str) -> str:
-    primer_apellido = last_name.strip().lower().split()[0] if last_name.strip() else 'usuario'
-    return f"{primer_apellido}.{ci}" if ci else primer_apellido
+
+def generar_password_default(last_name: str = '', ci: str = '') -> str:
+    """Genera una contraseña temporal ALEATORIA y segura.
+
+    IMPORTANTE: antes esta función devolvía `primer_apellido.ci`, datos que
+    NO son secretos (apellido y CI suelen ser públicos/deducibles), lo que
+    permitía a cualquiera adivinar la contraseña inicial de un usuario.
+    Ahora se genera con `get_random_string` y el usuario queda marcado con
+    `debe_cambiar_password=True` para forzar el cambio en su primer login.
+    Los parámetros se mantienen por compatibilidad con las llamadas
+    existentes, pero ya no influyen en el resultado.
+    """
+    from django.utils.crypto import get_random_string
+    alfabeto = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
+    return get_random_string(12, allowed_chars=alfabeto)

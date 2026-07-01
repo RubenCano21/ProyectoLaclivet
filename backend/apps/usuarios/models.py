@@ -78,6 +78,13 @@ class Usuario(AbstractUser):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
+    # Seguridad: fuerza el cambio de contraseña en el próximo login cuando
+    # la cuenta fue creada con una contraseña temporal generada por el sistema.
+    debe_cambiar_password = models.BooleanField(
+        default=False,
+        help_text="Si es True, el usuario debe cambiar su contraseña temporal antes de continuar."
+    )
+
     # Configurar el campo de autenticación principal
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']

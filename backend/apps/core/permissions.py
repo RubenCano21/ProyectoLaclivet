@@ -31,12 +31,37 @@ class EsPropietario(BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
-        # solo puede acceder a sus mascotas/ expedientes
-        if hasattr(obj, 'propietario'):
-            return obj.propietario == request.user
-        if hasattr(obj, 'mascota'):
-            return obj.mascota.propietario == request.user
+        """Solo puede acceder a sus propias mascotas/expedientes.
+
+        OJO: `obj.propietario` es una instancia de `Propietario`, no de
+        `Usuario` — se debe comparar contra `propietario.usuario`.
+        """
+        propietario = getattr(obj, 'propietario', None)
+        if propietario is not None:
+            return getattr(propietario, 'usuario', None) == request.user
+
+        mascota = getattr(obj, 'mascota', None)
+        if mascota is not None:
+            propietario_mascota = getattr(mascota, 'propietario', None)
+            if propietario_mascota is not None:
+                return getattr(propietario_mascota, 'usuario', None) == request.user
         return False
+
+
+def es_propietario_de(usuario, paciente):
+    """Verifica si `usuario` es el dueño (vía Propietario.usuario) del `paciente`."""
+    if not usuario or not getattr(usuario, 'is_authenticated', False):
+        return False
+    if not paciente or not paciente.propietario:
+        return False
+    return paciente.propietario.usuario_id == usuario.id
+
+
+def tiene_rol(usuario, *nombres_rol):
+    return bool(
+        usuario and usuario.is_authenticated and
+        usuario.rol and usuario.rol.nombre in nombres_rol
+    )
 
 class EsVeterinario(BasePermission):
     """Permite acceso solo a usuarios con rol 'Veterinario' (interno)."""

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import Usuario, Rol, Permiso
-from apps.core.validators import validar_formato_ci, validar_ci_unico_global
+from apps.core.validators import validar_formato_ci, validar_ci_unico_global, generar_password_default, generar_username
 
 
 class RolSerializer(serializers.ModelSerializer):
@@ -44,9 +44,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'ci','telefono', 'direccion', 'fecha_nacimiento', 'rol', 'permisos',
-            'fecha_creacion', 'fecha_actualizacion', 'is_active', 'is_staff'
+            'fecha_creacion', 'fecha_actualizacion', 'is_active', 'is_staff',
+            'debe_cambiar_password',
         ]
-        read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion', 'debe_cambiar_password']
 
     def get_permisos(self, obj):
         """Obtiene los permisos del usuario"""
@@ -55,7 +56,13 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 
 class RegistroUsuarioSerializer(serializers.ModelSerializer):
-    """Serializer para el registro de nuevos usuarios"""
+    """Serializer para el AUTO-REGISTRO PÚBLICO de nuevos usuarios (endpoint AllowAny).
+
+    SEGURIDAD: este serializer NUNCA debe exponer un campo para elegir el rol
+    (`rol_id`). Todo usuario que se auto-registra recibe siempre el rol
+    'Propietario'. Cambiar el rol de un usuario es una operación exclusiva de
+    Administrador vía `AsignarRolUsuarioView` / `AdminActualizarUsuarioSerializer`.
+    """
     password = serializers.CharField(
         write_only=True,
         required=False,
@@ -68,20 +75,13 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'},
         label='Confirmar contraseña'
     )
-    rol_id = serializers.PrimaryKeyRelatedField(
-        queryset=Rol.objects.all(),
-        source='rol',
-        required=False,
-        allow_null=True,
-        write_only=True,
-    )
 
     class Meta:
         model = Usuario
         fields = [
             'email', 'password', 'password2',
             'first_name', 'last_name','ci', 'telefono',
-            'direccion', 'fecha_nacimiento', 'rol_id'
+            'direccion', 'fecha_nacimiento',
         ]
         extra_kwargs = {
             'email': {'required': True},
@@ -98,13 +98,6 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             })
         return attrs
 
-    def _generar_password_default(self, validated_data):
-        """Genera la contraseña por defecto: primer_apellido.ci en minúsculas"""
-        last_name = validated_data.get('last_name', '').strip().lower()
-        primer_apellido = last_name.split()[0] if last_name else 'usuario'
-        ci = validated_data.get('ci', '').strip()
-        return f"{primer_apellido}.{ci}" if ci else primer_apellido
-
     def validate_ci(self, value):
         validar_formato_ci(value)
         instance = getattr(self, 'instance', None)
@@ -120,25 +113,27 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Este email ya está registrado.")
         return value
 
-    def _generar_username(self, email):
-        """Genera un username único a partir del email"""
-        base = (email or '').split('@')[0][:140] or 'user'
-        username = base
-        i = 1
-        while Usuario.objects.filter(username=username).exists():
-            i += 1
-            username = f"{base}{i}"[:150]
-        return username
-
     def create(self, validated_data):
         validated_data.pop('password2', None)
         password = validated_data.pop('password', None)
 
-        # Si no envió contraseña, usar primer_apellido.ci
+        # Si el usuario no definió su propia contraseña, se genera una
+        # temporal ALEATORIA (nunca predecible) y se le exige cambiarla.
+        debe_cambiar_password = False
         if not password:
-            password = self._generar_password_default(validated_data)
+            password = generar_password_default()
+            debe_cambiar_password = True
 
-        validated_data['username'] = self._generar_username(validated_data.get('email'))
+        # SEGURIDAD: el rol de un auto-registro público siempre es
+        # 'Propietario', sin excepción — nunca se acepta rol desde el cliente.
+        rol_propietario, _ = Rol.objects.get_or_create(
+            nombre='Propietario',
+            defaults={'descripcion': 'Solo resultados de sus mascotas'}
+        )
+
+        validated_data['username'] = generar_username(validated_data.get('email'))
+        validated_data['rol'] = rol_propietario
+        validated_data['debe_cambiar_password'] = debe_cambiar_password
         usuario = Usuario.objects.create(**validated_data)
         usuario.set_password(password)
         usuario.save()
@@ -225,6 +220,7 @@ class CambiarPasswordSerializer(serializers.Serializer):
         """Cambiar la contraseña del usuario"""
         user = self.context['request'].user
         user.set_password(self.validated_data['password_nuevo'])
+        user.debe_cambiar_password = False
         user.save()
         return user
 
