@@ -118,7 +118,9 @@ watch(
                             </p>
                         </div>
                     </div>
-                    <Button @click="abrirNueva" class="gap-2">
+                    <Button 
+                    class="gap-2" 
+                    @click="abrirNueva">
                         <Plus class="h-4 w-4" />
                         Nueva Solicitud
                     </Button>
@@ -149,7 +151,8 @@ watch(
                     <span class="text-sm">Cargando solicitudes…</span>
                 </div>
 
-                <div v-else-if="store.error"
+                <div 
+                v-else-if="store.error"
                     class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
                     <AlertCircle class="h-4 w-4 shrink-0" />
                     {{ store.error }}
@@ -176,7 +179,8 @@ watch(
                                         {{ search ? 'Sin resultados para tu búsqueda.' : 'No hay solicitudes registradas.' }}
                                     </td>
                                 </tr>
-                                <tr v-for="s in filtered" :key="s.id"
+                                <tr 
+                                v-for="s in filtered" :key="s.id"
                                     class="border-b last:border-0 hover:bg-muted/20 transition-colors">
                                     <td class="px-4 py-3 font-medium">{{ s.codigo }}</td>
                                     <td class="px-4 py-3">{{ s.paciente_nombre }}</td>
@@ -184,7 +188,8 @@ watch(
                                     <td class="px-4 py-3">{{ formatFecha(s.fecha_solicitud) }}</td>
                                     <td class="px-4 py-3">{{ s.detalles?.length ?? 0 }}</td>
                                     <td class="px-4 py-3">
-                                        <span v-if="cantidadMuestrasPendientes(s) > 0"
+                                        <span 
+                                            v-if="cantidadMuestrasPendientes(s) > 0"
                                             class="inline-flex items-center gap-1 text-amber-700">
                                             <FlaskConical class="h-3.5 w-3.5" /> {{ cantidadMuestrasPendientes(s) }}
                                         </span>
@@ -197,9 +202,10 @@ watch(
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <button @click="verDetalle(s.id)"
-                                            class="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                                            title="Ver detalle">
+                                        <button 
+                                        class="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                                        title="Ver detalle"
+                                            @click="verDetalle(s.id)">
                                             <Eye class="h-4 w-4" />
                                         </button>
                                     </td>
@@ -208,18 +214,21 @@ watch(
                         </table>
                     </div>
 
-                    <div v-if="store.paginas > 1"
+                    <div 
+                        v-if="store.paginas > 1"
                         class="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
                         <span class="text-sm text-muted-foreground">
                             Página {{ store.paginaActual }} de {{ store.paginas }} — {{ store.total }} registros
                         </span>
                         <div class="flex items-center gap-1">
-                            <Button variant="outline" size="sm" :disabled="store.paginaActual <= 1"
+                            <Button 
+                                variant="outline" size="sm" :disabled="store.paginaActual <= 1"
                                 @click="goToPage(store.paginaActual - 1)">
                                 <ChevronLeft class="h-4 w-4" />
                             </Button>
                             <span class="px-2 text-sm font-medium">{{ store.paginaActual }}</span>
-                            <Button variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
+                            <Button 
+                                variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
                                 @click="goToPage(store.paginaActual + 1)">
                                 <ChevronRight class="h-4 w-4" />
                             </Button>

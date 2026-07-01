@@ -211,7 +211,9 @@ async function handleSubmit() {
         {{ formError }}
       </div>
 
-      <form @submit.prevent="handleSubmit" class="space-y-4">
+      <form 
+        class="space-y-4"
+        @submit.prevent="handleSubmit" >
 
         <!-- Código: solo en edición -->
         <div v-if="isEdit && muestra" class="space-y-1.5">
@@ -254,7 +256,7 @@ async function handleSubmit() {
                   — {{ selectedPaciente.propietario_nombre }}
                 </span>
               </span>
-              <button type="button" @click="clearPaciente" class="ml-2 text-muted-foreground hover:text-foreground">
+              <button class="ml-2 text-muted-foreground hover:text-foreground" type="button" @click="clearPaciente" >
                 <X class="h-4 w-4" />
               </button>
             </div>
@@ -327,7 +329,7 @@ async function handleSubmit() {
         <!-- Fecha recepción -->
         <div class="space-y-1.5">
           <label class="text-sm font-medium">Fecha de recepción</label>
-          <Input type="date" v-model="form.fecha_recepcion" />
+          <Input v-model="form.fecha_recepcion" type="date"  />
         </div>
 
         <!-- Observaciones -->

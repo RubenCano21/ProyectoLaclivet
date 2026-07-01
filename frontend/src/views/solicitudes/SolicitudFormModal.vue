@@ -178,7 +178,7 @@ async function guardar() {
 
       <DialogFooter>
         <Button variant="outline" @click="emit('update:open', false)">Cancelar</Button>
-        <Button :disabled="store.saving" @click="guardar" class="gap-2">
+        <Button class="gap-2" :disabled="store.saving" @click="guardar" >
           <Loader2 v-if="store.saving" class="h-4 w-4 animate-spin" />
           Crear solicitud
         </Button>
