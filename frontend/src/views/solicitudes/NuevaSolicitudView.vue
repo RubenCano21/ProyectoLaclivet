@@ -240,7 +240,7 @@ async function guardar() {
   for (const m of muestras.value) {
     const rm = await muestrasStore.create({
       paciente:        paciente.value!,
-      tipo:            m.tipo,
+      tipo_muestra:            m.tipo,
       estado:          'pendiente',
       fecha_recepcion: m.fecha_recepcion,
       observaciones:   m.observaciones,
@@ -486,7 +486,9 @@ async function guardar() {
               <!-- Fecha de recepción -->
               <div class="space-y-1.5">
                 <Label class="text-xs">Fecha de recepción</Label>
-                <Input type="date" v-model="m.fecha_recepcion" class="h-8 text-sm" />
+                <Input 
+                v-model="m.fecha_recepcion" 
+                type="date" class="h-8 text-sm" />
               </div>
 
               <!-- Observaciones (span completo) -->
@@ -578,7 +580,9 @@ async function guardar() {
                 Cobro
               </div>
               <label class="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-                <input type="checkbox" v-model="incluirCobro" class="rounded" />
+                <input 
+                v-model="incluirCobro" 
+                type="checkbox" class="rounded" />
                 Incluir cobro
               </label>
             </div>

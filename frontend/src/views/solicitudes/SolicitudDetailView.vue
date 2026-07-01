@@ -80,18 +80,21 @@ const solicitud = computed(() => store.actual)
             </header>
 
             <main class="flex flex-1 flex-col gap-6 p-6 max-w-4xl">
-                <Button variant="ghost" size="sm" class="w-fit gap-2 -ml-2"
+                <Button 
+                variant="ghost" size="sm" class="w-fit gap-2 -ml-2"
                     @click="router.push({ name: 'solicitudes' })">
                     <ArrowLeft class="h-4 w-4" /> Volver a Solicitudes
                 </Button>
 
-                <div v-if="store.loadingDetalle"
+                <div 
+                v-if="store.loadingDetalle"
                     class="flex items-center justify-center py-16 gap-3 text-muted-foreground">
                     <Loader2 class="h-5 w-5 animate-spin" />
                     <span class="text-sm">Cargando solicitud…</span>
                 </div>
 
-                <div v-else-if="store.error"
+                <div 
+                v-else-if="store.error"
                     class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                     <AlertCircle class="h-4 w-4 shrink-0" />
                     {{ store.error }}
@@ -128,13 +131,15 @@ const solicitud = computed(() => store.actual)
                     <!-- Exámenes -->
                     <div class="space-y-3">
                         <h2 class="text-lg font-semibold">Exámenes solicitados</h2>
-                        <div v-for="d in solicitud.detalles" :key="d.id"
+                        <div 
+                        v-for="d in solicitud.detalles" :key="d.id"
                             class="rounded-xl border bg-white p-4 shadow-xs flex items-center justify-between gap-4">
                             <div class="flex-1">
                                 <p class="font-medium">{{ d.examen_nombre }}</p>
                                 <div class="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                     <span v-if="d.precio_aplicado">Bs. {{ d.precio_aplicado }}</span>
-                                    <span v-if="d.requiere_muestra"
+                                    <span 
+                                    v-if="d.requiere_muestra"
                                         class="inline-flex items-center gap-1 text-amber-700">
                                         <FlaskConical class="h-3.5 w-3.5" /> Requiere muestra
                                     </span>
@@ -150,7 +155,8 @@ const solicitud = computed(() => store.actual)
                             </div>
 
                             <div class="flex items-center gap-2 shrink-0">
-                                <span v-if="d.tiene_resultado"
+                                <span 
+                                v-if="d.tiene_resultado"
                                     class="inline-flex items-center gap-1 text-green-700 text-xs font-medium">
                                     <CheckCircle2 class="h-4 w-4" /> Con resultado
                                 </span>

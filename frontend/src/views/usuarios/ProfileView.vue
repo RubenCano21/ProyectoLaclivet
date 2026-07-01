@@ -282,14 +282,15 @@ onMounted(() => {
             <div class="w-full lg:w-80 shrink-0 flex flex-col gap-4">
 
               <!-- Avatar card -->
-              <div class="relative rounded-2xl overflow-hidden
-                          bg-white border border-mineral-green-100
+              <div 
+                class="relative rounded-2xl overflow-hidden bg-white border border-mineral-green-100
                           shadow-[0_2px_16px_rgba(26,74,46,.08)]">
 
                 <!-- Banda decorativa superior -->
-                <div class="h-20 bg-[linear-gradient(135deg,#0f2e1e,#2d6e47)]
-                            relative overflow-hidden">
-                  <div class="absolute inset-0
+                <div 
+                class="h-20 bg-[linear-gradient(135deg,#0f2e1e,#2d6e47)] relative overflow-hidden">
+                  <div 
+                    class="absolute inset-0
                               bg-[linear-gradient(rgba(255,255,255,.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)]
                               bg-size-[24px_24px]" />
                 </div>
@@ -320,16 +321,19 @@ onMounted(() => {
                   <p class="text-xs text-mineral-green-400 mt-0.5 mb-3">@{{ auth.user.username }}</p>
 
                   <div class="flex flex-wrap justify-center gap-1.5">
-                    <Badge v-if="auth.user.rol"
+                    <Badge 
+                      v-if="auth.user.rol"
                            class="bg-mineral-green-700 hover:bg-mineral-green-800 text-white border-0 text-[.68rem] px-2.5 py-0.5">
                       <ShieldCheck class="h-3 w-3 mr-1" />
                       {{ auth.user.rol.nombre }}
                     </Badge>
-                    <Badge v-if="auth.user.is_staff"
+                    <Badge 
+                      v-if="auth.user.is_staff"
                            class="bg-amber-100 text-amber-700 border border-amber-200 text-[.68rem] px-2.5 py-0.5">
                       Staff
                     </Badge>
-                    <Badge :class="auth.user.is_active
+                    <Badge  
+                      :class="auth.user.is_active
                       ? 'bg-green-50 text-green-700 border border-green-200'
                       : 'bg-red-50 text-red-600 border border-red-200'"
                            class="text-[.68rem] px-2.5 py-0.5">
@@ -340,16 +344,19 @@ onMounted(() => {
               </div>
 
               <!-- Info card -->
-              <div class="rounded-2xl bg-white border border-mineral-green-100
+              <div 
+              class="rounded-2xl bg-white border border-mineral-green-100
                           shadow-[0_2px_16px_rgba(26,74,46,.06)] overflow-hidden">
 
                 <!-- Sección contacto -->
                 <div class="px-5 py-4">
-                  <p class="text-[.65rem] font-semibold tracking-widest uppercase
+                  <p 
+                    class="text-[.65rem] font-semibold tracking-widest uppercase
                              text-mineral-green-400 mb-3">Contacto</p>
                   <div class="flex flex-col gap-3.5">
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <Mail class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -361,7 +368,8 @@ onMounted(() => {
                       </div>
                     </div>
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <Phone class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -371,7 +379,8 @@ onMounted(() => {
                       </div>
                     </div>
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <MapPin class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -381,7 +390,8 @@ onMounted(() => {
                       </div>
                     </div>
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <CalendarDays class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -397,11 +407,13 @@ onMounted(() => {
 
                 <!-- Sección cuenta -->
                 <div class="px-5 py-4">
-                  <p class="text-[.65rem] font-semibold tracking-widest uppercase
+                  <p 
+                    class="text-[.65rem] font-semibold tracking-widest uppercase
                              text-mineral-green-400 mb-3">Cuenta</p>
                   <div class="flex flex-col gap-3.5">
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <CalendarDays class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -411,7 +423,8 @@ onMounted(() => {
                       </div>
                     </div>
                     <div class="flex items-start gap-3">
-                      <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
+                      <span 
+                        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center
                                    rounded-lg bg-mineral-green-50 border border-mineral-green-100">
                         <Clock class="h-3.5 w-3.5 text-mineral-green-600" />
                       </span>
@@ -426,7 +439,8 @@ onMounted(() => {
             </div>
 
             <!-- ══ Tarjeta derecha: tabs de edición ══ -->
-            <div class="flex-1 min-w-0 rounded-2xl bg-white border border-mineral-green-100
+            <div 
+              class="flex-1 min-w-0 rounded-2xl bg-white border border-mineral-green-100
                         shadow-[0_2px_16px_rgba(26,74,46,.08)] overflow-hidden">
 
               <!-- Tab bar -->
@@ -435,15 +449,15 @@ onMounted(() => {
                   <!-- Editar Perfil -->
                   <button
                     type="button"
-                    @click="activeTab = 'editar'"
-                    :class="[
-                      'flex items-center gap-1.5 px-4 py-4 text-sm font-medium border-b-2 transition-all duration-150',
+                    :class="['flex items-center gap-1.5 px-4 py-4 text-sm font-medium border-b-2 transition-all duration-150',
                       activeTab === 'editar'
                         ? 'border-mineral-green-700 text-mineral-green-800 bg-transparent'
                         : 'border-transparent text-mineral-green-400 hover:text-mineral-green-700 hover:border-mineral-green-300',
                     ]"
+                    @click="activeTab = 'editar'"
                   >
-                    <span :class="[
+                    <span 
+                      :class="[
                       'flex h-6 w-6 items-center justify-center rounded-md transition-colors',
                       activeTab === 'editar' ? 'bg-mineral-green-100' : ''
                     ]">
@@ -455,15 +469,16 @@ onMounted(() => {
                   <!-- Contraseña -->
                   <button
                     type="button"
-                    @click="activeTab = 'password'"
                     :class="[
                       'flex items-center gap-1.5 px-4 py-4 text-sm font-medium border-b-2 transition-all duration-150',
                       activeTab === 'password'
                         ? 'border-mineral-green-700 text-mineral-green-800 bg-transparent'
                         : 'border-transparent text-mineral-green-400 hover:text-mineral-green-700 hover:border-mineral-green-300',
                     ]"
+                      @click="activeTab = 'password'"
                   >
-                    <span :class="[
+                    <span 
+                    :class="[
                       'flex h-6 w-6 items-center justify-center rounded-md transition-colors',
                       activeTab === 'password' ? 'bg-mineral-green-100' : ''
                     ]">
@@ -476,15 +491,16 @@ onMounted(() => {
                   <button
                     v-if="auth.user?.is_staff"
                     type="button"
-                    @click="activeTab = 'roles'"
                     :class="[
                       'flex items-center gap-1.5 px-4 py-4 text-sm font-medium border-b-2 transition-all duration-150',
                       activeTab === 'roles'
                         ? 'border-mineral-green-700 text-mineral-green-800 bg-transparent'
                         : 'border-transparent text-mineral-green-400 hover:text-mineral-green-700 hover:border-mineral-green-300',
                     ]"
+                    @click="activeTab = 'roles'"
                   >
-                    <span :class="[
+                    <span 
+                      :class="[
                       'flex h-6 w-6 items-center justify-center rounded-md transition-colors',
                       activeTab === 'roles' ? 'bg-mineral-green-100' : ''
                     ]">
@@ -602,7 +618,8 @@ onMounted(() => {
                              active:scale-[.98]
                              disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      <span class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
+                      <span 
+                        class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
                                    bg-[linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)]
                                    animate-[shimmerBtn_3s_ease-in-out_infinite] pointer-events-none" />
                       <Loader2 v-if="editSaving" class="h-4 w-4 animate-spin" />
@@ -679,7 +696,8 @@ onMounted(() => {
                              active:scale-[.98]
                              disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
                     >
-                      <span class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
+                      <span 
+                        class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
                                    bg-[linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)]
                                    animate-[shimmerBtn_3s_ease-in-out_infinite] pointer-events-none" />
                       <Loader2 v-if="passwordSaving" class="h-4 w-4 animate-spin" />
@@ -718,13 +736,16 @@ onMounted(() => {
                   </div>
 
                   <!-- Selector de rol -->
-                  <div class="rounded-xl border border-mineral-green-100 bg-mineral-green-50/50 p-4">
-                    <p class="text-[.7rem] font-semibold tracking-[.08em] uppercase
+                  <div 
+                    class="rounded-xl border border-mineral-green-100 bg-mineral-green-50/50 p-4">
+                    <p 
+                      class="text-[.7rem] font-semibold tracking-[.08em] uppercase
                                text-mineral-green-400 mb-3">Perfil del usuario</p>
                     <div class="flex items-center gap-4">
                       <span class="text-sm font-medium text-mineral-green-700 shrink-0 w-10 text-right">Rol</span>
-                      <Select :model-value="selectedRolId" @update:model-value="onRolChange" class="flex-1">
-                        <SelectTrigger class="rounded-xl border-mineral-green-200 bg-white
+                      <Select class="flex-1" :model-value="selectedRolId" @update:model-value="onRolChange">
+                        <SelectTrigger 
+                          class="rounded-xl border-mineral-green-200 bg-white
                                               focus:ring-2 focus:ring-mineral-green-500/15">
                           <SelectValue placeholder="Sin rol asignado" />
                         </SelectTrigger>
@@ -755,7 +776,8 @@ onMounted(() => {
                     >
                       <!-- Cabecera de grupo -->
                       <div class="flex items-center gap-2 mb-3">
-                        <span class="flex h-6 w-6 items-center justify-center rounded-lg
+                        <span 
+                          class="flex h-6 w-6 items-center justify-center rounded-lg
                                      bg-mineral-green-100">
                           <KeyRound class="h-3 w-3 text-mineral-green-600" />
                         </span>
@@ -781,9 +803,9 @@ onMounted(() => {
                           </span>
                           <div class="flex justify-center">
                             <Switch
+                              class="data-[state=checked]:bg-mineral-green-600"
                               :checked="activePermisoIds.has(permiso.id)"
                               @update:checked="togglePermiso(permiso.id, $event)"
-                              class="data-[state=checked]:bg-mineral-green-600"
                             />
                           </div>
                           <span class="text-xs text-mineral-green-400 leading-snug">
@@ -794,7 +816,8 @@ onMounted(() => {
                     </div>
                   </template>
 
-                  <div v-else class="rounded-xl border border-dashed border-mineral-green-200
+                  <div
+                    v-else class="rounded-xl border border-dashed border-mineral-green-200
                                      bg-mineral-green-50/30 py-10 text-center">
                     <KeyRound class="h-8 w-8 text-mineral-green-300 mx-auto mb-2" />
                     <p class="text-sm text-mineral-green-400">Selecciona un rol para ver y editar sus permisos.</p>
@@ -819,13 +842,13 @@ onMounted(() => {
                   <div class="flex items-center justify-between gap-3 pt-1">
                     <button
                       type="button"
-                      :disabled="!selectedRolId || rpStore.saving"
-                      @click="saveRolUsuario"
                       class="flex items-center gap-2 rounded-xl border border-mineral-green-200
                              bg-white px-4 py-2.5 text-sm font-medium text-mineral-green-700
                              shadow-sm transition
                              hover:bg-mineral-green-50 hover:border-mineral-green-300
                              disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!selectedRolId || rpStore.saving"
+                      @click="saveRolUsuario"
                     >
                       <Loader2 v-if="rpStore.saving" class="h-4 w-4 animate-spin" />
                       <ShieldCheck v-else class="h-4 w-4" />
@@ -834,8 +857,6 @@ onMounted(() => {
 
                     <button
                       type="button"
-                      :disabled="!selectedRol || rpStore.saving"
-                      @click="saveRolPermisos"
                       class="relative overflow-hidden flex items-center gap-2
                              rounded-xl px-4 py-2.5 text-sm font-semibold text-white
                              bg-[linear-gradient(135deg,#1a4a2e_0%,#2d6e47_100%)]
@@ -843,8 +864,11 @@ onMounted(() => {
                              transition hover:-translate-y-px hover:shadow-[0_5px_18px_rgba(26,74,46,.4)]
                              active:scale-[.98]
                              disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
+                      :disabled="!selectedRol || rpStore.saving"
+                      @click="saveRolPermisos"
                     >
-                      <span class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
+                      <span 
+                        class="absolute top-0 -left-full bottom-0 w-1/2 skew-x-[-20deg]
                                    bg-[linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)]
                                    animate-[shimmerBtn_3s_ease-in-out_infinite] pointer-events-none" />
                       <Loader2 v-if="rpStore.saving" class="h-4 w-4 animate-spin" />

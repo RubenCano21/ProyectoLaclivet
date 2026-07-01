@@ -127,7 +127,8 @@ watch(
                     <span class="text-sm">Cargando…</span>
                 </div>
 
-                <div v-else-if="store.error"
+                <div 
+                v-else-if="store.error"
                     class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
                     <AlertCircle class="h-4 w-4 shrink-0" />
                     {{ store.error }}
@@ -154,7 +155,8 @@ watch(
                                         "${titleCase(estadoFiltro)}"` : '' }}.
                                     </td>
                                 </tr>
-                                <tr v-for="o in filtered" :key="o.id"
+                                <tr 
+                                v-for="o in filtered" :key="o.id"
                                     class="border-b last:border-0 hover:bg-muted/20 transition-colors">
                                     <td class="px-4 py-3 font-medium">{{ o.solicitud_codigo }}</td>
                                     <td class="px-4 py-3">{{ o.paciente?.nombre }}</td>
@@ -173,10 +175,12 @@ watch(
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <button @click="abrirCaptura(o.id)"
+                                        <button
                                             class="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
-                                            :title="o.estado === 'pendiente' || o.estado === 'en_proceso' ? 'Registrar resultado' : 'Ver / generar PDF'">
-                                            <PencilLine v-if="o.estado === 'pendiente' || o.estado === 'en_proceso'"
+                                            :title="o.estado === 'pendiente' || o.estado === 'en_proceso' ? 'Registrar resultado' : 'Ver / generar PDF'"
+                                            @click="abrirCaptura(o.id)">
+                                            <PencilLine 
+                                            v-if="o.estado === 'pendiente' || o.estado === 'en_proceso'"
                                                 class="h-4 w-4" />
                                             <FileDown v-else class="h-4 w-4" />
                                         </button>
@@ -186,18 +190,21 @@ watch(
                         </table>
                     </div>
 
-                    <div v-if="store.paginas > 1"
+                    <div 
+                    v-if="store.paginas > 1"
                         class="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
                         <span class="text-sm text-muted-foreground">
                             Página {{ store.paginaActual }} de {{ store.paginas }} — {{ store.total }} registros
                         </span>
                         <div class="flex items-center gap-1">
-                            <Button variant="outline" size="sm" :disabled="store.paginaActual <= 1"
+                            <Button 
+                            variant="outline" size="sm" :disabled="store.paginaActual <= 1"
                                 @click="goToPage(store.paginaActual - 1)">
                                 <ChevronLeft class="h-4 w-4" />
                             </Button>
                             <span class="px-2 text-sm font-medium">{{ store.paginaActual }}</span>
-                            <Button variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
+                            <Button 
+                            variant="outline" size="sm" :disabled="store.paginaActual >= store.paginas"
                                 @click="goToPage(store.paginaActual + 1)">
                                 <ChevronRight class="h-4 w-4" />
                             </Button>
