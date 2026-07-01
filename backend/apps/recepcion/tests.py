@@ -80,7 +80,7 @@ class RecepcionAccesoRestringidoTests(TestCase):
         )
         self.propietario_user.set_password('x')
         self.propietario_user.save()
-        Propietario.objects.create(usuario=self.propietario_user)
+        # La señal post_save de Usuario ya crea el Propietario automáticamente.
 
         self.client = APIClient()
 
