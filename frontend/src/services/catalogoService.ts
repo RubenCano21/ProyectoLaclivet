@@ -331,6 +331,8 @@ export const resultadoFlujoService = {
 
   /** Genera (o regenera) el PDF del resultado */
   generarPdf(id: number) {
-    return api.post<OrdenExamenCompleto>(`/catalogos/orden-examenes/${id}/generar-pdf/`)
+    return api.post<{ success: boolean; message: string; pdf_url: string; pdf_name: string }>(
+      `/catalogos/orden-examenes/${id}/generar-pdf/`,
+    )
   },
 }

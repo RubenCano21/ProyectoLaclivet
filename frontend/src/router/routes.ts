@@ -93,6 +93,11 @@ export const protectedRoutes: RouteRecordRaw[] = [
     name: 'incidencias',
     component: () => import('@/views/muestras/IncidenciasView.vue'),
   },
+  {
+    path: '/muestras/recepcion',
+    name: 'recepcion-muestras',
+    component: () => import('@/views/muestras/RecepcionView.vue'),
+  },
   // ── Business Intelligence ─────────────────────────────────────────
   {
     path: '/bi',
@@ -109,13 +114,13 @@ export const protectedRoutes: RouteRecordRaw[] = [
     path: '/resultados/:id',
     name: 'captura-resultados',
     component: () => import('@/views/resultados/CapturaResultadosView.vue'),
-    meta: { permiso: 'registrar_resultados' },
+    //meta: { permiso: 'registrar_resultados' },
   },
   {
     path: '/resultados/validacion',
     name: 'validacion',
     component: () => import('@/views/resultados/ValidacionView.vue'),
-    meta: { permiso: 'validar_resultados' },
+    //meta: { permiso: 'validar_resultados' },
   },
 ]
 

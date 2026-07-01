@@ -5,7 +5,7 @@ from datetime import timedelta, date
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from apps.core.permissions import EsStaffInterno
 
 from apps.muestra.models import Muestra
 from apps.recepcion.models import SolicitudExamen, Cobro
@@ -25,7 +25,7 @@ def _ultimos_meses(n=6):
 
 class BiResumenView(APIView):
     """KPIs generales del laboratorio."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         total_muestras = Muestra.objects.count()
@@ -76,7 +76,7 @@ class BiResumenView(APIView):
 
 class BiMuestrasPorMesView(APIView):
     """Tendencia de muestras recibidas en los últimos 6 meses."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         meses = _ultimos_meses(6)
@@ -101,7 +101,7 @@ class BiMuestrasPorMesView(APIView):
 
 class BiSolicitudesPorMesView(APIView):
     """Tendencia de solicitudes en los últimos 6 meses."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         meses = _ultimos_meses(6)
@@ -126,7 +126,7 @@ class BiSolicitudesPorMesView(APIView):
 
 class BiIngresosPorMesView(APIView):
     """Ingresos totales por mes (últimos 6 meses)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         meses = _ultimos_meses(6)
@@ -151,7 +151,7 @@ class BiIngresosPorMesView(APIView):
 
 class BiSolicitudesPorEstadoView(APIView):
     """Distribución de solicitudes por estado."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         qs = (
@@ -167,7 +167,7 @@ class BiSolicitudesPorEstadoView(APIView):
 
 class BiTiposMuestraView(APIView):
     """Distribución de muestras por tipo."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         qs = (
@@ -183,7 +183,7 @@ class BiTiposMuestraView(APIView):
 
 class BiMuestrasPorEstadoView(APIView):
     """Distribución de muestras por estado."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         qs = (
@@ -199,7 +199,7 @@ class BiMuestrasPorEstadoView(APIView):
 
 class BiEspeciesView(APIView):
     """Distribución de pacientes por especie."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         qs = (
@@ -223,7 +223,7 @@ class BiEspeciesView(APIView):
 
 class BiExamenesTopView(APIView):
     """Top 8 exámenes más solicitados."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get(self, request):
         qs = (

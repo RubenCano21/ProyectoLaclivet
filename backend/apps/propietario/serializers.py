@@ -43,20 +43,6 @@ class PropietarioCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Este email ya está registrado.")
         return value
 
-    def _generar_username(self, email):
-        base = (email or '').split('@')[0][:140] or 'user'
-        username = base
-        i = 1
-        while Usuario.objects.filter(username=username).exists():
-            i += 1
-            username = f"{base}{i}"[:150]
-        return username
-
-    def _generar_password_default(self, data):
-        last_name = data.get('last_name', '').strip().lower()
-        primer_apellido = last_name.split()[0] if last_name else 'usuario'
-        ci = data.get('ci', '').strip()
-        return f"{primer_apellido}.{ci}" if ci else primer_apellido
 
     @transaction.atomic
     def create(self, validated_data):
@@ -79,6 +65,7 @@ class PropietarioCreateSerializer(serializers.Serializer):
             direccion=validated_data.get('direccion', ''),
             fecha_nacimiento=validated_data.get('fecha_nacimiento'),
             rol=rol_propietario,
+            debe_cambiar_password=True,
         )
         usuario.set_password(password)
         usuario.save()
@@ -137,6 +124,7 @@ class PropietarioUpdateSerializer(serializers.Serializer):
                 direccion=validated_data.get('direccion', ''),
                 fecha_nacimiento=validated_data.get('fecha_nacimiento'),
                 rol=rol_propietario,
+                debe_cambiar_password=True,
             )
             usuario.set_password(password)
             usuario.save()

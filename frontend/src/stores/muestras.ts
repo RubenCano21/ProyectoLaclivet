@@ -6,7 +6,7 @@ import { ref } from "vue";
 
 
 export type MuestraForm = {
-  tipo: string
+  tipo_muestra: string
   estado: string
   fecha_recepcion: string
   observaciones: string

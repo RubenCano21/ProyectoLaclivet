@@ -85,6 +85,15 @@ class PropietarioDetailView(APIView):
 
 
 class ResultadosPropietarioView(APIView):
+    """Resultados de las mascotas del propietario autenticado.
+
+    NOTA: antes consultaba `apps.muestra.models.Resultado` y
+    `apps.muestra.serializers.ResultadoSerializer` — un modelo/serializer
+    LEGACY que ya no se usa (`ResultadoSerializer` ni siquiera existe hoy en
+    `muestra/serializers.py`), por lo que este endpoint lanzaba `ImportError`
+    en cada llamada. El flujo vigente registra resultados en
+    `apps.catalogo.models.OrdenExamen` + `ResultadoParametro`.
+    """
     permission_classes = [EsPropietario]
 
     def get(self, request):
@@ -93,13 +102,16 @@ class ResultadosPropietarioView(APIView):
         except Propietario.DoesNotExist:
             return Response({'error': 'No tiene perfil de propietario'}, status=status.HTTP_404_NOT_FOUND)
 
-        from apps.muestra.models import Resultado
-        from apps.muestra.serializers import ResultadoSerializer
-        resultados = Resultado.objects.filter(
-            detalle_solicitud__solicitud__paciente__propietario=propietario
+        from apps.catalogo.models import OrdenExamen
+        from apps.catalogo.serializers import OrdenExamenFullDetailSerializer
+
+        resultados = OrdenExamen.objects.filter(
+            orden__paciente__propietario=propietario,
+            estado__in=('completado', 'validado'),
         ).select_related(
-            'detalle_solicitud__solicitud__paciente',
-            'detalle_solicitud__examen',
-            'muestra',
-        )
-        return Response(ResultadoSerializer(resultados, many=True).data)
+            'examen', 'orden__paciente__raza__especie', 'muestra',
+            'detalle_solicitud__solicitud__medico_veterinario__usuario',
+            'veterinario_responsable',
+        ).prefetch_related('resultados__parametro')
+
+        return Response(OrdenExamenFullDetailSerializer(resultados, many=True).data)

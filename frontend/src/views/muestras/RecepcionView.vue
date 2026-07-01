@@ -133,6 +133,7 @@ onMounted(() => store.fetchAll())
                 <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Tipo</th>
                 <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Estado</th>
                 <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Fecha recepción</th>
+                <th class="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Observaciones</th>
                 <th class="px-5 py-3 text-xs font-medium text-muted-foreground text-right">Acciones</th>
               </tr>
             </thead>
@@ -146,13 +147,14 @@ onMounted(() => store.fetchAll())
                   <td class="px-4 py-3"><Skeleton class="h-4 w-20" /></td>
                   <td class="px-4 py-3"><Skeleton class="h-5 w-20 rounded-full" /></td>
                   <td class="px-4 py-3"><Skeleton class="h-4 w-24" /></td>
+                  <td class="px-4 py-3"><Skeleton class="h-4 w-32" /></td>
                   <td class="px-5 py-3"><Skeleton class="h-7 w-16 ml-auto" /></td>
                 </tr>
               </template>
 
               <!-- Sin datos -->
               <tr v-else-if="store.items.length === 0">
-                <td colspan="6" class="px-5 py-12 text-center text-sm text-muted-foreground">
+                <td colspan="7" class="px-5 py-12 text-center text-sm text-muted-foreground">
                   <FlaskConical class="h-10 w-10 mx-auto mb-2 opacity-20" />
                   No se encontraron muestras.
                 </td>
@@ -167,7 +169,7 @@ onMounted(() => store.fetchAll())
               >
                 <td class="px-5 py-3 font-mono text-xs font-medium">{{ m.codigo }}</td>
                 <td class="px-4 py-3 font-medium">{{ m.paciente_nombre ?? '—' }}</td>
-                <td class="px-4 py-3 text-muted-foreground capitalize">{{ m.tipo ?? '—' }}</td>
+                <td class="px-4 py-3 text-muted-foreground capitalize">{{ m.tipo_muestra ?? '—' }}</td>
                 <td class="px-4 py-3">
                   <Badge
                     class="text-xs capitalize"
@@ -177,6 +179,7 @@ onMounted(() => store.fetchAll())
                   </Badge>
                 </td>
                 <td class="px-4 py-3 text-muted-foreground">{{ formatFecha(m.fecha_recepcion) }}</td>
+                <td class="px-4 py-3 text-muted-foreground text-xs max-w-45 truncate">{{ m.observaciones ?? '—' }}</td>
                 <td class="px-5 py-3">
                   <div class="flex items-center justify-end gap-1">
                     <Button size="icon" variant="ghost" class="h-7 w-7" @click="abrirEditar(m)">

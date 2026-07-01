@@ -60,40 +60,16 @@ async function cargarTodo() {
   precargarFormulario()
 }
 
-onMounted(() => {
-  if (id.value && !Number.isNaN(id.value)) cargarTodo()
-})
-watch(() => route.params.id, () => {
-  if (id.value && !Number.isNaN(id.value)) cargarTodo()
-})
-
 // valor capturado por parametro_id
 const valores = reactive<Record<number, { valor_numerico: string; valor_texto: string }>>({})
 const observaciones = reactive({ observaciones: '', alteraciones: '', diagnostico: '', pronostico: '' })
 
-onMounted(async () => {
-  await store.fetchDetalle(id.value)
-  // precargar valores existentes (si ya hay resultados guardados)
-  if (store.actual) {
-    for (const r of store.actual.resultados) {
-      valores[r.parametro] = {
-        valor_numerico: r.valor_numerico != null ? String(r.valor_numerico) : '',
-        valor_texto: r.valor_texto || '',
-      }
-    }
-    observaciones.observaciones = store.actual.observaciones || ''
-    observaciones.alteraciones = store.actual.alteraciones || ''
-    observaciones.diagnostico = store.actual.diagnostico || ''
-    observaciones.pronostico = store.actual.pronostico || ''
-  }
-  // inicializar vacíos para parámetros sin valor aún
-  if (store.plantilla) {
-    for (const g of store.plantilla.grupos) {
-      for (const p of g.parametros) {
-        if (!valores[p.id]) valores[p.id] = { valor_numerico: '', valor_texto: '' }
-      }
-    }
-  }
+onMounted(() => {
+  if (id.value && !Number.isNaN(id.value)) cargarTodo()
+})
+
+watch(() => route.params.id, () => {
+  if (id.value && !Number.isNaN(id.value)) cargarTodo()
 })
 
 const esEditable = computed(() => {
@@ -109,6 +85,13 @@ function getReferencia(p: any) {
     return `${ref.valor_min ?? '–'} a ${ref.valor_max ?? '–'}`
   }
   return ref.texto_referencia || null
+}
+
+function getValor(parametroId: number) {
+  if (!valores[parametroId]) {
+    valores[parametroId] = { valor_numerico: '', valor_texto: '' }
+  }
+  return valores[parametroId]
 }
 
 function getInterpretacionGuardada(parametroId: number) {
@@ -127,7 +110,7 @@ async function guardar() {
 
   const resultados = store.plantilla.grupos.flatMap(g =>
     g.parametros.map(p => {
-      const v = valores[p.id]
+      const v = getValor(p.id)
       const payload: any = { parametro: p.id }
       if (p.tipo_dato === 'NUM') {
         payload.valor_numerico = v.valor_numerico !== '' ? Number(v.valor_numerico) : null
@@ -150,8 +133,12 @@ async function guardar() {
 
 async function generarYDescargarPdf() {
   const res = await store.generarPdf(id.value)
-  if (res.ok && store.actual?.archivo_pdf) {
-    window.open(store.actual.archivo_pdf, '_blank')
+  if (res.ok) {
+    // Usar la pdf_url devuelta directamente por el backend o la que quedó en el store
+    const url = res.data?.pdf_url || store.actual?.archivo_pdf
+    if (url) {
+      window.open(url, '_blank')
+    }
   }
 }
 </script>
@@ -243,9 +230,9 @@ async function generarYDescargarPdf() {
                 <tr v-for="p in grupo.parametros" :key="p.id" class="border-b last:border-0">
                   <td class="px-4 py-2.5">{{ p.nombre_parametro }}</td>
                   <td class="px-4 py-2.5">
-                    <Input v-if="p.tipo_dato === 'NUM'" v-model="valores[p.id].valor_numerico" type="number"
+                    <Input v-if="p.tipo_dato === 'NUM'" v-model="getValor(p.id).valor_numerico" type="number"
                       step="0.001" :disabled="!esEditable" class="h-8" />
-                    <Select v-else-if="p.tipo_dato === 'SEL'" v-model="valores[p.id].valor_texto"
+                    <Select v-else-if="p.tipo_dato === 'SEL'" v-model="getValor(p.id).valor_texto"
                       :disabled="!esEditable">
                       <SelectTrigger class="h-8">
                         <SelectValue placeholder="—" />
@@ -254,7 +241,7 @@ async function generarYDescargarPdf() {
                         <SelectItem v-for="op in p.opciones || []" :key="op" :value="op">{{ op }}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input v-else v-model="valores[p.id].valor_texto" :disabled="!esEditable" class="h-8" />
+                    <Input v-else v-model="getValor(p.id).valor_texto" :disabled="!esEditable" class="h-8" />
                   </td>
                   <td class="px-4 py-2.5 text-muted-foreground">{{ p.unidad_medida || '—' }}</td>
                   <td class="px-4 py-2.5 text-muted-foreground text-xs">{{ getReferencia(p) || '—' }}</td>

@@ -71,8 +71,7 @@ function goToPage(page: number) {
 }
 
 function cantidadMuestrasPendientes(s: any) {
-    return s.detalles?.reduce((acc: number, d: any) =>
-        acc + (d.muestras?.filter((m: any) => m.estado === 'pendiente').length || 0), 0) || 0
+    return s.detalles?.filter((d: any) => d.muestra?.estado === 'pendiente').length || 0
 }
 
 watch(

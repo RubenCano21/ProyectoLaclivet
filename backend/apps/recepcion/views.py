@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+from apps.core.permissions import EsStaffInterno
 from config.pagination import StandardPagination
 from .models import Cobro, SolicitudExamen, DetalleSolicitud
 from .serializers import (
@@ -25,8 +26,14 @@ _del_response = openapi.Response('Eliminado exitosamente')
 
 
 # ── Cobro ─────────────────────────────────────────────────
+# NOTA DE SEGURIDAD: toda esta app maneja cobros, montos y solicitudes de
+# examen — son operaciones internas de recepción/administración. Antes
+# usaban `IsAuthenticated` genérico, lo que permitía a CUALQUIER usuario
+# autenticado (incluido un Propietario o Médico Externo) crear, editar o
+# eliminar cobros y solicitudes de otras personas. Se restringe a
+# `EsStaffInterno` (Administrador, Veterinario, Recepcionista).
 class CobroListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar cobros", responses={200: CobroSerializer(many=True)})
     def get(self, request):
@@ -43,7 +50,7 @@ class CobroListCreateView(APIView):
 
 
 class CobroDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -89,7 +96,7 @@ class CobroDetailView(APIView):
 
 # ── SolicitudExamen ───────────────────────────────────────
 class SolicitudExamenListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar solicitudes de examen", responses={200: SolicitudExamenSerializer(many=True)})
     def get(self, request):
@@ -107,7 +114,7 @@ class SolicitudExamenListCreateView(APIView):
 
 
 class SolicitudExamenDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -153,7 +160,7 @@ class SolicitudExamenDetailView(APIView):
 
 # ── DetalleSolicitud ──────────────────────────────────────
 class DetalleSolicitudListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(operation_summary="Listar detalles de solicitud", responses={200: DetalleSolicitudSerializer(many=True)})
     def get(self, request):
@@ -171,7 +178,7 @@ class DetalleSolicitudListCreateView(APIView):
 
 
 class DetalleSolicitudDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -220,7 +227,7 @@ class SolicitudExamenCrearConExamenesView(APIView):
     verificando automáticamente si cada Examen requiere Muestra
     (Examen.requiere_muestra) y generándola si aplica.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(
         operation_summary="Crear solicitud con exámenes (verifica muestras automáticamente)",
@@ -266,7 +273,7 @@ class SolicitudExamenCrearConExamenesView(APIView):
 class SolicitudExamenFullDetailView(APIView):
     """Detalle completo de la solicitud: exámenes, muestras, estado de resultado.
     Usado por la lista de solicitudes / pantalla de seguimiento."""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:
@@ -287,7 +294,7 @@ class SolicitudExamenFullDetailView(APIView):
 class SolicitudExamenListFiltradaView(APIView):
     """Lista de solicitudes con filtro opcional por ?estado=pendiente.
     Es la vista que alimenta la 'lista de exámenes' después de registrarlos."""
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     @swagger_auto_schema(
         operation_summary="Listar solicitudes (filtro por estado)",
@@ -311,7 +318,7 @@ class SolicitudExamenListFiltradaView(APIView):
 
 
 class SolicitudExamenCambiarEstadoView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [EsStaffInterno]
 
     def get_object(self, pk):
         try:

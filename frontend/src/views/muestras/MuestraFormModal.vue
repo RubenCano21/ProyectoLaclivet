@@ -56,7 +56,7 @@ const TIPOS = [
 // ── Formulario ────────────────────────────────────────────────────────────────
 const defaultForm = (): MuestraForm => ({
   paciente:        null,
-  tipo:            '',
+  tipo_muestra:    '',
   estado:          'pendiente',
   fecha_recepcion: new Date().toISOString().slice(0, 10),
   observaciones:   '',
@@ -119,7 +119,7 @@ watch(
       // Modo edición
       form.value = {
         paciente:        props.muestra.paciente,
-        tipo:            props.muestra.tipo ?? '',
+        tipo_muestra:    props.muestra.tipo_muestra ?? '',
         estado:          props.muestra.estado,
         fecha_recepcion: props.muestra.fecha_recepcion ?? new Date().toISOString().slice(0, 10),
         observaciones:   props.muestra.observaciones ?? '',
@@ -140,8 +140,17 @@ watch(
       // Modo normal: cargar lista de pacientes
       await loadPacientes()
       if (props.muestra) {
-        selectedPaciente.value =
-          pacientes.value.find(p => p.id === props.muestra!.paciente) ?? null
+        // Intentar encontrarlo en la lista cargada
+        const encontrado = pacientes.value.find(p => p.id === props.muestra!.paciente)
+        if (encontrado) {
+          selectedPaciente.value = encontrado
+        } else if (props.muestra.paciente && props.muestra.paciente_nombre) {
+          // Fallback: usar el nombre que ya devuelve el serializer
+          selectedPaciente.value = {
+            id: props.muestra.paciente,
+            nombre: props.muestra.paciente_nombre,
+          } as Paciente
+        }
       }
     }
   },
@@ -160,7 +169,7 @@ async function handleSubmit() {
     formError.value = 'Debes seleccionar el paciente'
     return
   }
-  if (!form.value.tipo) {
+  if (!form.value.tipo_muestra) {
     formError.value = 'El tipo de muestra es requerido'
     return
   }
@@ -297,7 +306,7 @@ async function handleSubmit() {
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div class="space-y-1.5">
             <label class="text-sm font-medium">Tipo <span class="text-red-500">*</span></label>
-            <Select v-model="form.tipo">
+            <Select v-model="form.tipo_muestra">
               <SelectTrigger><SelectValue placeholder="Seleccionar tipo…" /></SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="t in TIPOS" :key="t.value" :value="t.value">{{ t.label }}</SelectItem>

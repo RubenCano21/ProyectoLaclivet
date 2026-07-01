@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.db import transaction
 from .models import MedicoVeterinario
 from apps.usuarios.models import Usuario, Rol
-from apps.core.validators import validar_formato_ci, validar_ci_unico_global
+from apps.core.validators import validar_formato_ci, validar_ci_unico_global, generar_password_default, generar_username
 
 
 class UsuarioMedicoSerializer(serializers.ModelSerializer):
@@ -59,29 +59,14 @@ class MedicoVeterinarioCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Este email ya está registrado.")
         return value
 
-    def _generar_username(self, email):
-        base = (email or '').split('@')[0][:140] or 'user'
-        username = base
-        i = 1
-        while Usuario.objects.filter(username=username).exists():
-            i += 1
-            username = f"{base}{i}"[:150]
-        return username
-
-    def _generar_password_default(self, data):
-        last_name = data.get('last_name', '').strip().lower()
-        primer_apellido = last_name.split()[0] if last_name else 'usuario'
-        ci = data.get('ci', '').strip()
-        return f"{primer_apellido}.{ci}" if ci else primer_apellido
-
     @transaction.atomic
     def create(self, validated_data):
         rol_medico, _ = Rol.objects.get_or_create(
             nombre='Medico Externo',
             defaults={'descripcion': 'Solo resultados de sus solicitudes'}
         )
-        password = self._generar_password_default(validated_data)
-        username = self._generar_username(validated_data['email'])
+        password = generar_password_default()
+        username = generar_username(validated_data['email'])
 
         usuario = Usuario.objects.create(
             username=username,
@@ -92,6 +77,7 @@ class MedicoVeterinarioCreateSerializer(serializers.Serializer):
             telefono=validated_data.get('telefono', ''),
             direccion=validated_data.get('direccion', ''),
             rol=rol_medico,
+            debe_cambiar_password=True,
         )
         usuario.set_password(password)
         usuario.save()
@@ -161,17 +147,8 @@ class MedicoVeterinarioUpdateSerializer(serializers.Serializer):
                 defaults={'descripcion': 'Solo resultados de sus solicitudes'}
             )
             base_email = validated_data.get('email', f'medico{instance.pk}@laclivet.com')
-            base = base_email.split('@')[0][:140] or 'medico'
-            username = base
-            i = 1
-            while Usuario.objects.filter(username=username).exists():
-                i += 1
-                username = f"{base}{i}"[:150]
-
-            last_name = validated_data.get('last_name', '').strip().lower()
-            primer_apellido = last_name.split()[0] if last_name else 'usuario'
-            ci = validated_data.get('ci', '')
-            password = f"{primer_apellido}.{ci}" if ci else primer_apellido
+            username = generar_username(base_email)
+            password = generar_password_default()
 
             usuario = Usuario.objects.create(
                 username=username,
@@ -182,6 +159,7 @@ class MedicoVeterinarioUpdateSerializer(serializers.Serializer):
                 telefono=validated_data.get('telefono', ''),
                 direccion=validated_data.get('direccion', ''),
                 rol=rol_medico,
+                debe_cambiar_password=True,
             )
             usuario.set_password(password)
             usuario.save()

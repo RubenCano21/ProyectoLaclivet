@@ -21,11 +21,11 @@ export const muestraService = {
   },
 
   registrarIncidencia(id: number, descripcion: string) {
-    return api.post(`/muestras/${id}/incidencia/`, { descripcion })
+    return api.post('/muestras/incidencias/', { muestra: id, descripcion })
   },
 
   getIncidencias(id: number) {
-    return api.get(`/muestras/${id}/incidencias/`)
+    return api.get('/muestras/incidencias/', { params: { muestra: id } })
   },
 
   delete(id: number) {

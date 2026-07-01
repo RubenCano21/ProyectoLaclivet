@@ -11,3 +11,11 @@ export interface Muestra {
   solicitud: number | null
   solicitud_codigo: string | null
 }
+
+export interface IncidenciaMuestra {
+  id: number
+  fecha_registro: string
+  descripcion: string | null
+  muestra: number
+  muestra_codigo: string | null
+}
