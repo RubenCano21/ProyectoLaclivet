@@ -25,7 +25,7 @@ class PacienteIDORTests(TestCase):
         )
         self.usuario_a.set_password('x')
         self.usuario_a.save()
-        self.propietario_a = Propietario.objects.create(usuario=self.usuario_a)
+        self.propietario_a = Propietario.objects.get(usuario=self.usuario_a)
 
         # Propietario B y su mascota (la que A NO debería poder ver/editar)
         self.usuario_b = Usuario.objects.create(
@@ -34,7 +34,7 @@ class PacienteIDORTests(TestCase):
         )
         self.usuario_b.set_password('x')
         self.usuario_b.save()
-        self.propietario_b = Propietario.objects.create(usuario=self.usuario_b)
+        self.propietario_b = Propietario.objects.get(usuario=self.usuario_b)
 
         self.especie = Especie.objects.create(nombre='Canino')
         self.raza = Raza.objects.create(nombre='Labrador', especie=self.especie)

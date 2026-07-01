@@ -70,7 +70,9 @@ class PropietarioCreateSerializer(serializers.Serializer):
         usuario.set_password(password)
         usuario.save()
 
-        propietario = Propietario.objects.create(usuario=usuario)
+        # La señal post_save de Usuario ya crea el Propietario cuando el rol
+        # es 'Propietario' (ver apps.usuarios.signals.sincronizar_propietario).
+        propietario = Propietario.objects.get(usuario=usuario)
         return propietario
 
 

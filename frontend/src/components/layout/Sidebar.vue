@@ -19,6 +19,7 @@ import {
   Microscope,
   AlertTriangle,
   BarChart3,
+  CalendarDays,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -119,6 +120,7 @@ const navMain = computed(() => {
       items: [
         { title: "Catálogo de Exámenes", url: "/solicitudes/catalogo", icon: BookOpen,  visible: p('ver_catalogo') },
         { title: "Listado de Solicitudes", url: "/solicitudes",        icon: FilePlus,  visible: p('ver_solicitudes') },
+        { title: "Agenda",               url: "/agenda",              icon: CalendarDays, visible: p('ver_solicitudes') },
       ].filter(i => i.visible),
     },
     {
