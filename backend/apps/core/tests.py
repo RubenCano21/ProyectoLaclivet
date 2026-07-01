@@ -16,15 +16,18 @@ from apps.paciente.models import Especie, Raza, Paciente
 class EsPropietarioObjectPermissionTests(TestCase):
     def setUp(self):
         rol = Rol.objects.create(nombre='Propietario')
+
         self.usuario = Usuario.objects.create(
             username='ana', email='ana@example.com', first_name='Ana', last_name='Perez', rol=rol,
         )
-        self.propietario = Propietario.objects.create(usuario=self.usuario)
+        # La señal `sincronizar_propietario` ya creó el Propietario al guardar
+        # el Usuario con rol='Propietario'. No lo volvemos a crear:
+        self.propietario = self.usuario.propietario_perfil
 
         otro_usuario = Usuario.objects.create(
             username='beto', email='beto@example.com', first_name='Beto', last_name='B', rol=rol,
         )
-        self.otro_propietario = Propietario.objects.create(usuario=otro_usuario)
+        self.otro_propietario = otro_usuario.propietario_perfil
 
         especie = Especie.objects.create(nombre='Canino')
         raza = Raza.objects.create(nombre='Labrador', especie=especie)
@@ -55,4 +58,3 @@ class EsPropietarioObjectPermissionTests(TestCase):
     def test_helper_tiene_rol(self):
         self.assertTrue(tiene_rol(self.usuario, 'Propietario'))
         self.assertFalse(tiene_rol(self.usuario, 'Administrador'))
-
