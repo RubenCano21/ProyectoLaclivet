@@ -335,4 +335,9 @@ export const resultadoFlujoService = {
       `/catalogos/orden-examenes/${id}/generar-pdf/`,
     )
   },
+
+  /** Valida un resultado completado → estado 'validado' (RF9) */
+  validar(id: number) {
+    return api.post<OrdenExamenCompleto>(`/catalogos/orden-examenes/${id}/validar/`)
+  },
 }

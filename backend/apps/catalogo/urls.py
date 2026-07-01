@@ -6,6 +6,7 @@ from .views import (
     ValorReferenciaListCreateView, ValorReferenciaDetailView, ExamenPlantillaView, OrdenTrabajoListCreateView,
     OrdenTrabajoDetailView, OrdenExamenListCreateView, OrdenExamenDetailView, OrdenExamenResultadosView,
     OrdenExamenFullDetailView, RegistrarResultadoOrdenExamenView, OrdenExamenGenerarPdfView,
+    ValidarOrdenExamenView,
 )
 
 urlpatterns = [
@@ -29,5 +30,6 @@ urlpatterns = [
 
     path('orden-examenes/<int:pk>/completo/', OrdenExamenFullDetailView.as_view(), name='orden-examen-full-detail'),
     path('orden-examenes/<int:pk>/registrar-resultado/', RegistrarResultadoOrdenExamenView.as_view(), name='orden-examen-registrar'),
+    path('orden-examenes/<int:pk>/validar/', ValidarOrdenExamenView.as_view(), name='orden-examen-validar'),
     path('orden-examenes/<int:pk>/generar-pdf/', OrdenExamenGenerarPdfView.as_view(), name='orden-examen-pdf'),
 ]

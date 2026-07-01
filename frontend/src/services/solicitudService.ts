@@ -115,9 +115,11 @@ export interface DetalleSolicitudCompleto {
   examen: number
   examen_nombre: string
   requiere_muestra: boolean
-  muestra: MuestraResumen | null   // antes: muestras: MuestraResumen[]
+  muestra: MuestraResumen | null
   tiene_resultado: boolean
   estado_resultado: string | null
+  orden_examen_id: number | null
+  archivo_pdf_url: string | null
 }
 
 export interface SolicitudCompleta extends SolicitudExamen {
