@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, computed, reactive, watch } from 'vue'
+import { onMounted, computed, reactive, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResultadosStore } from '@/stores/resultados'
+import { useAuthStore } from '@/stores/auth'
 
 import AppSidebar from '@/components/layout/Sidebar.vue'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
@@ -18,12 +19,25 @@ import {
 } from '@/components/ui/select'
 
 import {
-  ArrowLeft, Loader2, AlertCircle, Save, FileDown, CheckCircle2,
+  ArrowLeft, Loader2, AlertCircle, Save, FileDown, CheckCircle2, BadgeCheck,
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 const store = useResultadosStore()
+const authStore = useAuthStore()
+
+const validando = ref(false)
+const puedeValidar = computed(() =>
+  authStore.tienePermiso('validar_resultados') && store.actual?.estado === 'completado'
+)
+
+async function validarDesde() {
+  if (!id.value) return
+  validando.value = true
+  await store.validar(id.value)
+  validando.value = false
+}
 
 const id = computed(() => Number(route.params.id))
 
@@ -291,6 +305,15 @@ async function generarYDescargarPdf() {
               class="gap-2" @click="generarYDescargarPdf">
               <FileDown class="h-4 w-4" />
               {{ store.actual.archivo_pdf ? 'Descargar PDF' : 'Generar e imprimir PDF' }}
+            </Button>
+            <Button
+              v-if="puedeValidar"
+              :disabled="validando"
+              class="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              @click="validarDesde">
+              <Loader2 v-if="validando" class="h-4 w-4 animate-spin" />
+              <BadgeCheck v-else class="h-4 w-4" />
+              Validar resultado
             </Button>
             <Button v-if="esEditable" :disabled="store.saving" class="gap-2" @click="guardar">
               <Loader2 v-if="store.saving" class="h-4 w-4 animate-spin" />

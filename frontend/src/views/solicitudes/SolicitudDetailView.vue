@@ -13,12 +13,20 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 
 import {
-    ArrowLeft, Loader2, AlertCircle, FlaskConical, CheckCircle2, Clock,
+    ArrowLeft, Loader2, AlertCircle, FlaskConical, CheckCircle2, Clock, Eye, Printer,
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
 const store = useSolicitudesStore()
+
+function verResultado(ordenExamenId: number) {
+    router.push({ name: 'captura-resultados', params: { id: ordenExamenId } })
+}
+
+function imprimirPdf(url: string) {
+    window.open(url, '_blank')
+}
 
 const id = computed(() => Number(route.params.id))
 
@@ -158,11 +166,31 @@ const solicitud = computed(() => store.actual)
                                 <span 
                                 v-if="d.tiene_resultado"
                                     class="inline-flex items-center gap-1 text-green-700 text-xs font-medium">
-                                    <CheckCircle2 class="h-4 w-4" /> Con resultado
+                                    <CheckCircle2 class="h-4 w-4" />
+                                    {{ d.estado_resultado === 'validado' ? 'Validado' : 'Con resultado' }}
                                 </span>
                                 <span v-else class="inline-flex items-center gap-1 text-muted-foreground text-xs">
                                     <Clock class="h-4 w-4" /> Pendiente
                                 </span>
+
+                                <!-- Botones de acción cuando hay resultado -->
+                                <template v-if="d.tiene_resultado && d.orden_examen_id">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        class="h-7 gap-1 text-xs"
+                                        @click="verResultado(d.orden_examen_id!)">
+                                        <Eye class="h-3.5 w-3.5" /> Ver
+                                    </Button>
+                                    <Button
+                                        v-if="d.archivo_pdf_url"
+                                        size="sm"
+                                        variant="outline"
+                                        class="h-7 gap-1 text-xs"
+                                        @click="imprimirPdf(d.archivo_pdf_url!)">
+                                        <Printer class="h-3.5 w-3.5" /> PDF
+                                    </Button>
+                                </template>
                             </div>
                         </div>
                     </div>

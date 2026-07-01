@@ -94,8 +94,6 @@ export const useResultadosStore = defineStore('resultados', () => {
         error.value = null
         try {
             const { data } = await resultadoFlujoService.generarPdf(id)
-            // El backend devuelve { success, message, pdf_url, pdf_name }, NO un OrdenExamenCompleto.
-            // Actualizamos solo el campo archivo_pdf del registro actual para que la vista pueda descargarlo.
             if (data.success && data.pdf_url && actual.value) {
                 actual.value = { ...actual.value, archivo_pdf: data.pdf_url }
             }
@@ -107,9 +105,29 @@ export const useResultadosStore = defineStore('resultados', () => {
         }
     }
 
+    async function validar(id: number): Promise<ApiResult> {
+        saving.value = true
+        error.value = null
+        try {
+            const { data } = await resultadoFlujoService.validar(id)
+            // Actualiza el registro en la lista si existe
+            const idx = items.value.findIndex(i => i.id === id)
+            if (idx !== -1) items.value[idx] = data
+            // Actualiza el detalle si está abierto
+            if (actual.value?.id === id) actual.value = data
+            return { ok: true, data }
+        } catch (err) {
+            const msg = extractError(err)
+            error.value = msg
+            return { ok: false, error: msg }
+        } finally {
+            saving.value = false
+        }
+    }
+
     return {
         items, loading, saving, error, total, paginas, paginaActual,
         actual, plantilla, loadingDetalle,
-        fetchAll, fetchDetalle, registrar, generarPdf,
+        fetchAll, fetchDetalle, registrar, generarPdf, validar,
     }
 })

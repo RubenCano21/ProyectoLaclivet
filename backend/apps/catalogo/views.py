@@ -596,8 +596,52 @@ class RegistrarResultadoOrdenExamenView(APIView):
         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ValidarOrdenExamenView(APIView):
+    """Valida un resultado completado → cambia estado a 'validado' (RF9)."""
+    permission_classes = [IsAuthenticated, EsStaffInterno]
+
+    def get_object(self, pk):
+        try:
+            return OrdenExamen.objects.select_related(
+                'examen', 'orden__paciente__raza__especie',
+                'detalle_solicitud__solicitud',
+                'veterinario_responsable',
+            ).prefetch_related('resultados__parametro__valores_referencia').get(pk=pk)
+        except OrdenExamen.DoesNotExist:
+            return None
+
+    @swagger_auto_schema(
+        operation_summary="Validar resultado de examen",
+        responses={200: OrdenExamenFullDetailSerializer},
+    )
+    def post(self, request, pk):
+        obj = self.get_object(pk)
+        if obj is None:
+            return Response({'error': 'Registro no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        if obj.estado != 'completado':
+            return Response(
+                {'error': f'Solo se pueden validar exámenes en estado "completado". Estado actual: {obj.estado}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        nombre_completo = f"{request.user.first_name} {request.user.last_name}".strip()
+        obj.validado_por = nombre_completo or request.user.email
+        obj.estado = 'validado'
+        obj.save(update_fields=['estado', 'validado_por'])
+
+        # Si todos los exámenes de la orden están completados/validados → marcar solicitud como completada
+        orden = obj.orden
+        if orden.solicitud and all(
+            oe.estado in ('completado', 'validado') for oe in orden.examenes.all()
+        ):
+            orden.solicitud.estado = 'completado'
+            orden.solicitud.save(update_fields=['estado'])
+
+        return Response(OrdenExamenFullDetailSerializer(obj, context={'request': request}).data)
+
+
 class OrdenExamenGenerarPdfView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         try:

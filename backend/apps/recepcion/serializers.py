@@ -157,12 +157,15 @@ class DetalleSolicitudConMuestraSerializer(serializers.ModelSerializer):
     muestra = serializers.SerializerMethodField()
     tiene_resultado = serializers.SerializerMethodField()
     estado_resultado = serializers.SerializerMethodField()
+    orden_examen_id = serializers.SerializerMethodField()
+    archivo_pdf_url = serializers.SerializerMethodField()
 
     class Meta:
         model = DetalleSolicitud
         fields = [
             'id', 'precio_aplicado', 'examen', 'examen_nombre',
             'requiere_muestra', 'muestra', 'tiene_resultado', 'estado_resultado',
+            'orden_examen_id', 'archivo_pdf_url',
         ]
 
     def get_muestra(self, obj):
@@ -178,6 +181,19 @@ class DetalleSolicitudConMuestraSerializer(serializers.ModelSerializer):
     def get_estado_resultado(self, obj):
         orden_examen = getattr(obj, 'orden_examen', None)
         return orden_examen.estado if orden_examen else None
+
+    def get_orden_examen_id(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        return orden_examen.id if orden_examen else None
+
+    def get_archivo_pdf_url(self, obj):
+        orden_examen = getattr(obj, 'orden_examen', None)
+        if orden_examen and orden_examen.archivo_pdf:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(orden_examen.archivo_pdf.url)
+            return orden_examen.archivo_pdf.url
+        return None
 
 
 class SolicitudExamenFullDetailSerializer(serializers.ModelSerializer):

@@ -288,7 +288,7 @@ class SolicitudExamenFullDetailView(APIView):
         obj = self.get_object(pk)
         if obj is None:
             return Response({'error': 'Solicitud no encontrada'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(SolicitudExamenFullDetailSerializer(obj).data)
+        return Response(SolicitudExamenFullDetailSerializer(obj, context={'request': request}).data)
 
 
 class SolicitudExamenListFiltradaView(APIView):
@@ -314,7 +314,7 @@ class SolicitudExamenListFiltradaView(APIView):
 
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
-        return paginator.get_paginated_response(SolicitudExamenFullDetailSerializer(pagina, many=True).data)
+        return paginator.get_paginated_response(SolicitudExamenFullDetailSerializer(pagina, many=True, context={'request': request}).data)
 
 
 class SolicitudExamenCambiarEstadoView(APIView):
@@ -347,4 +347,4 @@ class SolicitudExamenCambiarEstadoView(APIView):
             'detalles__examen', 'detalles__orden_examen__muestra'
         ).get(pk=pk)
 
-        return Response(SolicitudExamenFullDetailSerializer(obj).data)
+        return Response(SolicitudExamenFullDetailSerializer(obj, context={'request': request}).data)
