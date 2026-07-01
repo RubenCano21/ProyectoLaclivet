@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from drf_yasg import openapi
@@ -25,9 +27,15 @@ urlpatterns = [
     path('api/recepcion/', include('apps.recepcion.urls')),
     path('api/bitacora/', include('apps.bitacora.urls')),
     path('api/muestras/', include('apps.muestra.urls')),
+    path('api/bi/',       include('apps.bi.urls')),
 
     # --- RUTAS DE SWAGGER ---
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('swagger.json/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
 ]
+
+# Servir archivos media en desarrollo (DEBUG=True)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

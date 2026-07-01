@@ -5,7 +5,14 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 
-export type MuestraForm = Omit<Muestra, 'id'>
+export type MuestraForm = {
+  tipo_muestra: string
+  estado: string
+  fecha_recepcion: string
+  observaciones: string
+  paciente: number | null
+  solicitud?: number | null
+}
 
 interface ApiResult {
     ok: boolean
@@ -64,7 +71,7 @@ export const useMuestrasStore = defineStore('muestras', () => {
     async function update(id: number, form: MuestraForm): Promise<ApiResult> {
     saving.value = true
     try {
-      const { data } = await api.patch(`/muestra/${id}/`, form)
+      const { data } = await api.patch(`/muestras/${id}/`, form)
       const idx = items.value.findIndex(p => p.id === id)
       if (idx !== -1) items.value[idx] = data
       return { ok: true }
@@ -77,7 +84,7 @@ export const useMuestrasStore = defineStore('muestras', () => {
 
   async function remove(id: number): Promise<ApiResult> {
     try {
-      await api.delete(`/muestra/${id}/`)
+      await api.delete(`/muestras/${id}/`)
       items.value = items.value.filter(p => p.id !== id)
       return { ok: true }
     } catch (err) {

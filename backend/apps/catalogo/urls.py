@@ -3,7 +3,10 @@ from .views import (
     CatalogoExamenListCreateView, CatalogoExamenDetailView,
     ExamenListCreateView, ExamenDetailView,
     ParametroListCreateView, ParametroDetailView,
-    ValorReferenciaListCreateView, ValorReferenciaDetailView,
+    ValorReferenciaListCreateView, ValorReferenciaDetailView, ExamenPlantillaView, OrdenTrabajoListCreateView,
+    OrdenTrabajoDetailView, OrdenExamenListCreateView, OrdenExamenDetailView, OrdenExamenResultadosView,
+    OrdenExamenFullDetailView, RegistrarResultadoOrdenExamenView, OrdenExamenGenerarPdfView,
+    ValidarOrdenExamenView,
 )
 
 urlpatterns = [
@@ -15,4 +18,18 @@ urlpatterns = [
     path('parametros/<int:pk>/', ParametroDetailView.as_view(), name='parametro-detail'),
     path('valores-referencia/', ValorReferenciaListCreateView.as_view(), name='valor-referencia-list-create'),
     path('valores-referencia/<int:pk>/', ValorReferenciaDetailView.as_view(), name='valor-referencia-detail'),
+
+    path('examenes/<int:pk>/plantilla/', ExamenPlantillaView.as_view(), name='examen-plantilla'),
+
+    path('ordenes-trabajo/', OrdenTrabajoListCreateView.as_view(), name='orden-trabajo-list-create'),
+    path('ordenes-trabajo/<int:pk>/', OrdenTrabajoDetailView.as_view(), name='orden-trabajo-detail'),
+
+    path('orden-examenes/', OrdenExamenListCreateView.as_view(), name='orden-examen-list-create'),
+    path('orden-examenes/<int:pk>/', OrdenExamenDetailView.as_view(), name='orden-examen-detail'),
+    path('orden-examenes/<int:pk>/resultados/', OrdenExamenResultadosView.as_view(), name='orden-examen-resultados'),
+
+    path('orden-examenes/<int:pk>/completo/', OrdenExamenFullDetailView.as_view(), name='orden-examen-full-detail'),
+    path('orden-examenes/<int:pk>/registrar-resultado/', RegistrarResultadoOrdenExamenView.as_view(), name='orden-examen-registrar'),
+    path('orden-examenes/<int:pk>/validar/', ValidarOrdenExamenView.as_view(), name='orden-examen-validar'),
+    path('orden-examenes/<int:pk>/generar-pdf/', OrdenExamenGenerarPdfView.as_view(), name='orden-examen-pdf'),
 ]

@@ -3,6 +3,12 @@ from .views import (
     CobroListCreateView, CobroDetailView,
     SolicitudExamenListCreateView, SolicitudExamenDetailView,
     DetalleSolicitudListCreateView, DetalleSolicitudDetailView,
+
+    SolicitudExamenCrearConExamenesView,
+    SolicitudExamenFullDetailView,
+    SolicitudExamenListFiltradaView,
+    SolicitudExamenCambiarEstadoView,
+    SolicitudExamenAgendaView,
 )
 
 urlpatterns = [
@@ -12,4 +18,11 @@ urlpatterns = [
     path('solicitudes/<int:pk>/', SolicitudExamenDetailView.as_view(), name='solicitud-detail'),
     path('detalles/', DetalleSolicitudListCreateView.as_view(), name='detalle-list-create'),
     path('detalles/<int:pk>/', DetalleSolicitudDetailView.as_view(), name='detalle-detail'),
+
+# Flujo de gestión de exámenes/muestras
+    path('solicitudes/crear-con-examenes/', SolicitudExamenCrearConExamenesView.as_view(), name='solicitud-crear-con-examenes'),
+    path('solicitudes/listado/', SolicitudExamenListFiltradaView.as_view(), name='solicitud-listado-filtrado'),
+    path('solicitudes/agenda/', SolicitudExamenAgendaView.as_view(), name='solicitud-agenda'),
+    path('solicitudes/<int:pk>/completo/', SolicitudExamenFullDetailView.as_view(), name='solicitud-full-detail'),
+    path('solicitudes/<int:pk>/cambiar-estado/', SolicitudExamenCambiarEstadoView.as_view(), name='solicitud-cambiar-estado'),
 ]

@@ -1,18 +1,15 @@
 from apps.core.permissions import EsStaffInterno
-from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from config.pagination import StandardPagination
-from .models import Muestra, IncidenciaMuestra, Resultado
+from .models import Muestra, IncidenciaMuestra
 from .serializers import (
     MuestraSerializer, MuestraCreateSerializer, MuestraUpdateSerializer,
-    IncidenciaMuestraSerializer, IncidenciaMuestraCreateSerializer, IncidenciaMuestraUpdateSerializer,
-    ResultadoSerializer,
+    IncidenciaMuestraSerializer, IncidenciaMuestraCreateSerializer, IncidenciaMuestraUpdateSerializer
 )
 
 _del_response = openapi.Response('Eliminado exitosamente')
@@ -23,7 +20,7 @@ class MuestraListCreateView(APIView):
 
     @swagger_auto_schema(operation_summary="Listar muestras", responses={200: MuestraSerializer(many=True)})
     def get(self, request):
-        qs = Muestra.objects.select_related('solicitud').all()
+        qs = Muestra.objects.select_related('solicitud', 'paciente').all()
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(MuestraSerializer(pagina, many=True).data)
@@ -41,7 +38,7 @@ class MuestraDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Muestra.objects.select_related('solicitud').get(pk=pk)
+            return Muestra.objects.select_related('solicitud', 'paciente').get(pk=pk)
         except Muestra.DoesNotExist:
             return None
 
@@ -88,6 +85,9 @@ class IncidenciaMuestraListCreateView(APIView):
     @swagger_auto_schema(operation_summary="Listar incidencias de muestra", responses={200: IncidenciaMuestraSerializer(many=True)})
     def get(self, request):
         qs = IncidenciaMuestra.objects.select_related('muestra').all()
+        muestra_id = request.query_params.get('muestra')
+        if muestra_id:
+            qs = qs.filter(muestra_id=muestra_id)
         paginator = StandardPagination()
         pagina = paginator.paginate_queryset(qs, request)
         return paginator.get_paginated_response(IncidenciaMuestraSerializer(pagina, many=True).data)
@@ -144,26 +144,3 @@ class IncidenciaMuestraDetailView(APIView):
         obj.delete()
         return Response({'mensaje': 'Incidencia eliminada exitosamente'}, status=status.HTTP_200_OK)
 
-class ResultadoDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk):
-        resultado = get_object_or_404(Resultado, pk=pk)
-
-        # Staff interno ve todo
-        if hasattr(request.user, 'rol') and request.user.rol.nombre in ['Administrador', 'Veterinario', 'Recepcionista']:
-            return Response(ResultadoSerializer(resultado).data)
-
-        # Médico externo solo ve resultados de sus solicitudes
-        if hasattr(request.user, 'medico_perfil'):
-            if resultado.medico_solicitante != request.user.medico_perfil:
-                return Response({'error': 'No autorizado'}, status=403)
-            return Response(ResultadoSerializer(resultado).data)
-
-        # Propietario solo ve resultados de sus mascotas
-        if hasattr(request.user, 'propietario_perfil'):
-            if resultado.paciente.propietario != request.user.propietario_perfil:
-                return Response({'error': 'No autorizado'}, status=403)
-            return Response(ResultadoSerializer(resultado).data)
-
-        return Response({'error': 'No autorizado'}, status=403)

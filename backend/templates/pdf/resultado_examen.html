@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:pdf="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    /* ── Reset & base ───────────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica', 'Arial', sans-serif;
+      font-size: 10px;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+    /* ── Configuración de Página xhtml2pdf ──────────────────────────────── */
+    @page {
+      size: letter;
+      margin: 1cm;
+      /* Eliminamos @bottom-right que causaba el error */
+    }
+
+    /* ── Estructuras de Tablas para Reemplazar Flex/Grid ────────────────── */
+    .tabla-layout {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+    .tabla-layout td {
+      vertical-align: top;
+      border: none;
+    }
+
+    /* ── Encabezado ─────────────────────────────────────────────────────── */
+    .header-border {
+      border-bottom: 2px solid #1d4ed8;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1d4ed8;
+    }
+
+    .brand-sub {
+      font-size: 9px;
+      color: #6b7280;
+    }
+
+    .doc-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #111827;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .doc-code {
+      font-size: 11px;
+      color: #4b5563;
+      text-align: right;
+      font-weight: bold;
+    }
+
+    /* ── Secciones Generales ────────────────────────────────────────────── */
+    .section-title {
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 2px;
+      margin-bottom: 6px;
+      margin-top: 10px;
+    }
+
+    .info-item label {
+      display: block;
+      font-size: 8px;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+
+    .info-item span {
+      font-size: 10px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    /* ── Tabla de Resultados de Parámetros ──────────────────────────────── */
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5px;
+      margin-bottom: 15px;
+    }
+
+    .params-table th {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      padding: 5px 8px;
+      text-align: left;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .params-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 10px;
+    }
+
+    .examen-header {
+      background: #1e3a8a;
+      color: #ffffff;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* ── Badges y Estados ───────────────────────────────────────────────── */
+    .badge-normal {
+      color: #16a34a;
+      font-weight: bold;
+    }
+
+    .badge-fuera {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .estado-badge {
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .obs-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      font-size: 9.5px;
+      color: #374151;
+    }
+
+    /* ── Firmas ─────────────────────────────────────────────────────────── */
+    .firma-container {
+      margin-top: 40px;
+      text-align: center;
+    }
+    .firma-linea {
+      border-top: 1.5px solid #374151;
+      padding-top: 4px;
+      width: 200px;
+      margin: 0 auto;
+    }
+
+    /* ── Footer para número de página (alternativa) ────────────────────── */
+    .footer {
+      position: fixed;
+      bottom: -20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 8px;
+      color: #9ca3af;
+      padding: 10px 0;
+    }
+  </style>
+  <title>Resultado de Examen - LACLIVET</title>
+</head>
+<body>
+
+  <div class="header-border">
+    <table class="tabla-layout">
+      <tr>
+        <td>
+          <div class="brand-title">LACLIVET</div>
+          <div class="brand-sub">Laboratorio Clínico Veterinario (Hospital UAGRM)</div>
+        </td>
+        <td style="text-align: right;">
+          <div class="doc-title">Reporte de Resultados</div>
+          <div class="doc-code">Órden N°: {{ orden_examen.id }}</div>
+          <div class="brand-sub">Emitido: {{ orden_examen.fecha_resultado|date:"d/m/Y H:i" }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section-title">Datos del Paciente</div>
+  <table class="tabla-layout" style="margin-bottom: 5px;">
+    <tr>
+      <td class="info-item" style="width: 33%;">
+        <label>Paciente (Mascota)</label>
+        <span>{{ paciente.nombre|default:"—" }}</span>
+      </td>
+      <td class="info-item" style="width: 33%;">
+        <label>Especie</label>
+        <span>{{ paciente.raza.especie.nombre|default:"—" }}</span>
+      </td>
+      <td class="info-item" style="width: 33%;">
+        <label>Raza</label>
+        <span>{{ paciente.raza.nombre|default:"—" }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="info-item" style="padding-top: 5px;">
+        <label>Fecha Nac. / Sexo</label>
+        <span>{{ paciente.fecha_nacimiento|date:"d/m/Y"|default:"—" }} / {{ paciente.sexo|default:"—" }}</span>
+      </td>
+      <td class="info-item" style="padding-top: 5px;">
+        <label>Propietario (Tutor)</label>
+        <span>{{ paciente.propietario|default:"—" }}</span>
+      </td>
+      <td class="info-item" style="padding-top: 5px;">
+        <label>Médico Remitente</label>
+        <span>{{ medico_solicitante|default:"Particular" }}</span>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-title">Información de Seguimiento</div>
+  <table class="tabla-layout">
+    <tr>
+      <td class="info-item" style="width: 33%;">
+        <label>Código de Solicitud</label>
+        <span>{{ solicitud.codigo|default:"—" }}</span>
+      </td>
+      <td class="info-item" style="width: 33%;">
+        <label>Código Muestra (RF7)</label>
+        <span>{% if muestra %}{{ muestra.codigo }}{% else %}—{% endif %}</span>
+      </td>
+      <td class="info-item" style="width: 33%;">
+        <label>Estado de Orden</label>
+        <span class="estado-badge">{{ orden_examen.estado|default:"Validado" }}</span>
+      </td>
+    </tr>
+  </table>
+
+  <div class="section-title">Análisis Analítico Solicitado: {{ orden_examen.examen.nombre_examen }}</div>
+
+  {% for grupo, lista_resultados in grupos_parametros.items %}
+    <div class="examen-header">{{ grupo }}</div>
+    <table class="params-table">
+      <thead>
+        <tr>
+          <th style="width: 35%;">Parámetro</th>
+          <th style="width: 15%;">Resultado</th>
+          <th style="width: 15%;">Unidad</th>
+          <th style="width: 20%;">Rango de Referencia</th>
+          <th style="width: 15%;">Evaluación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in lista_resultados %}
+        <tr>
+          <td>{{ r.parametro.nombre_parametro }}</td>
+          <td style="font-weight: bold; {% if r.fuera_de_rango %}color: #dc2626;{% else %}color: #16a34a;{% endif %}">
+            {{ r.valor_display }}
+          </td>
+          <td style="color: #4b5563;">{{ r.parametro.unidad_medida|default:"—" }}</td>
+          <td style="color: #4b5563;">{{ r.referencia_display }}</td>
+          <td>
+            {% if r.interpretacion == "ALTO" %}
+              <span class="badge-fuera">Alto</span>
+            {% elif r.interpretacion == "BAJO" %}
+              <span class="badge-fuera">Bajo</span>
+            {% else %}
+              <span class="badge-normal">Normal</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% empty %}
+    <p style="padding: 10px; text-align: center; color: #6b7280;">No se registran parámetros validados para esta orden.</p>
+  {% endfor %}
+
+  {% if orden_examen.observaciones %}
+  <div class="section-title">Observaciones Clínicas</div>
+  <div class="obs-box">{{ orden_examen.observaciones }}</div>
+  {% endif %}
+
+  <table class="tabla-layout" style="margin-top: 50px;">
+    <tr>
+      <td style="width: 50%; text-align: center;">
+        <div class="firma-container">
+          <div class="firma-linea"></div>
+          <p style="font-size: 10px; font-weight: bold; color: #111827; margin-top: 4px;">
+            {% if veterinario_responsable %}{{ veterinario_responsable.first_name }} {{ veterinario_responsable.last_name }}{% else %}______________________{% endif %}
+          </p>
+          <p style="font-size: 8px; color: #6b7280;">Médico Bioquímico / Firma Autorizada</p>
+        </div>
+      </td>
+      <td style="width: 50%; text-align: center;">
+        <div class="firma-container">
+          <div class="firma-linea"></div>
+          <p style="font-size: 10px; font-weight: bold; color: #111827; margin-top: 4px;">
+            {{ medico_solicitante|default:"Sello del Solicitante" }}
+          </p>
+          <p style="font-size: 8px; color: #6b7280;">Médico Veterinario Remitente</p>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Footer con número de página (alternativa) -->
+  <div class="footer">
+    Página <pdf:pagenumber /> de <pdf:pagecount />
+  </div>
+
+</body>
+</html>

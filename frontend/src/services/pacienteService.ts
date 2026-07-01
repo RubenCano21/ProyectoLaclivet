@@ -181,4 +181,8 @@ export const pacienteService = {
   getHistorial(id: number) {
     return api.get(`/pacientes/${id}/historial/`)
   },
+
+  buscar(search = '') {
+    return api.get('/pacientes/', { params: { search, page_size: 20 } })
+  }
 }

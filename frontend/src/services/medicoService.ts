@@ -29,4 +29,8 @@ export const medicoService = {
   delete(id: number) {
     return api.delete(`/medicos/${id}/`)
   },
+
+  buscar(search = '') {
+    return api.get('/medicos/', { params: { search, page_size: 20 } })
+  }
 }
