@@ -9,6 +9,9 @@ from .views import (
     BiMuestrasPorEstadoView,
     BiEspeciesView,
     BiExamenesTopView,
+    ReporteMuestrasView,
+    ReporteSolicitudesView,
+    ReporteExamenesView,
 )
 
 urlpatterns = [
@@ -21,5 +24,9 @@ urlpatterns = [
     path('muestras-estado/',      BiMuestrasPorEstadoView.as_view(),    name='bi-muestras-estado'),
     path('especies/',             BiEspeciesView.as_view(),             name='bi-especies'),
     path('examenes-top/',         BiExamenesTopView.as_view(),          name='bi-examenes-top'),
+    # ── Reportes dinámicos ───────────────────────────────────────────────────
+    path('reporte-muestras/',     ReporteMuestrasView.as_view(),        name='bi-reporte-muestras'),
+    path('reporte-solicitudes/',  ReporteSolicitudesView.as_view(),     name='bi-reporte-solicitudes'),
+    path('reporte-examenes/',     ReporteExamenesView.as_view(),        name='bi-reporte-examenes'),
 ]
 

@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarDays,
+  FileText,
 } from "lucide-vue-next"
 import NavMain from './NavMain.vue'
 import NavUser from './NavUser.vue'
@@ -147,6 +148,13 @@ const navMain = computed(() => {
       title: "Business Intelligence",
       url: "/bi",
       icon: BarChart3,
+      visible: p('ver_reportes'),
+      items: [],
+    },
+    {
+      title: "Reportes",
+      url: "/reportes",
+      icon: FileText,
       visible: p('ver_reportes'),
       items: [],
     },

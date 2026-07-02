@@ -90,9 +90,25 @@ def _usuario_tiene_permiso(usuario, codigo_permiso):
         return False
     if usuario.is_superuser:
         return True
-    if not usuario.rol:
+    if not hasattr(usuario, 'rol'):
         return False
-    return usuario.rol.permisos_rol.filter(permiso__codigo=codigo_permiso).exists()
+    # Permiso vía rol
+    if usuario.rol and usuario.rol.permisos_rol.filter(permiso__codigo=codigo_permiso).exists():
+        return True
+    # Permiso extra individual
+    return usuario.permisos_usuario.filter(permiso__codigo=codigo_permiso).exists()
+
+
+class EsAdministrador(BasePermission):
+    """Solo usuarios con rol Administrador."""
+    message = "Solo un Administrador puede realizar esta acción."
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.rol and
+            request.user.rol.nombre == 'Administrador'
+        )
 
 
 def TienePermisoPorMetodo(ver, escribir):

@@ -13,12 +13,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Plus, Search, Pencil, Trash2, Loader2,
-  AlertCircle, Users, X, Check, ChevronLeft, ChevronRight,
+  AlertCircle, Users, X, Check, ChevronLeft, ChevronRight, Shield,
 } from 'lucide-vue-next'
 import { useUsuariosStore, type Usuario } from '@/stores/usuarios'
+import { useAuthStore } from '@/stores/auth'
 import RegisterUsuarioView from '@/views/usuarios/RegisterUsuarioView.vue'
+import PermisosUsuarioModal from '@/views/usuarios/PermisosUsuarioModal.vue'
 
 const store = useUsuariosStore()
+const authStore = useAuthStore()
 
 // ── Búsqueda ────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -45,6 +48,15 @@ function openCreate() {
 function openEdit(p: Usuario) {
   editingUsuario.value = p
   modalOpen.value = true
+}
+
+// ── Modal permisos ────────────────────────────────────────────────────────────
+const permisosModalOpen = ref(false)
+const usuarioPermisos = ref<Usuario | null>(null)
+
+function openPermisos(p: Usuario) {
+  usuarioPermisos.value = p
+  permisosModalOpen.value = true
 }
 
 // ── Eliminar ─────────────────────────────────────────────────────────────────
@@ -90,7 +102,8 @@ onMounted(() => store.fetchAll())
         <!-- Título + botón nuevo -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg 
+            <div 
+              class="flex h-10 w-10 items-center justify-center rounded-lg 
             bg-mineral-green-100 text-mineral-green-700">
               <Users class="h-5 w-5" />
             </div>
@@ -101,7 +114,11 @@ onMounted(() => store.fetchAll())
               </p>
             </div>
           </div>
-          <Button @click="openCreate" class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white gap-2">
+          <Button
+            v-if="authStore.tienePermiso('crear_usuario')"
+            class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white gap-2"
+            @click="openCreate"
+          >
             <Plus class="h-4 w-4" />
             Nuevo usuario
           </Button>
@@ -124,7 +141,8 @@ onMounted(() => store.fetchAll())
         </div>
 
         <!-- Error al cargar -->
-        <div v-else-if="store.error" class="flex items-center gap-2 rounded-xl border 
+        <div 
+          v-else-if="store.error" class="flex items-center gap-2 rounded-xl border 
         border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-lg">
           <AlertCircle class="h-4 w-4 shrink-0" />
           {{ store.error }}
@@ -185,16 +203,26 @@ onMounted(() => store.fetchAll())
                     <!-- Acciones normales -->
                     <div v-if="confirmDeleteId !== p.id" class="flex items-center justify-center gap-1">
                       <button
-                        @click="openEdit(p)"
+                        v-if="authStore.tienePermiso('editar_usuario')"
                         class="p-1.5 rounded-md text-mineral-green-600 hover:bg-mineral-green-100 transition-colors"
                         title="Editar"
+                        @click="openEdit(p)"
                       >
                         <Pencil class="h-4 w-4" />
                       </button>
                       <button
-                        @click="confirmDeleteId = p.id"
+                        v-if="authStore.esAdmin"
+                        class="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="Gestionar permisos"
+                        @click="openPermisos(p)"
+                      >
+                        <Shield class="h-4 w-4" />
+                      </button>
+                      <button
+                        v-if="authStore.esAdmin"
                         class="p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
                         title="Eliminar"
+                        @click="confirmDeleteId = p.id"
                       >
                         <Trash2 class="h-4 w-4" />
                       </button>
@@ -203,16 +231,16 @@ onMounted(() => store.fetchAll())
                     <!-- Confirmación de eliminación -->
                     <div v-else class="flex items-center justify-center gap-1">
                       <button
-                        @click="handleDelete(p.id)"
                         class="p-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
                         title="Confirmar eliminación"
+                        @click="handleDelete(p.id)"
                       >
                         <Check class="h-4 w-4" />
                       </button>
                       <button
-                        @click="confirmDeleteId = null"
                         class="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
                         title="Cancelar"
+                        @click="confirmDeleteId = null"
                       >
                         <X class="h-4 w-4" />
                       </button>
@@ -259,6 +287,12 @@ onMounted(() => store.fetchAll())
     v-model:open="modalOpen"
     :usuario="editingUsuario"
     @saved="store.fetchAll(store.paginaActual)"
+  />
+
+  <!-- Modal permisos extra del usuario (solo admin) -->
+  <PermisosUsuarioModal
+    v-model:open="permisosModalOpen"
+    :usuario="usuarioPermisos"
   />
 </template>
 

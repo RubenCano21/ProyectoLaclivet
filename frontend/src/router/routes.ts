@@ -124,6 +124,12 @@ export const protectedRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/bi/BIView.vue'),
     meta: { permiso: 'ver_reportes' },
   },
+  {
+    path: '/reportes',
+    name: 'reportes',
+    component: () => import('@/views/bi/ReportesView.vue'),
+    meta: { permiso: 'ver_reportes' },
+  },
   // ── Agenda ────────────────────────────────────────────────────────
   {
     path: '/agenda',

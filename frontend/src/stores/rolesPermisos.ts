@@ -62,5 +62,35 @@ export const useRolesPermisosStore = defineStore('rolesPermisos', () => {
     }
   }
 
-  return { roles, permisos, loading, saving, fetchAll, updateRolPermisos, asignarRolUsuario }
+  async function getPermisosExtraUsuario(userId: number): Promise<{
+    ok: boolean
+    permisos_rol?: Permiso[]
+    permisos_extra?: Permiso[]
+    error?: string
+  }> {
+    try {
+      const { data } = await api.get(`/usuarios/${userId}/permisos-extra/`)
+      return { ok: true, permisos_rol: data.permisos_rol ?? [], permisos_extra: data.permisos_extra ?? [] }
+    } catch {
+      return { ok: false, error: 'Error al obtener permisos del usuario' }
+    }
+  }
+
+  async function setPermisosExtraUsuario(userId: number, permisoIds: number[]): Promise<{ ok: boolean; error?: string }> {
+    saving.value = true
+    try {
+      await api.put(`/usuarios/${userId}/permisos-extra/`, { permisos: permisoIds })
+      return { ok: true }
+    } catch {
+      return { ok: false, error: 'Error al guardar permisos extra' }
+    } finally {
+      saving.value = false
+    }
+  }
+
+  return {
+    roles, permisos, loading, saving,
+    fetchAll, updateRolPermisos, asignarRolUsuario,
+    getPermisosExtraUsuario, setPermisosExtraUsuario,
+  }
 })
