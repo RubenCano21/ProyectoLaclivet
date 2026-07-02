@@ -10,7 +10,8 @@ from django.contrib.auth import logout
 from django.contrib.auth import authenticate
 
 from config.pagination import StandardPagination
-from .models import Usuario, Rol, Permiso, RolPermiso
+from apps.core.permissions import EsAdministrador, TienePermisoPorMetodo
+from .models import Usuario, Rol, Permiso, RolPermiso, UsuarioPermiso
 from .serializers import (
     UsuarioSerializer,
     RegistroUsuarioSerializer,
@@ -215,17 +216,23 @@ class CambiarPasswordView(APIView):
 
 
 class ListaUsuariosView(generics.ListAPIView):
-    """Vista para listar todos los usuarios (solo para administradores)"""
+    """Vista para listar todos los usuarios"""
     queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [TienePermisoPorMetodo('ver_usuarios', 'crear_usuario')]
     pagination_class = StandardPagination
 
 
 class DetalleUsuarioView(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Usuario.objects.all()
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get_permissions(self):
+        if self.request.method == 'DELETE':
+            return [EsAdministrador()]
+        if self.request.method in ('PUT', 'PATCH'):
+            return [TienePermisoPorMetodo('ver_usuarios', 'editar_usuario')()]
+        return [TienePermisoPorMetodo('ver_usuarios', 'ver_usuarios')()]
 
     def get_serializer_class(self):
         if self.request.method in ('PUT', 'PATCH'):
@@ -285,7 +292,7 @@ class ListaPermisosView(generics.ListAPIView):
 
 class ActualizarRolPermisosView(APIView):
     """Actualiza los permisos asignados a un rol (solo administradores)"""
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [EsAdministrador]
 
     def put(self, request, pk):
         try:
@@ -307,7 +314,7 @@ class ActualizarRolPermisosView(APIView):
 
 class AsignarRolUsuarioView(APIView):
     """Asigna un rol a un usuario (solo administradores)"""
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [EsAdministrador]
 
     def patch(self, request, pk):
 
@@ -324,4 +331,40 @@ class AsignarRolUsuarioView(APIView):
 
         usuario.save()
         return Response(UsuarioSerializer(usuario).data)
+
+
+class PermisosExtraUsuarioView(APIView):
+    """Gestiona los permisos extra (individuales) de un usuario — solo Administrador."""
+    permission_classes = [EsAdministrador]
+
+    def get(self, request, pk):
+        usuario = get_object_or_404(Usuario, pk=pk)
+        extra = Permiso.objects.filter(permisos_usuario__usuario=usuario)
+        return Response({
+            'permisos_rol': PermisoSerializer(
+                Permiso.objects.filter(roles_permiso__rol=usuario.rol) if usuario.rol else Permiso.objects.none(),
+                many=True,
+            ).data,
+            'permisos_extra': PermisoSerializer(extra, many=True).data,
+        })
+
+    def put(self, request, pk):
+        usuario = get_object_or_404(Usuario, pk=pk)
+        permiso_ids = request.data.get('permisos', [])
+        if not isinstance(permiso_ids, list):
+            return Response({'error': 'Se esperaba una lista de IDs'}, status=status.HTTP_400_BAD_REQUEST)
+
+        permisos_validos = Permiso.objects.filter(id__in=permiso_ids)
+        UsuarioPermiso.objects.filter(usuario=usuario).delete()
+        UsuarioPermiso.objects.bulk_create([
+            UsuarioPermiso(usuario=usuario, permiso=p) for p in permisos_validos
+        ])
+        extra = Permiso.objects.filter(permisos_usuario__usuario=usuario)
+        return Response({
+            'permisos_rol': PermisoSerializer(
+                Permiso.objects.filter(roles_permiso__rol=usuario.rol) if usuario.rol else Permiso.objects.none(),
+                many=True,
+            ).data,
+            'permisos_extra': PermisoSerializer(extra, many=True).data,
+        })
 

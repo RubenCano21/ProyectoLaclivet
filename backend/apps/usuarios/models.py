@@ -20,7 +20,7 @@ class Permiso(models.Model):
     """Modelo para los permisos del sistema"""
     id = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100, unique=True)
-    codigo = models.CharField(max_length=50, unique=True)  # Ej: 'crear_usuario', 'editar_mascota'
+    codigo = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True)
 
     class Meta:
@@ -97,13 +97,32 @@ class Usuario(AbstractUser):
         return self.email
 
     def get_permisos(self):
-        """Obtiene todos los permisos del usuario basados en su rol"""
+        """Obtiene todos los permisos: heredados del rol + extras individuales."""
+        from django.db.models import Q
+        q = Q()
         if self.rol:
-            return Permiso.objects.filter(
-                roles_permiso__rol=self.rol
-            ).distinct()
-        return Permiso.objects.none()
+            q |= Q(roles_permiso__rol=self.rol)
+        q |= Q(permisos_usuario__usuario=self)
+        return Permiso.objects.filter(q).distinct()
 
     def tiene_permiso(self, codigo_permiso):
-        """Verifica si el usuario tiene un permiso específico"""
+        """Verifica si el usuario tiene un permiso específico (rol o extra)."""
         return self.get_permisos().filter(codigo=codigo_permiso).exists()
+
+
+class UsuarioPermiso(models.Model):
+    """Permiso extra asignado individualmente a un usuario (más allá de su rol)."""
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, related_name='permisos_usuario'
+    )
+    permiso = models.ForeignKey(
+        Permiso, on_delete=models.CASCADE, related_name='permisos_usuario'
+    )
+
+    class Meta:
+        verbose_name = 'Permiso de Usuario'
+        verbose_name_plural = 'Permisos de Usuario'
+        unique_together = ['usuario', 'permiso']
+
+    def __str__(self):
+        return f"{self.usuario.email} → {self.permiso.codigo}"
