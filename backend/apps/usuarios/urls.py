@@ -14,6 +14,7 @@ from .views import (
     ListaPermisosView,
     ActualizarRolPermisosView,
     AsignarRolUsuarioView,
+    PermisosExtraUsuarioView,
 )
 
 app_name = 'usuarios'
@@ -35,6 +36,7 @@ urlpatterns = [
     path('', ListaUsuariosView.as_view(), name='lista_usuarios'),
     path('<int:pk>/', DetalleUsuarioView.as_view(), name='detalle_usuario'),
     path('<int:pk>/asignar-rol/', AsignarRolUsuarioView.as_view(), name='asignar_rol'),
+    path('<int:pk>/permisos-extra/', PermisosExtraUsuarioView.as_view(), name='permisos_extra_usuario'),
 
     # Roles y permisos
     path('roles/', ListaRolesView.as_view(), name='lista_roles'),
