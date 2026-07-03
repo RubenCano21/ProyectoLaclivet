@@ -22,7 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 import {
   FileDown, Search, FlaskConical, ClipboardList, Microscope,
-  AlertCircle, RefreshCw,
+  AlertCircle, RefreshCw, Sheet,
 } from 'lucide-vue-next'
 
 import {
@@ -109,6 +109,7 @@ const filtroTipo   = ref('')
 // ── Estado tabla ──────────────────────────────────────────────────────────────
 const loading        = ref(false)
 const loadingPdf     = ref(false)
+const loadingCsv     = ref(false)
 const error          = ref<string | null>(null)
 const totalRegistros = ref(0)
 const buscado        = ref(false)
@@ -192,6 +193,19 @@ async function descargarPdf() {
   finally { loadingPdf.value = false }
 }
 
+async function descargarCsv() {
+  loadingCsv.value = true
+  try {
+    const { data } = await biService.descargarCsv(tipoReporte.value, buildFiltros())
+    const url = URL.createObjectURL(new Blob([data], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `reporte_${tipoReporte.value}_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  } catch { error.value = 'Error al generar el CSV.' }
+  finally { loadingCsv.value = false }
+}
+
 function limpiarFiltros() {
   fechaInicio.value = ''; fechaFin.value = ''; filtroEstado.value = ''; filtroTipo.value = ''
   resultadosMuestras.value = []; resultadosSolicitudes.value = []; resultadosExamenes.value = []
@@ -233,7 +247,12 @@ function cambiarTipo(tipo: TipoReporte) {
           <Button variant="outline" size="sm" :disabled="!buscado || loadingPdf" class="gap-2" @click="descargarPdf">
             <RefreshCw v-if="loadingPdf" class="h-4 w-4 animate-spin" />
             <FileDown v-else class="h-4 w-4" />
-            Descargar PDF
+            PDF
+          </Button>
+          <Button variant="outline" size="sm" :disabled="!buscado || loadingCsv" class="gap-2" @click="descargarCsv">
+            <RefreshCw v-if="loadingCsv" class="h-4 w-4 animate-spin" />
+            <Sheet v-else class="h-4 w-4 text-emerald-600" />
+            CSV
           </Button>
         </div>
 

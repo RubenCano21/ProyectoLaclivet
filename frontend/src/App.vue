@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget.vue'
 
 const authStore = useAuthStore()
 
@@ -16,4 +17,5 @@ onMounted(async () => {
 
 <template>
   <RouterView />
+  <ChatbotWidget />
 </template>

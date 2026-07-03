@@ -1,5 +1,7 @@
 import api from '@/services/apiClient'
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
+
 export interface BiResumen {
   total_muestras: number
   total_solicitudes: number
@@ -7,16 +9,40 @@ export interface BiResumen {
   total_ingresos: number
   solicitudes_pendientes: number
   muestras_pendientes: number
+  muestras_rechazadas: number
+  tasa_rechazo: number
+  parametros_fuera_rango: number
   muestras_este_mes: number
   muestras_mes_anterior: number
   solicitudes_este_mes: number
   solicitudes_mes_anterior: number
   ingresos_este_mes: number
+  ingresos_mes_anterior: number
 }
 
 export interface BiSerie {
   labels: string[]
   datos: number[]
+  especies?: string[]
+}
+
+export interface BiAlerta {
+  resultados: { parametro: string; interpretacion: string; total: number }[]
+  total_alto: number
+  total_bajo: number
+  labels: string[]
+  datos: number[]
+}
+
+export interface BiInsight {
+  tipo: 'alerta' | 'advertencia' | 'info' | 'exito'
+  titulo: string
+  mensaje: string
+}
+
+export interface BiInsightsResponse {
+  insights: BiInsight[]
+  total: number
 }
 
 export interface ReporteMuestra {
@@ -70,7 +96,9 @@ export interface FiltrosReporte {
   columnas?: string
 }
 
-function buildParams(filtros: FiltrosReporte & { formato?: string }) {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function buildParams(filtros: FiltrosReporte & { formato?: string; meses?: number }) {
   const params: Record<string, string> = {}
   if (filtros.fecha_inicio) params.fecha_inicio = filtros.fecha_inicio
   if (filtros.fecha_fin)    params.fecha_fin    = filtros.fecha_fin
@@ -79,21 +107,37 @@ function buildParams(filtros: FiltrosReporte & { formato?: string }) {
   if (filtros.catalogo)     params.catalogo     = filtros.catalogo
   if (filtros.columnas)     params.columnas     = filtros.columnas
   if (filtros.formato)      params.formato      = filtros.formato
+  if (filtros.meses)        params.meses        = String(filtros.meses)
   return params
 }
 
-export const biService = {
-  getResumen()            { return api.get<BiResumen>('/bi/resumen/') },
-  getMuestrasPorMes()     { return api.get<BiSerie>('/bi/muestras-por-mes/') },
-  getSolicitudesPorMes()  { return api.get<BiSerie>('/bi/solicitudes-por-mes/') },
-  getIngresosPorMes()     { return api.get<BiSerie>('/bi/ingresos-por-mes/') },
-  getSolicitudesEstado()  { return api.get<BiSerie>('/bi/solicitudes-estado/') },
-  getTiposMuestra()       { return api.get<BiSerie>('/bi/tipos-muestra/') },
-  getMuestrasEstado()     { return api.get<BiSerie>('/bi/muestras-estado/') },
-  getEspecies()           { return api.get<BiSerie>('/bi/especies/') },
-  getExamenesTop()        { return api.get<BiSerie>('/bi/examenes-top/') },
+// ── Servicio ──────────────────────────────────────────────────────────────────
 
-  // ── Reportes dinámicos ──────────────────────────────────────────────────────
+export const biService = {
+  // ── KPIs y gráficas base (soportan ?meses=N) ────────────────────────────
+  getResumen()                        { return api.get<BiResumen>('/bi/resumen/') },
+  getMuestrasPorMes(meses = 6)        { return api.get<BiSerie>('/bi/muestras-por-mes/', { params: { meses } }) },
+  getSolicitudesPorMes(meses = 6)     { return api.get<BiSerie>('/bi/solicitudes-por-mes/', { params: { meses } }) },
+  getIngresosPorMes(meses = 6)        { return api.get<BiSerie>('/bi/ingresos-por-mes/', { params: { meses } }) },
+  getSolicitudesEstado()              { return api.get<BiSerie>('/bi/solicitudes-estado/') },
+  getTiposMuestra()                   { return api.get<BiSerie>('/bi/tipos-muestra/') },
+  getMuestrasEstado()                 { return api.get<BiSerie>('/bi/muestras-estado/') },
+  getEspecies()                       { return api.get<BiSerie>('/bi/especies/') },
+  getExamenesTop()                    { return api.get<BiSerie>('/bi/examenes-top/') },
+
+  // ── Nuevos endpoints analíticos ─────────────────────────────────────────
+  getIngresosPorMetodoPago()          { return api.get<BiSerie>('/bi/ingresos-metodo-pago/') },
+  getRendimientoVeterinarios()        { return api.get<BiSerie>('/bi/rendimiento-veterinarios/') },
+  getAlertasParametros()              { return api.get<BiAlerta>('/bi/alertas-parametros/') },
+  getPacientesMasActivos()            { return api.get<BiSerie>('/bi/pacientes-activos/') },
+  getInsights()                       { return api.get<BiInsightsResponse>('/bi/insights/') },
+
+  // ── Chatbot IA ──────────────────────────────────────────────────────────
+  chatbot(pregunta: string) {
+    return api.post<{ respuesta?: string; error?: string }>('/bi/chatbot/', { pregunta })
+  },
+
+  // ── Reportes dinámicos ──────────────────────────────────────────────────
   getReporteMuestras(filtros: FiltrosReporte) {
     return api.get<ReporteResponse<ReporteMuestra>>('/bi/reporte-muestras/', { params: buildParams(filtros) })
   },
@@ -104,10 +148,18 @@ export const biService = {
     return api.get<ReporteResponse<ReporteExamen>>('/bi/reporte-examenes/', { params: buildParams(filtros) })
   },
 
-  /** Descarga el PDF del reporte directamente como Blob */
+  /** Descarga PDF del reporte como Blob */
   descargarPdf(tipo: 'muestras' | 'solicitudes' | 'examenes', filtros: FiltrosReporte) {
     return api.get(`/bi/reporte-${tipo}/`, {
       params: buildParams({ ...filtros, formato: 'pdf' }),
+      responseType: 'blob',
+    })
+  },
+
+  /** Descarga CSV del reporte como Blob */
+  descargarCsv(tipo: 'muestras' | 'solicitudes' | 'examenes', filtros: FiltrosReporte) {
+    return api.get(`/bi/reporte-${tipo}/`, {
+      params: buildParams({ ...filtros, formato: 'csv' }),
       responseType: 'blob',
     })
   },

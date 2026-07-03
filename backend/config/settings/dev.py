@@ -15,3 +15,6 @@ DATABASES = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ── IA / Chatbot — se carga aquí DESPUÉS de read_env ─────────────────────────
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")

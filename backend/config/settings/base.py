@@ -112,6 +112,10 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ── IA / Chatbot ──────────────────────────────────────────────────────────────
+# Nota: el valor real se carga en dev.py / prod.py DESPUÉS de leer el .env
+GEMINI_API_KEY = ""
+
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
