@@ -116,13 +116,15 @@ async function handleSubmit() {
                   : 'Completa el formulario para registrar un nuevo médico veterinario.' }}
               </p>
             </div>
-            <button type="button" @click="close"
-              class="ml-4 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+            <button
+              class="ml-4 rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              type="button" 
+              @click="close">
               <X class="h-5 w-5" />
             </button>
           </div>
 
-          <form @submit.prevent="handleSubmit" class="px-6 py-5 space-y-4">
+          <form class="px-6 py-5 space-y-4" @submit.prevent="handleSubmit" >
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <label class="block text-sm font-medium text-mineral-green-800">
@@ -140,7 +142,8 @@ async function handleSubmit() {
                 <label class="block text-sm font-medium text-mineral-green-800">
                   CI <span class="text-red-500">*</span>
                 </label>
-                <Input v-model="form.ci" placeholder="Ej: 12345678" required maxlength="10"
+                <Input 
+                  v-model="form.ci" placeholder="Ej: 12345678" required maxlength="10"
                   @input="form.ci = form.ci.replace(/\D/g, '')" />
               </div>
 
@@ -195,7 +198,8 @@ async function handleSubmit() {
             </div>
 
             <Transition name="fade">
-              <div v-if="formError"
+              <div 
+                v-if="formError"
                 class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{{ formError }}</span>
@@ -204,7 +208,8 @@ async function handleSubmit() {
 
             <div class="flex justify-end gap-3 pt-2 border-t mt-2">
               <Button type="button" variant="outline" @click="close">Cancelar</Button>
-              <Button type="submit" :disabled="saving"
+              <Button 
+                type="submit" :disabled="saving"
                 class="bg-mineral-green-600 hover:bg-mineral-green-700 text-white min-w-32">
                 <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />
                 {{ saving

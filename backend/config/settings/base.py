@@ -3,6 +3,7 @@ from datetime import timedelta
 import environ
 from pathlib import Path
 
+from apps import usuarios
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
